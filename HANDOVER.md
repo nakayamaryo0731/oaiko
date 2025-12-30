@@ -184,27 +184,27 @@ Deploy: Vercel + Convex
 
 ### テーブル一覧
 
-| テーブル           | 用途                       | 主要インデックス         |
-| ------------------ | -------------------------- | ------------------------ |
-| users              | ユーザー                   | by_clerk_id              |
-| groups             | グループ                   | -                        |
-| groupMembers       | グループメンバー           | by_user, by_group_and_user |
-| groupInvitations   | 招待リンク                 | by_token                 |
-| categories         | カテゴリ                   | by_group                 |
-| expenses           | 支出                       | by_group_and_date        |
-| expenseSplits      | 支出分割                   | by_expense               |
-| settlements        | 精算                       | by_group_and_period      |
-| settlementPayments | 精算支払い                 | by_settlement            |
-| shoppingItems      | 買い物リスト               | by_group_and_purchased   |
+| テーブル           | 用途             | 主要インデックス           |
+| ------------------ | ---------------- | -------------------------- |
+| users              | ユーザー         | by_clerk_id                |
+| groups             | グループ         | -                          |
+| groupMembers       | グループメンバー | by_user, by_group_and_user |
+| groupInvitations   | 招待リンク       | by_token                   |
+| categories         | カテゴリ         | by_group                   |
+| expenses           | 支出             | by_group_and_date          |
+| expenseSplits      | 支出分割         | by_expense                 |
+| settlements        | 精算             | by_group_and_period        |
+| settlementPayments | 精算支払い       | by_settlement              |
+| shoppingItems      | 買い物リスト     | by_group_and_purchased     |
 
 ### 負担方法（splitMethod）
 
-| 値       | 説明                   |
-| -------- | ---------------------- |
-| equal    | 均等分割               |
-| ratio    | 傾斜分割（割合指定）   |
-| amount   | 傾斜分割（金額指定）   |
-| full     | 全額負担               |
+| 値     | 説明                 |
+| ------ | -------------------- |
+| equal  | 均等分割             |
+| ratio  | 傾斜分割（割合指定） |
+| amount | 傾斜分割（金額指定） |
+| full   | 全額負担             |
 
 ---
 
