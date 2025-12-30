@@ -18,11 +18,15 @@ export const create = authMutation({
     // バリデーション
     const name = args.name.trim();
     if (name.length === 0) {
-      ctx.logger.warn("GROUP", "create_validation_failed", { reason: "empty_name" });
+      ctx.logger.warn("GROUP", "create_validation_failed", {
+        reason: "empty_name",
+      });
       throw new Error("グループ名を入力してください");
     }
     if (name.length > 50) {
-      ctx.logger.warn("GROUP", "create_validation_failed", { reason: "name_too_long" });
+      ctx.logger.warn("GROUP", "create_validation_failed", {
+        reason: "name_too_long",
+      });
       throw new Error("グループ名は50文字以内で入力してください");
     }
 

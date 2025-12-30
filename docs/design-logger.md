@@ -26,11 +26,11 @@ Oaiko（おあいこ）における構造化ロギング機能の設計。Convex
 
 ### 代替案との比較
 
-| 方法 | メリット | デメリット |
-|------|----------|------------|
-| 素の `console.log` | 実装不要 | 形式不統一、検索困難 |
-| 構造化ロガー（採用） | 検索容易、拡張性高 | 初期実装コスト |
-| 外部ログサービス直接連携 | 高機能 | 設定複雑、コスト（Pro Plan必要） |
+| 方法                     | メリット           | デメリット                       |
+| ------------------------ | ------------------ | -------------------------------- |
+| 素の `console.log`       | 実装不要           | 形式不統一、検索困難             |
+| 構造化ロガー（採用）     | 検索容易、拡張性高 | 初期実装コスト                   |
+| 外部ログサービス直接連携 | 高機能             | 設定複雑、コスト（Pro Plan必要） |
 
 ## What to Do
 
@@ -38,13 +38,13 @@ Oaiko（おあいこ）における構造化ロギング機能の設計。Convex
 
 #### 1. ログレベル
 
-| レベル | 用途 | 出力先 |
-|--------|------|--------|
-| `debug` | 開発時の詳細情報 | 開発環境のみ |
-| `info` | 通常の処理情報 | 全環境 |
-| `warn` | 警告（処理は継続） | 全環境 |
-| `error` | エラー（処理失敗） | 全環境 |
-| `audit` | 監査ログ（重要操作） | 全環境 |
+| レベル  | 用途                 | 出力先       |
+| ------- | -------------------- | ------------ |
+| `debug` | 開発時の詳細情報     | 開発環境のみ |
+| `info`  | 通常の処理情報       | 全環境       |
+| `warn`  | 警告（処理は継続）   | 全環境       |
+| `error` | エラー（処理失敗）   | 全環境       |
+| `audit` | 監査ログ（重要操作） | 全環境       |
 
 #### 2. ログトピック
 
@@ -92,19 +92,29 @@ mindmap
 
 ```typescript
 // 使用例
-ctx.logger.info("GROUP", "create", { groupId, groupName }, "グループを作成しました");
+ctx.logger.info(
+  "GROUP",
+  "create",
+  { groupId, groupName },
+  "グループを作成しました",
+);
 ctx.logger.error("EXPENSE", "create", { error: e.message }, "支出作成に失敗");
-ctx.logger.audit("SETTLEMENT", "complete", { settlementId, amount }, "精算が完了");
+ctx.logger.audit(
+  "SETTLEMENT",
+  "complete",
+  { settlementId, amount },
+  "精算が完了",
+);
 ```
 
 ### 非機能要件
 
-| 項目 | 要件 |
-|------|------|
+| 項目           | 要件                                           |
+| -------------- | ---------------------------------------------- |
 | パフォーマンス | ログ出力が処理時間に影響しない（同期的に実行） |
-| 可用性 | ログ出力の失敗が本体処理に影響しない |
-| 拡張性 | 将来のログストリーム連携に対応可能な形式 |
-| 型安全性 | トピック、レベルは型で制約 |
+| 可用性         | ログ出力の失敗が本体処理に影響しない           |
+| 拡張性         | 将来のログストリーム連携に対応可能な形式       |
+| 型安全性       | トピック、レベルは型で制約                     |
 
 ## How to Do It
 
@@ -200,7 +210,7 @@ export class Logger {
     topic: LogTopic,
     action: string,
     metadata?: Record<string, unknown>,
-    message?: string
+    message?: string,
   ): void {
     const entry: LogEntry = {
       timestamp: new Date().toISOString(),
@@ -234,23 +244,48 @@ export class Logger {
     }
   }
 
-  debug(topic: LogTopic, action: string, metadata?: Record<string, unknown>, message?: string) {
+  debug(
+    topic: LogTopic,
+    action: string,
+    metadata?: Record<string, unknown>,
+    message?: string,
+  ) {
     this.log("debug", topic, action, metadata, message);
   }
 
-  info(topic: LogTopic, action: string, metadata?: Record<string, unknown>, message?: string) {
+  info(
+    topic: LogTopic,
+    action: string,
+    metadata?: Record<string, unknown>,
+    message?: string,
+  ) {
     this.log("info", topic, action, metadata, message);
   }
 
-  warn(topic: LogTopic, action: string, metadata?: Record<string, unknown>, message?: string) {
+  warn(
+    topic: LogTopic,
+    action: string,
+    metadata?: Record<string, unknown>,
+    message?: string,
+  ) {
     this.log("warn", topic, action, metadata, message);
   }
 
-  error(topic: LogTopic, action: string, metadata?: Record<string, unknown>, message?: string) {
+  error(
+    topic: LogTopic,
+    action: string,
+    metadata?: Record<string, unknown>,
+    message?: string,
+  ) {
     this.log("error", topic, action, metadata, message);
   }
 
-  audit(topic: LogTopic, action: string, metadata?: Record<string, unknown>, message?: string) {
+  audit(
+    topic: LogTopic,
+    action: string,
+    metadata?: Record<string, unknown>,
+    message?: string,
+  ) {
     this.log("audit", topic, action, metadata, message);
   }
 }
@@ -265,12 +300,12 @@ import { Logger } from "./logger";
 
 export type AuthQueryCtx = QueryCtx & {
   user: AuthUser;
-  logger: Logger;  // 追加
+  logger: Logger; // 追加
 };
 
 export type AuthMutationCtx = MutationCtx & {
   user: AuthUser;
-  logger: Logger;  // 追加
+  logger: Logger; // 追加
 };
 
 // authQueryMiddleware 内
@@ -278,7 +313,7 @@ return {
   ctx: {
     ...ctx,
     user,
-    logger: new Logger(user._id),  // 追加
+    logger: new Logger(user._id), // 追加
   },
   args,
 };
@@ -376,41 +411,41 @@ npx convex logs | grep '"level":"error"'
 
 ### MVP外の機能
 
-| 項目 | 理由 |
-|------|------|
-| ログストリーム連携（Axiom/Datadog） | Pro Plan必要、MVP後に検討 |
-| ログのDB保存 | 容量・コスト懸念、必要になったら検討 |
-| リアルタイムアラート | ログストリーム連携後に検討 |
-| ログローテーション | Convex側で管理 |
-| フロントエンドロギング | バックエンドのみ対象 |
-| パフォーマンス計測ログ | `console.time` は別途必要時に使用 |
+| 項目                                | 理由                                 |
+| ----------------------------------- | ------------------------------------ |
+| ログストリーム連携（Axiom/Datadog） | Pro Plan必要、MVP後に検討            |
+| ログのDB保存                        | 容量・コスト懸念、必要になったら検討 |
+| リアルタイムアラート                | ログストリーム連携後に検討           |
+| ログローテーション                  | Convex側で管理                       |
+| フロントエンドロギング              | バックエンドのみ対象                 |
+| パフォーマンス計測ログ              | `console.time` は別途必要時に使用    |
 
 ### 対象外の操作
 
-| 操作 | 理由 |
-|------|------|
+| 操作                            | 理由                            |
+| ------------------------------- | ------------------------------- |
 | 読み取り操作（query）の詳細ログ | 量が多すぎる、必要時のみdebugで |
-| 認証情報の詳細 | セキュリティリスク |
-| パスワード等の機密情報 | ログに出力禁止 |
+| 認証情報の詳細                  | セキュリティリスク              |
+| パスワード等の機密情報          | ログに出力禁止                  |
 
 ## Concerns
 
 ### 懸念事項と対策
 
-| 懸念 | リスク | 対策 |
-|------|--------|------|
-| ログ出力によるパフォーマンス低下 | 処理遅延 | 同期的console.logは軽量、影響は軽微 |
-| ログ容量の増大 | Convexの制限に達する | 重要な操作のみ記録、debugは開発時のみ |
-| 機密情報の漏洩 | セキュリティリスク | metadataに入れる情報を精査 |
-| ログ形式の変更 | 既存ログとの互換性 | バージョニングを検討 |
+| 懸念                             | リスク               | 対策                                  |
+| -------------------------------- | -------------------- | ------------------------------------- |
+| ログ出力によるパフォーマンス低下 | 処理遅延             | 同期的console.logは軽量、影響は軽微   |
+| ログ容量の増大                   | Convexの制限に達する | 重要な操作のみ記録、debugは開発時のみ |
+| 機密情報の漏洩                   | セキュリティリスク   | metadataに入れる情報を精査            |
+| ログ形式の変更                   | 既存ログとの互換性   | バージョニングを検討                  |
 
 ### 未解決の疑問
 
-| 疑問 | 検討状況 |
-|------|----------|
-| debugログを本番で無効化するか | 環境変数で制御？一旦全環境で出力 |
-| ログにRequest IDを含めるか | Convexが自動付与、手動で取得は困難 |
-| 監査ログの保持期間 | Convexの制限に依存、重要なら別途保存 |
+| 疑問                          | 検討状況                             |
+| ----------------------------- | ------------------------------------ |
+| debugログを本番で無効化するか | 環境変数で制御？一旦全環境で出力     |
+| ログにRequest IDを含めるか    | Convexが自動付与、手動で取得は困難   |
+| 監査ログの保持期間            | Convexの制限に依存、重要なら別途保存 |
 
 ### 将来の拡張
 
@@ -459,13 +494,13 @@ flowchart LR
 
 ### 各レベルの詳細定義
 
-| レベル | 定義 | 想定読者 | 出力タイミング |
-|--------|------|----------|----------------|
-| `debug` | 開発者向け詳細情報。問題解決に必要な内部状態 | 開発者 | 開発時のみ推奨 |
-| `info` | 正常系の処理完了。ビジネス上の重要イベント | 運用者/開発者 | 常時 |
-| `warn` | 処理は継続するが注意が必要な状況 | 運用者 | 常時 |
-| `error` | 処理失敗。ユーザー影響あり | 運用者（要対応） | 常時 |
-| `audit` | セキュリティ・コンプライアンス上重要な操作 | 監査担当者 | 常時（必須） |
+| レベル  | 定義                                         | 想定読者         | 出力タイミング |
+| ------- | -------------------------------------------- | ---------------- | -------------- |
+| `debug` | 開発者向け詳細情報。問題解決に必要な内部状態 | 開発者           | 開発時のみ推奨 |
+| `info`  | 正常系の処理完了。ビジネス上の重要イベント   | 運用者/開発者    | 常時           |
+| `warn`  | 処理は継続するが注意が必要な状況             | 運用者           | 常時           |
+| `error` | 処理失敗。ユーザー影響あり                   | 運用者（要対応） | 常時           |
+| `audit` | セキュリティ・コンプライアンス上重要な操作   | 監査担当者       | 常時（必須）   |
 
 ### レベル選択フローチャート
 
@@ -488,62 +523,62 @@ flowchart TD
 
 #### 1. 認証・認可（AUTH）
 
-| 操作 | レベル | ログ | metadata |
-|------|--------|------|----------|
-| 初回ユーザー作成 | `audit` | 必須 | userId |
-| ログイン試行成功 | `info` | 任意 | - |
-| 認証失敗 | `warn` | 必須 | reason |
-| 権限チェック失敗 | `warn` | 必須 | action, resource |
+| 操作             | レベル  | ログ | metadata         |
+| ---------------- | ------- | ---- | ---------------- |
+| 初回ユーザー作成 | `audit` | 必須 | userId           |
+| ログイン試行成功 | `info`  | 任意 | -                |
+| 認証失敗         | `warn`  | 必須 | reason           |
+| 権限チェック失敗 | `warn`  | 必須 | action, resource |
 
 #### 2. グループ操作（GROUP）
 
-| 操作 | レベル | ログ | metadata |
-|------|--------|------|----------|
-| グループ作成 | `audit` | 必須 | groupId, groupName |
-| グループ更新 | `audit` | 必須 | groupId, changes |
-| グループ削除 | `audit` | 必須 | groupId |
-| メンバー追加 | `audit` | 必須 | groupId, addedUserId |
-| メンバー削除 | `audit` | 必須 | groupId, removedUserId |
-| 招待作成 | `audit` | 必須 | groupId, expiresAt |
-| 招待使用 | `audit` | 必須 | groupId, token |
-| バリデーション失敗 | `warn` | 必須 | reason |
+| 操作               | レベル  | ログ | metadata               |
+| ------------------ | ------- | ---- | ---------------------- |
+| グループ作成       | `audit` | 必須 | groupId, groupName     |
+| グループ更新       | `audit` | 必須 | groupId, changes       |
+| グループ削除       | `audit` | 必須 | groupId                |
+| メンバー追加       | `audit` | 必須 | groupId, addedUserId   |
+| メンバー削除       | `audit` | 必須 | groupId, removedUserId |
+| 招待作成           | `audit` | 必須 | groupId, expiresAt     |
+| 招待使用           | `audit` | 必須 | groupId, token         |
+| バリデーション失敗 | `warn`  | 必須 | reason                 |
 
 #### 3. 支出操作（EXPENSE）
 
-| 操作 | レベル | ログ | metadata |
-|------|--------|------|----------|
-| 支出作成 | `info` | 必須 | expenseId, amount, categoryId |
-| 支出更新 | `info` | 必須 | expenseId, changes |
-| 支出削除 | `audit` | 必須 | expenseId |
-| バリデーション失敗 | `warn` | 必須 | reason |
+| 操作               | レベル  | ログ | metadata                      |
+| ------------------ | ------- | ---- | ----------------------------- |
+| 支出作成           | `info`  | 必須 | expenseId, amount, categoryId |
+| 支出更新           | `info`  | 必須 | expenseId, changes            |
+| 支出削除           | `audit` | 必須 | expenseId                     |
+| バリデーション失敗 | `warn`  | 必須 | reason                        |
 
 #### 4. 精算操作（SETTLEMENT）
 
-| 操作 | レベル | ログ | metadata |
-|------|--------|------|----------|
+| 操作     | レベル  | ログ | metadata                               |
+| -------- | ------- | ---- | -------------------------------------- |
 | 精算作成 | `audit` | 必須 | settlementId, amount, fromUser, toUser |
-| 精算完了 | `audit` | 必須 | settlementId |
-| 精算取消 | `audit` | 必須 | settlementId, reason |
+| 精算完了 | `audit` | 必須 | settlementId                           |
+| 精算取消 | `audit` | 必須 | settlementId, reason                   |
 
 #### 5. 買い物リスト（SHOPPING）
 
-| 操作 | レベル | ログ | metadata |
-|------|--------|------|----------|
-| アイテム追加 | `debug` | 任意 | - |
-| アイテム完了 | `debug` | 任意 | - |
-| アイテム削除 | `debug` | 任意 | - |
+| 操作         | レベル  | ログ | metadata |
+| ------------ | ------- | ---- | -------- |
+| アイテム追加 | `debug` | 任意 | -        |
+| アイテム完了 | `debug` | 任意 | -        |
+| アイテム削除 | `debug` | 任意 | -        |
 
 ### ログ出力しないもの
 
 以下はログ出力対象外とする:
 
-| 操作 | 理由 |
-|------|------|
-| Query（読み取り）の実行 | 量が多すぎる、パフォーマンス影響 |
-| 認証トークンやセッション情報 | セキュリティリスク |
-| 個人情報（メールアドレス等） | プライバシー保護 |
-| パスワード、APIキー | 絶対禁止 |
-| リクエスト/レスポンス全体 | 量が多すぎる |
+| 操作                         | 理由                             |
+| ---------------------------- | -------------------------------- |
+| Query（読み取り）の実行      | 量が多すぎる、パフォーマンス影響 |
+| 認証トークンやセッション情報 | セキュリティリスク               |
+| 個人情報（メールアドレス等） | プライバシー保護                 |
+| パスワード、APIキー          | 絶対禁止                         |
+| リクエスト/レスポンス全体    | 量が多すぎる                     |
 
 ### metadata に含めるべき情報
 
@@ -591,7 +626,7 @@ ctx.logger.info("GROUP", "created", {
 
 ## 変更履歴
 
-| 日付 | 変更内容 | 変更者 |
-|------|----------|--------|
-| 2024-12-30 | 初版作成 | Claude |
+| 日付       | 変更内容                                         | 変更者 |
+| ---------- | ------------------------------------------------ | ------ |
+| 2024-12-30 | 初版作成                                         | Claude |
 | 2024-12-30 | 付録A・B追加（ログレベル定義、粒度ガイドライン） | Claude |
