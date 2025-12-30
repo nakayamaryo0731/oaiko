@@ -5,6 +5,7 @@ import { UserButton } from "@clerk/nextjs";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { GroupList } from "@/components/groups/GroupList";
+import { GroupListSkeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -62,15 +63,7 @@ export default function Home() {
           {isAuthenticated && isUserReady ? (
             <GroupList />
           ) : isAuthenticated ? (
-            // ユーザー初期化中
-            <div className="space-y-3">
-              {[1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-20 bg-slate-100 rounded-lg animate-pulse"
-                />
-              ))}
-            </div>
+            <GroupListSkeleton />
           ) : (
             <div className="text-center py-12">
               <h2 className="text-2xl font-bold text-slate-800 mb-4">

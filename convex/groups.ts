@@ -15,12 +15,21 @@ export const create = authMutation({
     description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    // バリデーション
+    const name = args.name.trim();
+    if (name.length === 0) {
+      throw new Error("グループ名を入力してください");
+    }
+    if (name.length > 50) {
+      throw new Error("グループ名は50文字以内で入力してください");
+    }
+
     const now = Date.now();
 
     // 1. グループ作成
     const groupId = await ctx.db.insert("groups", {
-      name: args.name,
-      description: args.description,
+      name,
+      description: args.description?.trim() || undefined,
       closingDay: 25, // デフォルト値
       createdAt: now,
       updatedAt: now,

@@ -5,19 +5,14 @@ import { api } from "@/convex/_generated/api";
 import { GroupCard } from "./GroupCard";
 import { CreateGroupDialog } from "./CreateGroupDialog";
 import { Button } from "@/components/ui/button";
+import { GroupListSkeleton } from "@/components/ui/skeleton";
 
 export function GroupList() {
   const groups = useQuery(api.groups.listMyGroups);
 
   // ローディング中
   if (groups === undefined) {
-    return (
-      <div className="space-y-3">
-        {[1, 2].map((i) => (
-          <div key={i} className="h-20 bg-slate-100 rounded-lg animate-pulse" />
-        ))}
-      </div>
-    );
+    return <GroupListSkeleton />;
   }
 
   // グループがない場合
