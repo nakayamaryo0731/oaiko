@@ -166,7 +166,8 @@ export const joinTestGroup = internalMutation({
     if (!testGroup) {
       return {
         success: false,
-        message: "テストグループが見つかりません。先に seedTestData を実行してください",
+        message:
+          "テストグループが見つかりません。先に seedTestData を実行してください",
       };
     }
 
