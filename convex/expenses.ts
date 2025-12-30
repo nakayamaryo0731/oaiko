@@ -1,10 +1,29 @@
 import { v } from "convex/values";
 import { authMutation, authQuery } from "./lib/auth";
-import { calculateEqualSplit, validateExpenseInput } from "./domain/expense";
+import {
+  calculateEqualSplit,
+  calculateRatioSplit,
+  calculateAmountSplit,
+  calculateFullSplit,
+  validateExpenseInput,
+  validateSplitDetails,
+  type SplitDetails,
+  type SplitResult,
+} from "./domain/expense";
 
-/**
- * 支出登録（Phase 1: 均等分割のみ）
- */
+const splitDetailsValidator = v.union(
+  v.object({ method: v.literal("equal") }),
+  v.object({
+    method: v.literal("ratio"),
+    ratios: v.array(v.object({ userId: v.id("users"), ratio: v.number() })),
+  }),
+  v.object({
+    method: v.literal("amount"),
+    amounts: v.array(v.object({ userId: v.id("users"), amount: v.number() })),
+  }),
+  v.object({ method: v.literal("full"), bearerId: v.id("users") }),
+);
+
 export const create = authMutation({
   args: {
     groupId: v.id("groups"),
@@ -13,6 +32,7 @@ export const create = authMutation({
     paidBy: v.id("users"),
     date: v.string(),
     memo: v.optional(v.string()),
+    splitDetails: v.optional(splitDetailsValidator),
   },
   handler: async (ctx, args) => {
     validateExpenseInput({
@@ -59,7 +79,16 @@ export const create = authMutation({
       .collect();
 
     const memberIds = memberships.map((m) => m.userId);
-    const splits = calculateEqualSplit(args.amount, memberIds, args.paidBy);
+
+    const splitDetails: SplitDetails = args.splitDetails ?? { method: "equal" };
+    validateSplitDetails(splitDetails, args.amount, memberIds);
+
+    const splits = calculateSplits(
+      splitDetails,
+      args.amount,
+      memberIds,
+      args.paidBy,
+    );
 
     const now = Date.now();
     const expenseId = await ctx.db.insert("expenses", {
@@ -69,7 +98,7 @@ export const create = authMutation({
       paidBy: args.paidBy,
       date: args.date,
       memo: args.memo?.trim() || undefined,
-      splitMethod: "equal",
+      splitMethod: splitDetails.method,
       createdBy: ctx.user._id,
       createdAt: now,
       updatedAt: now,
@@ -89,12 +118,31 @@ export const create = authMutation({
       expenseId,
       groupId: args.groupId,
       amount: args.amount,
+      splitMethod: splitDetails.method,
       categoryName: category.name,
     });
 
     return expenseId;
   },
 });
+
+function calculateSplits(
+  details: SplitDetails,
+  amount: number,
+  memberIds: import("./_generated/dataModel").Id<"users">[],
+  payerId: import("./_generated/dataModel").Id<"users">,
+): SplitResult[] {
+  switch (details.method) {
+    case "equal":
+      return calculateEqualSplit(amount, memberIds, payerId);
+    case "ratio":
+      return calculateRatioSplit(amount, details.ratios, payerId);
+    case "amount":
+      return calculateAmountSplit(details.amounts);
+    case "full":
+      return calculateFullSplit(amount, memberIds, details.bearerId);
+  }
+}
 
 /**
  * グループの支出一覧取得

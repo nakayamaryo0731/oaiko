@@ -4,9 +4,18 @@ import {
   validateDate,
   validateMemo,
   validateExpenseInput,
+  validateRatioSplit,
+  validateAmountSplit,
+  validateFullSplit,
+  validateSplitDetails,
   ExpenseValidationError,
   EXPENSE_RULES,
 } from "../domain/expense";
+import type { Id } from "../_generated/dataModel";
+
+const userA = "user_a" as Id<"users">;
+const userB = "user_b" as Id<"users">;
+const userC = "user_c" as Id<"users">;
 
 describe("expense/rules", () => {
   describe("validateAmount", () => {
@@ -158,6 +167,220 @@ describe("expense/rules", () => {
       expect(EXPENSE_RULES.MAX_AMOUNT).toBe(100_000_000);
       expect(EXPENSE_RULES.MAX_MEMO_LENGTH).toBe(500);
       expect(EXPENSE_RULES.DATE_FORMAT_REGEX).toEqual(/^\d{4}-\d{2}-\d{2}$/);
+    });
+  });
+
+  describe("validateRatioSplit", () => {
+    test("有効な割合は通過する", () => {
+      expect(() =>
+        validateRatioSplit(
+          [
+            { userId: userA, ratio: 60 },
+            { userId: userB, ratio: 40 },
+          ],
+          [userA, userB],
+        ),
+      ).not.toThrow();
+    });
+
+    test("合計が100%でない場合はエラー", () => {
+      expect(() =>
+        validateRatioSplit(
+          [
+            { userId: userA, ratio: 60 },
+            { userId: userB, ratio: 30 },
+          ],
+          [userA, userB],
+        ),
+      ).toThrow("割合の合計は100%である必要があります");
+    });
+
+    test("メンバーの割合が欠けている場合はエラー", () => {
+      expect(() =>
+        validateRatioSplit([{ userId: userA, ratio: 100 }], [userA, userB]),
+      ).toThrow("全メンバーの割合を指定してください");
+    });
+
+    test("割合が負の値の場合はエラー", () => {
+      expect(() =>
+        validateRatioSplit(
+          [
+            { userId: userA, ratio: -10 },
+            { userId: userB, ratio: 110 },
+          ],
+          [userA, userB],
+        ),
+      ).toThrow("割合は0〜100の整数で指定してください");
+    });
+
+    test("割合が101以上の場合はエラー", () => {
+      expect(() =>
+        validateRatioSplit(
+          [
+            { userId: userA, ratio: 101 },
+            { userId: userB, ratio: -1 },
+          ],
+          [userA, userB],
+        ),
+      ).toThrow("割合は0〜100の整数で指定してください");
+    });
+
+    test("割合が小数の場合はエラー", () => {
+      expect(() =>
+        validateRatioSplit(
+          [
+            { userId: userA, ratio: 60.5 },
+            { userId: userB, ratio: 39.5 },
+          ],
+          [userA, userB],
+        ),
+      ).toThrow("割合は0〜100の整数で指定してください");
+    });
+  });
+
+  describe("validateAmountSplit", () => {
+    test("有効な金額分割は通過する", () => {
+      expect(() =>
+        validateAmountSplit(
+          [
+            { userId: userA, amount: 600 },
+            { userId: userB, amount: 400 },
+          ],
+          1000,
+          [userA, userB],
+        ),
+      ).not.toThrow();
+    });
+
+    test("合計が支出金額と一致しない場合はエラー", () => {
+      expect(() =>
+        validateAmountSplit(
+          [
+            { userId: userA, amount: 600 },
+            { userId: userB, amount: 300 },
+          ],
+          1000,
+          [userA, userB],
+        ),
+      ).toThrow("金額の合計が支出金額と一致しません");
+    });
+
+    test("メンバーの金額が欠けている場合はエラー", () => {
+      expect(() =>
+        validateAmountSplit([{ userId: userA, amount: 1000 }], 1000, [
+          userA,
+          userB,
+        ]),
+      ).toThrow("全メンバーの金額を指定してください");
+    });
+
+    test("金額が負の値の場合はエラー", () => {
+      expect(() =>
+        validateAmountSplit(
+          [
+            { userId: userA, amount: -100 },
+            { userId: userB, amount: 1100 },
+          ],
+          1000,
+          [userA, userB],
+        ),
+      ).toThrow("金額は0以上の整数で指定してください");
+    });
+  });
+
+  describe("validateFullSplit", () => {
+    test("有効な全額負担は通過する", () => {
+      expect(() => validateFullSplit(userA, [userA, userB])).not.toThrow();
+    });
+
+    test("負担者がメンバーにいない場合はエラー", () => {
+      expect(() => validateFullSplit(userC, [userA, userB])).toThrow(
+        "負担者はメンバーに含まれている必要があります",
+      );
+    });
+  });
+
+  describe("validateSplitDetails", () => {
+    test("equal methodは常に通過する", () => {
+      expect(() =>
+        validateSplitDetails({ method: "equal" }, 1000, [userA, userB]),
+      ).not.toThrow();
+    });
+
+    test("ratio methodは割合バリデーションを実行", () => {
+      expect(() =>
+        validateSplitDetails(
+          {
+            method: "ratio",
+            ratios: [
+              { userId: userA, ratio: 60 },
+              { userId: userB, ratio: 40 },
+            ],
+          },
+          1000,
+          [userA, userB],
+        ),
+      ).not.toThrow();
+
+      expect(() =>
+        validateSplitDetails(
+          {
+            method: "ratio",
+            ratios: [
+              { userId: userA, ratio: 50 },
+              { userId: userB, ratio: 40 },
+            ],
+          },
+          1000,
+          [userA, userB],
+        ),
+      ).toThrow("割合の合計は100%である必要があります");
+    });
+
+    test("amount methodは金額バリデーションを実行", () => {
+      expect(() =>
+        validateSplitDetails(
+          {
+            method: "amount",
+            amounts: [
+              { userId: userA, amount: 600 },
+              { userId: userB, amount: 400 },
+            ],
+          },
+          1000,
+          [userA, userB],
+        ),
+      ).not.toThrow();
+
+      expect(() =>
+        validateSplitDetails(
+          {
+            method: "amount",
+            amounts: [
+              { userId: userA, amount: 600 },
+              { userId: userB, amount: 300 },
+            ],
+          },
+          1000,
+          [userA, userB],
+        ),
+      ).toThrow("金額の合計が支出金額と一致しません");
+    });
+
+    test("full methodは全額負担バリデーションを実行", () => {
+      expect(() =>
+        validateSplitDetails({ method: "full", bearerId: userA }, 1000, [
+          userA,
+          userB,
+        ]),
+      ).not.toThrow();
+
+      expect(() =>
+        validateSplitDetails({ method: "full", bearerId: userC }, 1000, [
+          userA,
+          userB,
+        ]),
+      ).toThrow("負担者はメンバーに含まれている必要があります");
     });
   });
 });

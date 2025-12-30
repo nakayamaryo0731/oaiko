@@ -13,6 +13,22 @@ export interface SplitResult {
  */
 export type SplitMethod = "equal" | "ratio" | "amount" | "full";
 
+export interface RatioSplitInput {
+  userId: Id<"users">;
+  ratio: number; // 0-100 の整数（%）
+}
+
+export interface AmountSplitInput {
+  userId: Id<"users">;
+  amount: number; // 0以上の整数（円）
+}
+
+export type SplitDetails =
+  | { method: "equal" }
+  | { method: "ratio"; ratios: RatioSplitInput[] }
+  | { method: "amount"; amounts: AmountSplitInput[] }
+  | { method: "full"; bearerId: Id<"users"> };
+
 /**
  * 支出入力データ（バリデーション前）
  */

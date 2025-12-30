@@ -1,4 +1,11 @@
-import { EXPENSE_RULES, type ExpenseInput } from "./types";
+import type { Id } from "../../_generated/dataModel";
+import {
+  EXPENSE_RULES,
+  type ExpenseInput,
+  type SplitDetails,
+  type RatioSplitInput,
+  type AmountSplitInput,
+} from "./types";
 
 /**
  * バリデーションエラー
@@ -62,4 +69,102 @@ export function validateExpenseInput(input: ExpenseInput): void {
   validateAmount(input.amount);
   validateDate(input.date);
   validateMemo(input.memo);
+}
+
+/**
+ * 割合指定のバリデーション
+ */
+export function validateRatioSplit(
+  ratios: RatioSplitInput[],
+  memberIds: Id<"users">[],
+): void {
+  if (ratios.length === 0) {
+    throw new ExpenseValidationError("割合が指定されていません");
+  }
+
+  const ratioUserIds = new Set(ratios.map((r) => r.userId));
+  for (const memberId of memberIds) {
+    if (!ratioUserIds.has(memberId)) {
+      throw new ExpenseValidationError("全メンバーの割合を指定してください");
+    }
+  }
+
+  for (const r of ratios) {
+    if (!Number.isInteger(r.ratio) || r.ratio < 0 || r.ratio > 100) {
+      throw new ExpenseValidationError("割合は0〜100の整数で指定してください");
+    }
+  }
+
+  const total = ratios.reduce((sum, r) => sum + r.ratio, 0);
+  if (total !== 100) {
+    throw new ExpenseValidationError("割合の合計は100%である必要があります");
+  }
+}
+
+/**
+ * 金額指定のバリデーション
+ */
+export function validateAmountSplit(
+  amounts: AmountSplitInput[],
+  totalAmount: number,
+  memberIds: Id<"users">[],
+): void {
+  if (amounts.length === 0) {
+    throw new ExpenseValidationError("金額が指定されていません");
+  }
+
+  const amountUserIds = new Set(amounts.map((a) => a.userId));
+  for (const memberId of memberIds) {
+    if (!amountUserIds.has(memberId)) {
+      throw new ExpenseValidationError("全メンバーの金額を指定してください");
+    }
+  }
+
+  for (const a of amounts) {
+    if (!Number.isInteger(a.amount) || a.amount < 0) {
+      throw new ExpenseValidationError("金額は0以上の整数で指定してください");
+    }
+  }
+
+  const total = amounts.reduce((sum, a) => sum + a.amount, 0);
+  if (total !== totalAmount) {
+    throw new ExpenseValidationError("金額の合計が支出金額と一致しません");
+  }
+}
+
+/**
+ * 全額負担のバリデーション
+ */
+export function validateFullSplit(
+  bearerId: Id<"users">,
+  memberIds: Id<"users">[],
+): void {
+  if (!memberIds.includes(bearerId)) {
+    throw new ExpenseValidationError(
+      "負担者はメンバーに含まれている必要があります",
+    );
+  }
+}
+
+/**
+ * 負担方法詳細のバリデーション
+ */
+export function validateSplitDetails(
+  details: SplitDetails,
+  totalAmount: number,
+  memberIds: Id<"users">[],
+): void {
+  switch (details.method) {
+    case "equal":
+      break;
+    case "ratio":
+      validateRatioSplit(details.ratios, memberIds);
+      break;
+    case "amount":
+      validateAmountSplit(details.amounts, totalAmount, memberIds);
+      break;
+    case "full":
+      validateFullSplit(details.bearerId, memberIds);
+      break;
+  }
 }
