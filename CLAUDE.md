@@ -37,6 +37,10 @@
   - Convex関数（mutation/query）のユニットテスト
   - テストファイルは `convex/__tests__/` に配置
   - テスト実行: `pnpm test:run`
+- **シードデータの更新**: 新機能追加時は必ずシードデータの更新要否を確認する
+  - 動作確認に必要なデータがあれば `convex/seed.ts` と `convex/lib/seedData.ts` に追加
+  - 設計ドキュメント: `docs/design-seed-data.md`
+  - 実行: `npx convex run seed:seedTestData`
 - 例: Vercel CLI複雑な認証回避 → Deploy Hook（シンプル）
 
 ### UX指針
