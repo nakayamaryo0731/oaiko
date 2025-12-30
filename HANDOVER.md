@@ -1,7 +1,7 @@
 # Oaiko - セッション引き継ぎ書
 
 > 最終更新: 2024-12-30
-> ステータス: CI/CD構築完了
+> ステータス: DBスキーマ実装完了
 
 ---
 
@@ -19,12 +19,23 @@
   - CI: lint, format, typecheck, build（並列実行）
   - Deploy: Convex → Vercel Deploy Hook
 - pnpmへ移行
+- ドメインモデル設計（`docs/design-domain-model.md`）
+- 認証方式決定・実装（Clerk）
+  - Clerk + Convex連携
+  - 認証ミドルウェア（authQuery, authMutation）
+  - サインイン・サインアップページ
+- DBスキーマ実装（`convex/schema.ts`）
+  - 全9テーブル定義完了
+  - 共通バリデータ作成
+  - プリセットカテゴリ定義
 
 **次にやること**
 
-- ドメインモデル設計
-- DBスキーマ設計（`convex/schema.ts`）
-- 認証方式決定・実装
+- 基本的なCRUD mutation/query の実装
+  - グループ作成・参加
+  - 支出登録・一覧
+  - カテゴリ管理
+- UI実装（モバイルファースト）
 
 ---
 
@@ -47,7 +58,7 @@ Frontend: Next.js 16 (App Router) + React 19
 Backend: Convex 1.31 (DB + API + リアルタイム)
 Styling: Tailwind CSS 4
 Language: TypeScript 5
-Auth: 未決定（Clerk or Convex Auth）
+Auth: Clerk（決定済み）
 Deploy: Vercel + Convex
 ```
 
@@ -140,26 +151,60 @@ Deploy: Vercel + Convex
 ```
 /Users/ron/Dev/oaiko/
 ├── app/                    # Next.js App Router
-│   ├── layout.tsx
-│   ├── page.tsx           # サンプルページ（要削除/修正）
+│   ├── layout.tsx          # ルートレイアウト
+│   ├── page.tsx            # ホームページ（認証状態表示）
 │   ├── globals.css
-│   └── server/            # Server Components サンプル
+│   ├── sign-in/            # サインインページ
+│   └── sign-up/            # サインアップページ
 ├── convex/                 # Convex バックエンド
-│   ├── schema.ts          # DBスキーマ（これから設計）
-│   ├── myFunctions.ts     # サンプル関数（要削除/修正）
-│   ├── _generated/        # 自動生成（触らない）
-│   └── README.md
+│   ├── schema.ts           # DBスキーマ（全テーブル定義済み）
+│   ├── auth.config.ts      # Clerk認証設定
+│   ├── lib/
+│   │   ├── auth.ts         # 認証ミドルウェア（authQuery, authMutation）
+│   │   ├── validators.ts   # 共通バリデータ
+│   │   └── presetCategories.ts  # プリセットカテゴリ
+│   └── _generated/         # 自動生成（触らない）
 ├── components/
-│   └── ConvexClientProvider.tsx
+│   └── ConvexClientProvider.tsx  # Convex + Clerk プロバイダ
 ├── docs/
-│   ├── tech-selection.md  # 技術選定ドキュメント
-│   └── mvp-features.md    # MVP機能仕様
-├── public/
-├── CLAUDE.md              # プロジェクト概要（Claude Code用）
-├── HANDOVER.md            # この引き継ぎ書
+│   ├── tech-selection.md   # 技術選定ドキュメント
+│   ├── mvp-features.md     # MVP機能仕様
+│   ├── design-domain-model.md     # ドメインモデル設計書
+│   └── design-authentication.md   # 認証設計書
+├── middleware.ts           # Clerk認証ミドルウェア
+├── CLAUDE.md               # プロジェクト概要（Claude Code用）
+├── HANDOVER.md             # この引き継ぎ書
 ├── package.json
 └── tsconfig.json
 ```
+
+---
+
+## DBスキーマ
+
+### テーブル一覧
+
+| テーブル           | 用途                       | 主要インデックス         |
+| ------------------ | -------------------------- | ------------------------ |
+| users              | ユーザー                   | by_clerk_id              |
+| groups             | グループ                   | -                        |
+| groupMembers       | グループメンバー           | by_user, by_group_and_user |
+| groupInvitations   | 招待リンク                 | by_token                 |
+| categories         | カテゴリ                   | by_group                 |
+| expenses           | 支出                       | by_group_and_date        |
+| expenseSplits      | 支出分割                   | by_expense               |
+| settlements        | 精算                       | by_group_and_period      |
+| settlementPayments | 精算支払い                 | by_settlement            |
+| shoppingItems      | 買い物リスト               | by_group_and_purchased   |
+
+### 負担方法（splitMethod）
+
+| 値       | 説明                   |
+| -------- | ---------------------- |
+| equal    | 均等分割               |
+| ratio    | 傾斜分割（割合指定）   |
+| amount   | 傾斜分割（金額指定）   |
+| full     | 全額負担               |
 
 ---
 
@@ -176,32 +221,23 @@ Deploy: Vercel + Convex
 
 ## 次のセッションでやること
 
-### 1. ドメインモデル設計
+### 1. グループ機能の実装
 
-検討すべきエンティティ：
+- グループ作成 mutation（プリセットカテゴリ自動追加）
+- グループ一覧 query
+- グループ招待・参加機能
 
-- User（ユーザー）
-- Group（グループ）
-- GroupMember（グループメンバー関連）
-- Expense（支出）
-- ExpenseSplit（支出の負担配分）
-- Category（カテゴリ）
-- Settlement（精算）
-- ShoppingList / ShoppingItem（買い物リスト）
+### 2. 支出機能の実装
 
-### 2. DBスキーマ設計
+- 支出登録 mutation（負担配分計算含む）
+- 支出一覧 query
+- 支出編集・削除
 
-`convex/schema.ts` にスキーマを定義。
-Convexの特徴：
+### 3. UI実装
 
-- リレーションはID参照（`v.id("users")`）
-- インデックスを明示的に定義
-- マイグレーション自動
-
-### 3. 認証方式決定
-
-- Clerk: DX良い、UIコンポーネント付き
-- Convex Auth: Convex統合、シンプル
+- グループ一覧画面
+- 支出入力フォーム
+- 支出一覧画面
 
 ---
 
@@ -236,11 +272,12 @@ Convexの特徴：
 | 2024-12-30 | 技術スタック: Next.js + Convex | リアルタイム同期、Optimistic UI、開発速度            |
 | 2024-12-30 | プロダクト名: Oaiko            | 「おあいこ」= 精算して貸し借りなし。被りなし確認済み |
 | 2024-12-30 | フロントエンド: Next.js        | 将来の拡張性（LP、SEO等）を考慮                      |
+| 2024-12-30 | 認証方式: Clerk                | DX良い、UIコンポーネント付き、Convex連携実績あり     |
 
 ---
 
 ## 注意事項
 
 - `convex/_generated/` は自動生成なので編集しない
-- `app/page.tsx` と `convex/myFunctions.ts` はサンプルなので、実装開始時に削除/修正
-- 認証方式（Clerk vs Convex Auth）は未決定。実装前に決める必要あり
+- 認証ミドルウェア: `authQuery` はユーザー必須（エラー）、`authMutation` はユーザー自動作成
+- 環境変数: Convex本番には `CLERK_ISSUER_URL` 設定済み
