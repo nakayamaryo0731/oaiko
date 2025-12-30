@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as groups from "../groups.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_presetCategories from "../lib/presetCategories.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +21,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  groups: typeof groups;
   "lib/auth": typeof lib_auth;
   "lib/presetCategories": typeof lib_presetCategories;
   "lib/validators": typeof lib_validators;
+  users: typeof users;
 }>;
 
 /**

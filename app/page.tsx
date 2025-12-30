@@ -1,10 +1,37 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { useConvexAuth } from "convex/react";
+import { useConvexAuth, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { GroupList } from "@/components/groups/GroupList";
+import { GroupListSkeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useConvexAuth();
+  const ensureUser = useMutation(api.users.ensureUser);
+  const [isUserReady, setIsUserReady] = useState(false);
+
+  // 認証後、ユーザーを初期化
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    let cancelled = false;
+    ensureUser()
+      .then(() => {
+        if (!cancelled) {
+          setIsUserReady(true);
+        }
+      })
+      .catch(console.error);
+
+    return () => {
+      cancelled = true;
+      setIsUserReady(false);
+    };
+  }, [isAuthenticated, ensureUser]);
 
   if (isLoading) {
     return (
@@ -31,22 +58,23 @@ export default function Home() {
         {isAuthenticated && <UserButton />}
       </header>
 
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto">
-          <h2 className="text-2xl font-bold text-slate-800 mb-4">おあいこ</h2>
-          <p className="text-slate-600 mb-6">
-            割り勘・傾斜折半ができる共有家計簿
-          </p>
-
-          {isAuthenticated ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <p className="text-green-800">
-                ログイン済みです。機能は順次実装予定です。
-              </p>
-            </div>
+          {isAuthenticated && isUserReady ? (
+            <GroupList />
+          ) : isAuthenticated ? (
+            <GroupListSkeleton />
           ) : (
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-              <p className="text-slate-600">ログインしてください。</p>
+            <div className="text-center py-12">
+              <h2 className="text-2xl font-bold text-slate-800 mb-4">
+                おあいこ
+              </h2>
+              <p className="text-slate-600 mb-6">
+                割り勘・傾斜折半ができる共有家計簿
+              </p>
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                <p className="text-slate-600">ログインしてください。</p>
+              </div>
             </div>
           )}
         </div>
