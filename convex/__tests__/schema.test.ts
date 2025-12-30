@@ -3,7 +3,8 @@ import { describe, expect, test } from "vitest";
 import schema from "../schema";
 
 // Convex関数モジュールを明示的にインポート
-const modules = import.meta.glob("../**/*.ts", { eager: true });
+// Note: convex-testの型定義がRecord<string, () => Promise<any>>を期待するため型アサーションが必要
+const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
 
 describe("schema", () => {
   describe("users テーブル", () => {
