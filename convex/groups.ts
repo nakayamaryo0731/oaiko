@@ -18,9 +18,15 @@ export const create = authMutation({
     // バリデーション
     const name = args.name.trim();
     if (name.length === 0) {
+      ctx.logger.warn("GROUP", "create_validation_failed", {
+        reason: "empty_name",
+      });
       throw new Error("グループ名を入力してください");
     }
     if (name.length > 50) {
+      ctx.logger.warn("GROUP", "create_validation_failed", {
+        reason: "name_too_long",
+      });
       throw new Error("グループ名は50文字以内で入力してください");
     }
 
@@ -54,6 +60,12 @@ export const create = authMutation({
         createdAt: now,
       });
     }
+
+    // 監査ログ
+    ctx.logger.audit("GROUP", "created", {
+      groupId,
+      groupName: name,
+    });
 
     return groupId;
   },
@@ -182,6 +194,10 @@ export const createInvitation = authMutation({
     // 1. グループ存在確認
     const group = await ctx.db.get(args.groupId);
     if (!group) {
+      ctx.logger.warn("GROUP", "invitation_create_failed", {
+        groupId: args.groupId,
+        reason: "group_not_found",
+      });
       throw new Error("グループが見つかりません");
     }
 
@@ -194,6 +210,10 @@ export const createInvitation = authMutation({
       .unique();
 
     if (!myMembership || myMembership.role !== "owner") {
+      ctx.logger.warn("GROUP", "invitation_create_failed", {
+        groupId: args.groupId,
+        reason: "unauthorized",
+      });
       throw new Error("招待リンクを作成する権限がありません");
     }
 
@@ -210,6 +230,13 @@ export const createInvitation = authMutation({
       createdBy: ctx.user._id,
       expiresAt,
       createdAt: now,
+    });
+
+    // 監査ログ
+    ctx.logger.audit("GROUP", "invitation_created", {
+      groupId: args.groupId,
+      groupName: group.name,
+      expiresAt,
     });
 
     return { token, expiresAt };

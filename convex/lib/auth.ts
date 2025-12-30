@@ -6,6 +6,7 @@ import { query, mutation } from "../_generated/server";
 import { ConvexError } from "convex/values";
 import { Doc } from "../_generated/dataModel";
 import { QueryCtx, MutationCtx } from "../_generated/server";
+import { Logger } from "./logger";
 
 /**
  * 認証済みユーザーの型
@@ -17,6 +18,7 @@ export type AuthUser = Doc<"users">;
  */
 export type AuthQueryCtx = QueryCtx & {
   user: AuthUser;
+  logger: Logger;
 };
 
 /**
@@ -24,6 +26,7 @@ export type AuthQueryCtx = QueryCtx & {
  */
 export type AuthMutationCtx = MutationCtx & {
   user: AuthUser;
+  logger: Logger;
 };
 
 /**
@@ -65,7 +68,8 @@ const authQueryMiddleware = {
       );
     }
 
-    return { ctx: { ...ctx, user }, args };
+    const logger = new Logger(user._id);
+    return { ctx: { ...ctx, user, logger }, args };
   },
 };
 
@@ -104,7 +108,8 @@ const authMutationMiddleware = {
       throw new ConvexError("ユーザーの作成に失敗しました");
     }
 
-    return { ctx: { ...ctx, user }, args };
+    const logger = new Logger(user._id);
+    return { ctx: { ...ctx, user, logger }, args };
   },
 };
 
