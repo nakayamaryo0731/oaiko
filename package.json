@@ -16,7 +16,7 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:unit": "vitest run",
-    "test:integration": "vitest run convex/**/*.integration.test.ts",
+    "test:integration": "vitest run convex/**/*.integration.test.ts --passWithNoTests",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
