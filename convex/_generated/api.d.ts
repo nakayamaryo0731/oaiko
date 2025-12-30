@@ -9,6 +9,7 @@
  */
 
 import type * as groups from "../groups.js";
+import type * as invitations from "../invitations.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_presetCategories from "../lib/presetCategories.js";
 import type * as lib_seedData from "../lib/seedData.js";
@@ -24,6 +25,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   groups: typeof groups;
+  invitations: typeof invitations;
   "lib/auth": typeof lib_auth;
   "lib/presetCategories": typeof lib_presetCategories;
   "lib/seedData": typeof lib_seedData;
