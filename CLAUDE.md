@@ -78,15 +78,50 @@ Deploy: Vercel + Convex
 - `docs/tech-selection.md` - 技術選定の比較検討・決定事項
 - `docs/mvp-features.md` - MVP機能仕様
 
-## コマンド
+## 開発フロー
+
+### ローカル開発
 
 ```bash
-# 開発サーバー起動
-npm run dev
+# 開発サーバー起動（Next.js + Convex同時起動）
+pnpm dev
+```
 
-# Convex開発サーバー（別ターミナル）
-npx convex dev
+### デプロイ
 
-# デプロイ
-npx convex deploy
+**重要: デプロイはPRマージで行う**
+
+1. featureブランチを作成して作業
+2. PRを作成 → CI（lint, format, typecheck, build）が自動実行
+3. CIパス確認後、mainにマージ
+4. マージ後、Deployワークフローが自動実行（Convex → Vercel）
+5. **CI/CDが正常終了したことを必ず確認する**
+
+```bash
+# ワークフロー実行状況確認
+gh run list --limit 3
+
+# 特定のワークフロー監視
+gh run watch <run-id>
+```
+
+### CI/CD構成
+
+- **CI** (PR時): lint, format, typecheck, build を並列実行
+- **Deploy** (main push時): Convex → Vercel を順次実行
+
+### その他コマンド
+
+```bash
+# lint
+pnpm lint
+
+# フォーマット
+pnpm format
+
+# 型チェック
+pnpm typecheck
+
+# Convex手動デプロイ（通常は不要）
+pnpm dlx convex deploy --yes
 ```
