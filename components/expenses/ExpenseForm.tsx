@@ -33,6 +33,7 @@ type InitialData = {
   categoryId: Id<"categories">;
   paidBy: Id<"users">;
   date: string;
+  title?: string;
   memo?: string;
   splitMethod: "equal" | "ratio" | "amount" | "full";
   ratios?: { userId: Id<"users">; ratio: number }[];
@@ -84,6 +85,9 @@ export function ExpenseForm({
   );
   const [date, setDate] = useState(
     isEditMode ? initialData.date : getTodayString(),
+  );
+  const [title, setTitle] = useState(
+    isEditMode ? (initialData.title ?? "") : "",
   );
   const [memo, setMemo] = useState(isEditMode ? (initialData.memo ?? "") : "");
 
@@ -218,6 +222,7 @@ export function ExpenseForm({
           categoryId,
           paidBy,
           date,
+          title: title.trim() || undefined,
           memo: memo.trim() || undefined,
           splitDetails,
         });
@@ -228,6 +233,7 @@ export function ExpenseForm({
           categoryId,
           paidBy,
           date,
+          title: title.trim() || undefined,
           memo: memo.trim() || undefined,
           splitDetails,
           shoppingItemIds:
@@ -284,6 +290,19 @@ export function ExpenseForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* タイトル（任意） */}
+      <div className="space-y-2">
+        <Label htmlFor="title">タイトル（任意）</Label>
+        <Input
+          id="title"
+          type="text"
+          placeholder="例: スーパーで買い物"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={100}
+        />
+      </div>
+
       {/* 金額 */}
       <div className="space-y-2">
         <Label htmlFor="amount">金額</Label>

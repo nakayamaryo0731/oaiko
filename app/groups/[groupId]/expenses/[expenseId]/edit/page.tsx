@@ -141,6 +141,7 @@ export default function ExpenseEditPage({ params }: PageProps) {
     categoryId: expense.category?._id ?? detail.categories[0]?._id,
     paidBy: expense.payer?._id ?? detail.members[0]?.userId,
     date: expense.date,
+    title: expense.title,
     memo: expense.memo,
     splitMethod: expense.splitMethod as "equal" | "ratio" | "amount" | "full",
     ratios:

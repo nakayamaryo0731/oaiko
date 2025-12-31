@@ -2,6 +2,7 @@ import { describe, expect, test, beforeEach, afterEach, vi } from "vitest";
 import {
   validateAmount,
   validateDate,
+  validateTitle,
   validateMemo,
   validateExpenseInput,
   validateRatioSplit,
@@ -76,6 +77,39 @@ describe("expense/rules", () => {
       expect(() => validateDate("2024-12-31")).toThrow(ExpenseValidationError);
       expect(() => validateDate("2025-01-01")).toThrow(
         "未来の日付は指定できません",
+      );
+    });
+  });
+
+  describe("validateTitle", () => {
+    test("undefinedはundefinedを返す", () => {
+      expect(validateTitle(undefined)).toBeUndefined();
+    });
+
+    test("空文字はundefinedを返す", () => {
+      expect(validateTitle("")).toBeUndefined();
+    });
+
+    test("空白のみはundefinedを返す", () => {
+      expect(validateTitle("   ")).toBeUndefined();
+    });
+
+    test("有効なタイトルはトリムして返す", () => {
+      expect(validateTitle("スーパーで買い物")).toBe("スーパーで買い物");
+      expect(validateTitle("  スーパーで買い物  ")).toBe("スーパーで買い物");
+    });
+
+    test("100文字以内は通過する", () => {
+      const title = "あ".repeat(100);
+      expect(validateTitle(title)).toBe(title);
+    });
+
+    test("100文字超はエラー", () => {
+      expect(() => validateTitle("あ".repeat(101))).toThrow(
+        ExpenseValidationError,
+      );
+      expect(() => validateTitle("あ".repeat(101))).toThrow(
+        "タイトルは100文字以内で入力してください",
       );
     });
   });
@@ -165,6 +199,7 @@ describe("expense/rules", () => {
     test("定数が正しく定義されている", () => {
       expect(EXPENSE_RULES.MIN_AMOUNT).toBe(1);
       expect(EXPENSE_RULES.MAX_AMOUNT).toBe(100_000_000);
+      expect(EXPENSE_RULES.MAX_TITLE_LENGTH).toBe(100);
       expect(EXPENSE_RULES.MAX_MEMO_LENGTH).toBe(500);
       expect(EXPENSE_RULES.DATE_FORMAT_REGEX).toEqual(/^\d{4}-\d{2}-\d{2}$/);
     });

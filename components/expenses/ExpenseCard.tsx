@@ -7,6 +7,7 @@ type ExpenseCardProps = {
     _id: Id<"expenses">;
     amount: number;
     date: string;
+    title?: string;
     memo?: string;
     splitMethod: string;
     category: {
@@ -45,7 +46,10 @@ function formatAmount(amount: number): string {
 }
 
 export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
-  const { category, payer, amount, date, memo, splits } = expense;
+  const { category, payer, amount, date, title, memo, splits } = expense;
+
+  // タイトルがない場合はカテゴリ名をフォールバック
+  const displayTitle = title || category?.name || "カテゴリなし";
 
   // 負担配分の表示（最大3人まで）
   const displaySplits = splits.slice(0, 3);
@@ -63,14 +67,13 @@ export function ExpenseCard({ expense, onEdit, onDelete }: ExpenseCardProps) {
 
           {/* 情報 */}
           <div>
-            <div className="font-medium text-slate-800">
-              {category?.name ?? "カテゴリなし"}
-            </div>
+            <div className="font-medium text-slate-800">{displayTitle}</div>
             <div className="text-sm text-slate-500 mt-0.5">
               {payer?.displayName ?? "不明"}が支払い
             </div>
             <div className="text-xs text-slate-400 mt-1">
               {formatDate(date)}
+              {title && category && <span> ・ {category.name}</span>}
               {memo && <span> ・ {memo}</span>}
             </div>
           </div>

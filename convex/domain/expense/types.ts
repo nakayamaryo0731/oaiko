@@ -46,6 +46,8 @@ export const EXPENSE_RULES = {
   MIN_AMOUNT: 1,
   /** 最大金額（円） */
   MAX_AMOUNT: 100_000_000,
+  /** タイトルの最大文字数 */
+  MAX_TITLE_LENGTH: 100,
   /** メモの最大文字数 */
   MAX_MEMO_LENGTH: 500,
   /** 日付フォーマット */
