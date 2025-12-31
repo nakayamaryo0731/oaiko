@@ -14,6 +14,7 @@ export {
   ExpenseValidationError,
   validateAmount,
   validateDate,
+  validateTitle,
   validateMemo,
   validateExpenseInput,
   validateRatioSplit,

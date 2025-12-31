@@ -81,6 +81,7 @@ export default defineSchema({
     categoryId: v.id("categories"),
     paidBy: v.id("users"),
     date: v.string(), // YYYY-MM-DD
+    title: v.optional(v.string()), // 支出のタイトル（任意）
     memo: v.optional(v.string()),
     splitMethod: splitMethodValidator,
     createdBy: v.id("users"),

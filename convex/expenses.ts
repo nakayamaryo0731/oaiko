@@ -7,6 +7,7 @@ import {
   calculateFullSplit,
   validateExpenseInput,
   validateSplitDetails,
+  validateTitle,
   type SplitDetails,
   type SplitResult,
 } from "./domain/expense";
@@ -35,6 +36,7 @@ export const create = authMutation({
     categoryId: v.id("categories"),
     paidBy: v.id("users"),
     date: v.string(),
+    title: v.optional(v.string()),
     memo: v.optional(v.string()),
     splitDetails: v.optional(splitDetailsValidator),
     shoppingItemIds: v.optional(v.array(v.id("shoppingItems"))),
@@ -45,6 +47,9 @@ export const create = authMutation({
       date: args.date,
       memo: args.memo,
     });
+
+    // タイトルのバリデーション
+    const validatedTitle = validateTitle(args.title);
 
     const group = await ctx.db.get(args.groupId);
     if (!group) {
@@ -95,6 +100,24 @@ export const create = authMutation({
       args.paidBy,
     );
 
+    // 買い物リスト連携時はアイテム名をタイトルに設定
+    let title = validatedTitle;
+    if (!title && args.shoppingItemIds && args.shoppingItemIds.length > 0) {
+      const items = await Promise.all(
+        args.shoppingItemIds.map((id) => ctx.db.get(id)),
+      );
+      const itemNames = items
+        .filter((item) => item !== null)
+        .map((item) => item.name);
+      if (itemNames.length > 0) {
+        if (itemNames.length <= 3) {
+          title = itemNames.join(", ");
+        } else {
+          title = `${itemNames.slice(0, 3).join(", ")} 他${itemNames.length - 3}件`;
+        }
+      }
+    }
+
     const now = Date.now();
     const expenseId = await ctx.db.insert("expenses", {
       groupId: args.groupId,
@@ -102,6 +125,7 @@ export const create = authMutation({
       categoryId: args.categoryId,
       paidBy: args.paidBy,
       date: args.date,
+      title,
       memo: args.memo?.trim() || undefined,
       splitMethod: splitDetails.method,
       createdBy: ctx.user._id,
@@ -267,6 +291,7 @@ export const listByGroup = authQuery({
         _id: expense._id,
         amount: expense.amount,
         date: expense.date,
+        title: expense.title,
         memo: expense.memo,
         splitMethod: expense.splitMethod,
         category: category ?? null,
@@ -348,6 +373,7 @@ export const getById = authQuery({
       groupId: expense.groupId,
       amount: expense.amount,
       date: expense.date,
+      title: expense.title,
       memo: expense.memo,
       splitMethod: expense.splitMethod,
       isSettled,
@@ -485,6 +511,7 @@ export const listByPeriod = authQuery({
         _id: expense._id,
         amount: expense.amount,
         date: expense.date,
+        title: expense.title,
         memo: expense.memo,
         splitMethod: expense.splitMethod,
         category: category ?? null,
@@ -545,6 +572,7 @@ export const update = authMutation({
     categoryId: v.id("categories"),
     paidBy: v.id("users"),
     date: v.string(),
+    title: v.optional(v.string()),
     memo: v.optional(v.string()),
     splitDetails: v.optional(splitDetailsValidator),
   },
@@ -587,6 +615,9 @@ export const update = authMutation({
       date: args.date,
       memo: args.memo,
     });
+
+    // タイトルのバリデーション
+    const validatedTitle = validateTitle(args.title);
 
     const category = await ctx.db.get(args.categoryId);
     if (!category || category.groupId !== expense.groupId) {
@@ -635,6 +666,7 @@ export const update = authMutation({
       categoryId: args.categoryId,
       paidBy: args.paidBy,
       date: args.date,
+      title: validatedTitle,
       memo: args.memo?.trim() || undefined,
       splitMethod: splitDetails.method,
       updatedAt: Date.now(),

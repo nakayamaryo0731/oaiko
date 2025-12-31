@@ -50,6 +50,25 @@ export function validateDate(date: string): void {
 }
 
 /**
+ * タイトルのバリデーション
+ *
+ * @param title 入力タイトル
+ * @returns バリデーション済みタイトル（空文字はundefined）
+ * @throws {ExpenseValidationError} タイトルが長すぎる場合
+ */
+export function validateTitle(title: string | undefined): string | undefined {
+  if (!title) return undefined;
+  const trimmed = title.trim();
+  if (trimmed.length === 0) return undefined;
+  if (trimmed.length > EXPENSE_RULES.MAX_TITLE_LENGTH) {
+    throw new ExpenseValidationError(
+      `タイトルは${EXPENSE_RULES.MAX_TITLE_LENGTH}文字以内で入力してください`,
+    );
+  }
+  return trimmed;
+}
+
+/**
  * メモのバリデーション
  *
  * @throws {ExpenseValidationError} メモが長すぎる場合

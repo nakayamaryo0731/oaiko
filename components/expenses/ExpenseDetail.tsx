@@ -10,6 +10,7 @@ type ExpenseDetailProps = {
     groupId: Id<"groups">;
     amount: number;
     date: string;
+    title?: string;
     memo?: string;
     splitMethod: string;
     category: {
@@ -87,9 +88,14 @@ export function ExpenseDetail({
             <div className="text-2xl font-bold text-slate-800">
               ¥{formatAmount(expense.amount)}
             </div>
-            <div className="text-slate-600">
-              {expense.category?.name ?? "カテゴリなし"}
+            <div className="text-lg text-slate-800 font-medium">
+              {expense.title ?? expense.category?.name ?? "カテゴリなし"}
             </div>
+            {expense.title && expense.category && (
+              <div className="text-sm text-slate-500">
+                {expense.category.name}
+              </div>
+            )}
           </div>
         </div>
 
