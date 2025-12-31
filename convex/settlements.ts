@@ -124,8 +124,8 @@ export const create = authMutation({
       "グループが見つかりません",
     );
 
-    // オーナー権限チェック
-    await requireGroupOwner(ctx, args.groupId);
+    // メンバー権限チェック（オーナー以外も精算確定可能）
+    await requireGroupMember(ctx, args.groupId);
 
     const period = getSettlementPeriod(group.closingDay, args.year, args.month);
 
