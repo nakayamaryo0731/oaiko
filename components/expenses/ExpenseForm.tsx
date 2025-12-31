@@ -5,10 +5,6 @@ import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import {
   SplitMethodSelector,
   type SplitMethod,
@@ -91,7 +87,6 @@ export function ExpenseForm({
   const [title, setTitle] = useState(
     isEditMode ? (initialData.title ?? "") : "",
   );
-  const [memo, setMemo] = useState(isEditMode ? (initialData.memo ?? "") : "");
 
   const [splitMethod, setSplitMethod] = useState<SplitMethod>(
     isEditMode ? initialData.splitMethod : "equal",
@@ -287,7 +282,6 @@ export function ExpenseForm({
           paidBy,
           date,
           title: title.trim() || undefined,
-          memo: memo.trim() || undefined,
           splitDetails,
         });
       } else {
@@ -298,7 +292,6 @@ export function ExpenseForm({
           paidBy,
           date,
           title: title.trim() || undefined,
-          memo: memo.trim() || undefined,
           splitDetails,
           shoppingItemIds:
             shoppingItemIds.length > 0 ? shoppingItemIds : undefined,
@@ -353,35 +346,18 @@ export function ExpenseForm({
     isSplitValid();
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* タイトル（任意） */}
-      <div className="space-y-2">
-        <Label htmlFor="title">タイトル（任意）</Label>
-        <Input
-          id="title"
-          type="text"
-          placeholder="例: スーパーで買い物"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={100}
-        />
-      </div>
-
-      {/* 金額 */}
-      <div className="space-y-2">
-        <Label htmlFor="amount">金額</Label>
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">
-            ¥
-          </span>
-          <Input
-            id="amount"
+    <form onSubmit={handleSubmit} className="space-y-6 py-2">
+      {/* 金額 - 大きく中央に */}
+      <div className="text-center py-4">
+        <div className="inline-flex items-baseline gap-1">
+          <span className="text-3xl text-slate-400">¥</span>
+          <input
             type="number"
             inputMode="numeric"
-            placeholder="1,500"
+            placeholder="0"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="pl-7"
+            className="text-5xl font-light text-slate-800 w-48 text-center bg-transparent border-none outline-none placeholder:text-slate-300"
             min={1}
             max={100000000}
             required
@@ -389,57 +365,79 @@ export function ExpenseForm({
         </div>
       </div>
 
-      {/* カテゴリ */}
-      <div className="space-y-2">
-        <Label htmlFor="category">カテゴリ</Label>
-        <Select
-          id="category"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value as Id<"categories">)}
-          required
-        >
-          {categories.map((category) => (
-            <option key={category._id} value={category._id}>
-              {category.icon} {category.name}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      {/* 支払者 */}
-      <div className="space-y-2">
-        <Label htmlFor="paidBy">支払者</Label>
-        <Select
-          id="paidBy"
-          value={paidBy}
-          onChange={(e) => setPaidBy(e.target.value as Id<"users">)}
-          required
-        >
-          {members.map((member) => (
-            <option key={member.userId} value={member.userId}>
-              {member.displayName}
-              {member.isMe && " (自分)"}
-            </option>
-          ))}
-        </Select>
-      </div>
-
-      {/* 日付 */}
-      <div className="space-y-2">
-        <Label htmlFor="date">日付</Label>
-        <Input
-          id="date"
+      {/* タイトル + 日付 - 横並び */}
+      <div className="flex gap-2 items-center">
+        <input
+          type="text"
+          placeholder="タイトル"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          maxLength={100}
+          className="flex-1 py-3 px-4 bg-slate-50 rounded-xl border-none text-slate-800 outline-none focus:ring-2 focus:ring-slate-200 placeholder:text-slate-400"
+        />
+        <input
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
           max={getTodayString()}
           required
+          className="py-3 px-3 bg-slate-50 rounded-xl border-none text-slate-800 text-sm outline-none focus:ring-2 focus:ring-slate-200 w-36"
         />
+      </div>
+
+      {/* カテゴリ - 横スクロールチップ */}
+      <div className="space-y-2">
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+          カテゴリ
+        </span>
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 scrollbar-hide">
+          {categories.map((category) => (
+            <button
+              key={category._id}
+              type="button"
+              onClick={() => setCategoryId(category._id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap transition-all shrink-0 ${
+                categoryId === category._id
+                  ? "bg-slate-800 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              <span>{category.icon}</span>
+              <span className="text-sm font-medium">{category.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 支払者 - 横スクロールチップ */}
+      <div className="space-y-2">
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+          支払った人
+        </span>
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-5 px-5 scrollbar-hide">
+          {members.map((member) => (
+            <button
+              key={member.userId}
+              type="button"
+              onClick={() => setPaidBy(member.userId)}
+              className={`px-4 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                paidBy === member.userId
+                  ? "bg-slate-800 text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {member.displayName}
+              {member.isMe && " ✓"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 負担方法 */}
       <div className="space-y-2">
-        <Label>負担方法</Label>
+        <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+          負担方法
+        </span>
         <SplitMethodSelector
           method={splitMethod}
           onMethodChange={handleMethodChange}
@@ -456,19 +454,6 @@ export function ExpenseForm({
         />
       </div>
 
-      {/* メモ */}
-      <div className="space-y-2">
-        <Label htmlFor="memo">メモ（任意）</Label>
-        <Input
-          id="memo"
-          type="text"
-          placeholder="ランチ代など"
-          value={memo}
-          onChange={(e) => setMemo(e.target.value)}
-          maxLength={500}
-        />
-      </div>
-
       {/* 買い物リスト連携（新規作成時のみ） */}
       {!isEditMode && (
         <ShoppingItemSelector
@@ -480,18 +465,17 @@ export function ExpenseForm({
 
       {/* エラー表示 */}
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl">
           {error}
         </div>
       )}
 
       {/* ボタン */}
-      <div className="space-y-3 pt-4">
-        <Button
+      <div className="space-y-3 pt-2">
+        <button
           type="submit"
-          className="w-full"
-          size="lg"
           disabled={isLoading || !isFormValid}
+          className="w-full py-4 bg-slate-800 text-white font-medium rounded-2xl hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading
             ? isEditMode
@@ -500,7 +484,7 @@ export function ExpenseForm({
             : isEditMode
               ? "更新する"
               : "記録する"}
-        </Button>
+        </button>
         <button
           type="button"
           className="w-full text-sm text-slate-500 hover:text-slate-700 transition-colors"

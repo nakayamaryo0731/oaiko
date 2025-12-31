@@ -17,35 +17,41 @@ type PageProps = {
 
 function ExpenseFormSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 py-2">
       {/* 金額 */}
-      <div className="space-y-2">
-        <div className="h-4 w-12 bg-slate-100 rounded animate-pulse" />
-        <div className="h-9 w-full bg-slate-100 rounded animate-pulse" />
+      <div className="text-center py-4">
+        <div className="h-14 w-48 mx-auto bg-slate-100 rounded-xl animate-pulse" />
+      </div>
+      {/* タイトル + 日付 */}
+      <div className="flex gap-2">
+        <div className="flex-1 h-12 bg-slate-100 rounded-xl animate-pulse" />
+        <div className="w-36 h-12 bg-slate-100 rounded-xl animate-pulse" />
       </div>
       {/* カテゴリ */}
       <div className="space-y-2">
         <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
-        <div className="h-9 w-full bg-slate-100 rounded animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-10 w-24 bg-slate-100 rounded-full animate-pulse" />
+          <div className="h-10 w-24 bg-slate-100 rounded-full animate-pulse" />
+          <div className="h-10 w-24 bg-slate-100 rounded-full animate-pulse" />
+        </div>
       </div>
       {/* 支払者 */}
       <div className="space-y-2">
-        <div className="h-4 w-14 bg-slate-100 rounded animate-pulse" />
-        <div className="h-9 w-full bg-slate-100 rounded animate-pulse" />
-      </div>
-      {/* 日付 */}
-      <div className="space-y-2">
-        <div className="h-4 w-10 bg-slate-100 rounded animate-pulse" />
-        <div className="h-9 w-full bg-slate-100 rounded animate-pulse" />
-      </div>
-      {/* メモ */}
-      <div className="space-y-2">
         <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
-        <div className="h-9 w-full bg-slate-100 rounded animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-10 w-28 bg-slate-100 rounded-full animate-pulse" />
+          <div className="h-10 w-28 bg-slate-100 rounded-full animate-pulse" />
+        </div>
+      </div>
+      {/* 負担方法 */}
+      <div className="space-y-2">
+        <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+        <div className="h-10 w-full bg-slate-100 rounded-xl animate-pulse" />
       </div>
       {/* ボタン */}
-      <div className="pt-4">
-        <div className="h-10 w-full bg-slate-100 rounded animate-pulse" />
+      <div className="pt-2">
+        <div className="h-14 w-full bg-slate-100 rounded-2xl animate-pulse" />
       </div>
     </div>
   );
@@ -92,7 +98,7 @@ export default function ExpenseEditPage({ params }: PageProps) {
           <div className="h-6 w-24 bg-slate-100 rounded animate-pulse" />
         </header>
         <main className="flex-1 p-4">
-          <div className="max-w-lg mx-auto bg-white border border-slate-200 rounded-lg p-6">
+          <div className="max-w-lg mx-auto bg-white rounded-2xl p-5">
             <ExpenseFormSkeleton />
           </div>
         </main>
@@ -193,7 +199,7 @@ export default function ExpenseEditPage({ params }: PageProps) {
       </header>
 
       <main className="flex-1 p-4">
-        <div className="max-w-lg mx-auto bg-white border border-slate-200 rounded-lg p-6">
+        <div className="max-w-lg mx-auto bg-white rounded-2xl p-5">
           <ExpenseForm
             groupId={groupId}
             categories={detail.categories}
