@@ -115,10 +115,11 @@ pnpm dev
 **重要: デプロイはPRマージで行う**
 
 1. featureブランチを作成して作業
-2. PRを作成 → CI（lint, format, typecheck, build）が自動実行
-3. CIパス確認後、mainにマージ
-4. マージ後、Deployワークフローが自動実行（Convex → Vercel）
-5. **CI/CDが正常終了したことを必ず確認する**
+2. **PR作成前に必ずローカルでチェックを実行**（下記参照）
+3. PRを作成 → CI（lint, format, typecheck, build）が自動実行
+4. CIパス確認後、mainにマージ
+5. マージ後、Deployワークフローが自動実行（Convex → Vercel）
+6. **CI/CDが正常終了したことを必ず確認する**
 
 ```bash
 # ワークフロー実行状況確認
@@ -132,6 +133,19 @@ gh run watch <run-id>
 
 - **CI** (PR時): lint, format, typecheck, build を並列実行
 - **Deploy** (main push時): Convex → Vercel を順次実行
+
+### PR作成前のローカルチェック（必須）
+
+PR作成前に以下のコマンドを実行し、すべてパスすることを確認する:
+
+```bash
+pnpm format      # コードフォーマット
+pnpm lint        # ESLint
+pnpm typecheck   # TypeScript型チェック
+pnpm test:run    # ユニットテスト
+```
+
+**注意**: CIで落ちると手戻りが発生するため、必ずローカルで確認してからPRを作成すること。
 
 ### その他コマンド
 

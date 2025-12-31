@@ -102,8 +102,7 @@ export function GroupDetail({ group, members, myRole }: GroupDetailProps) {
   // 翌月へ移動可能かどうか（今期より先には進めない）
   const canGoNext =
     displayYear < currentPeriod.year ||
-    (displayYear === currentPeriod.year &&
-      displayMonth < currentPeriod.month);
+    (displayYear === currentPeriod.year && displayMonth < currentPeriod.month);
 
   const goToPreviousMonth = () => {
     if (displayMonth === 1) {
