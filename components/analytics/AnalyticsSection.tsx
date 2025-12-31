@@ -31,6 +31,13 @@ export function AnalyticsSection({
     months: 6,
   });
 
+  const annualTrend = useQuery(api.analytics.getMonthlyTrend, {
+    groupId,
+    year,
+    month,
+    months: 12,
+  });
+
   return (
     <div className="flex flex-col gap-6">
       {/* カテゴリ別円グラフ */}
@@ -46,13 +53,23 @@ export function AnalyticsSection({
         )}
       </section>
 
-      {/* 月別推移グラフ */}
+      {/* 月別推移グラフ（6ヶ月） */}
       <section className="bg-card rounded-lg border p-4">
-        <h3 className="text-sm font-medium mb-4">月別推移</h3>
+        <h3 className="text-sm font-medium mb-4">月別推移（6ヶ月）</h3>
         {monthlyTrend === undefined ? (
           <ChartSkeleton type="bar" />
         ) : (
           <MonthlyTrendChart data={monthlyTrend.trend} />
+        )}
+      </section>
+
+      {/* 年間推移グラフ（12ヶ月） */}
+      <section className="bg-card rounded-lg border p-4">
+        <h3 className="text-sm font-medium mb-4">年間推移（12ヶ月）</h3>
+        {annualTrend === undefined ? (
+          <ChartSkeleton type="bar" />
+        ) : (
+          <MonthlyTrendChart data={annualTrend.trend} />
         )}
       </section>
     </div>
