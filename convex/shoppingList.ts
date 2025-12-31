@@ -2,13 +2,12 @@ import { v } from "convex/values";
 import { authMutation, authQuery } from "./lib/auth";
 import {
   validateShoppingItemName,
-  getHistoryStartTime,
   ShoppingItemValidationError,
 } from "./domain/shopping";
 import { Id } from "./_generated/dataModel";
 
 /**
- * 買い物リスト取得（未購入 + 直近の購入済み）
+ * 買い物リスト取得（未購入のみ）
  */
 export const list = authQuery({
   args: {
@@ -32,10 +31,67 @@ export const list = authQuery({
       .withIndex("by_group_and_purchased", (q) => q.eq("groupId", args.groupId))
       .collect();
 
+    // 未購入アイテムのみ（createdAt降順）
+    const pending = allItems
+      .filter((item) => item.purchasedAt === undefined)
+      .sort((a, b) => b.createdAt - a.createdAt);
+
+    return pending;
+  },
+});
+
+/**
+ * 購入履歴取得（月別）
+ */
+export const listPurchasedByMonth = authQuery({
+  args: {
+    groupId: v.id("groups"),
+    year: v.number(),
+    month: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const myMembership = await ctx.db
+      .query("groupMembers")
+      .withIndex("by_group_and_user", (q) =>
+        q.eq("groupId", args.groupId).eq("userId", ctx.user._id),
+      )
+      .unique();
+
+    if (!myMembership) {
+      throw new Error("このグループにアクセスする権限がありません");
+    }
+
+    // 月の開始・終了タイムスタンプを計算
+    const startOfMonth = new Date(args.year, args.month - 1, 1).getTime();
+    const endOfMonth = new Date(
+      args.year,
+      args.month,
+      0,
+      23,
+      59,
+      59,
+      999,
+    ).getTime();
+
+    // 全アイテムを取得
+    const allItems = await ctx.db
+      .query("shoppingItems")
+      .withIndex("by_group_and_purchased", (q) => q.eq("groupId", args.groupId))
+      .collect();
+
+    // 指定月の購入済みアイテム（purchasedAt降順）
+    const purchased = allItems
+      .filter(
+        (item) =>
+          item.purchasedAt !== undefined &&
+          item.purchasedAt >= startOfMonth &&
+          item.purchasedAt <= endOfMonth,
+      )
+      .sort((a, b) => (b.purchasedAt ?? 0) - (a.purchasedAt ?? 0));
+
     // ユーザー情報を取得
     const userIds = new Set<string>();
-    allItems.forEach((item) => {
-      userIds.add(item.addedBy);
+    purchased.forEach((item) => {
       if (item.purchasedBy) {
         userIds.add(item.purchasedBy);
       }
@@ -46,33 +102,12 @@ export const list = authQuery({
     );
     const userMap = new Map(users.filter(Boolean).map((u) => [u!._id, u!]));
 
-    // 未購入アイテム（createdAt降順）
-    const pending = allItems
-      .filter((item) => item.purchasedAt === undefined)
-      .sort((a, b) => b.createdAt - a.createdAt)
-      .map((item) => ({
-        ...item,
-        addedByUser: userMap.get(item.addedBy),
-      }));
-
-    // 購入済みアイテム（直近30日、purchasedAt降順）
-    const historyStartTime = getHistoryStartTime();
-    const purchased = allItems
-      .filter(
-        (item) =>
-          item.purchasedAt !== undefined &&
-          item.purchasedAt >= historyStartTime,
-      )
-      .sort((a, b) => (b.purchasedAt ?? 0) - (a.purchasedAt ?? 0))
-      .map((item) => ({
-        ...item,
-        addedByUser: userMap.get(item.addedBy),
-        purchasedByUser: item.purchasedBy
-          ? userMap.get(item.purchasedBy)
-          : undefined,
-      }));
-
-    return { pending, purchased };
+    return purchased.map((item) => ({
+      ...item,
+      purchasedByUser: item.purchasedBy
+        ? userMap.get(item.purchasedBy)
+        : undefined,
+    }));
   },
 });
 
