@@ -41,8 +41,10 @@ export function AnalyticsSection({
   return (
     <div className="flex flex-col gap-6">
       {/* カテゴリ別円グラフ */}
-      <section className="bg-card rounded-lg border p-4">
-        <h3 className="text-sm font-medium mb-4">カテゴリ別支出</h3>
+      <section>
+        <h3 className="text-sm font-medium text-slate-700 mb-3">
+          カテゴリ別支出
+        </h3>
         {categoryBreakdown === undefined ? (
           <ChartSkeleton type="pie" />
         ) : (
@@ -54,8 +56,10 @@ export function AnalyticsSection({
       </section>
 
       {/* 月別推移グラフ（6ヶ月） */}
-      <section className="bg-card rounded-lg border p-4">
-        <h3 className="text-sm font-medium mb-4">月別推移（6ヶ月）</h3>
+      <section>
+        <h3 className="text-sm font-medium text-slate-700 mb-3">
+          月別推移（6ヶ月）
+        </h3>
         {monthlyTrend === undefined ? (
           <ChartSkeleton type="bar" />
         ) : (
@@ -64,8 +68,10 @@ export function AnalyticsSection({
       </section>
 
       {/* 年間推移グラフ（12ヶ月） */}
-      <section className="bg-card rounded-lg border p-4">
-        <h3 className="text-sm font-medium mb-4">年間推移（12ヶ月）</h3>
+      <section>
+        <h3 className="text-sm font-medium text-slate-700 mb-3">
+          年間推移（12ヶ月）
+        </h3>
         {annualTrend === undefined ? (
           <ChartSkeleton type="bar" />
         ) : (
