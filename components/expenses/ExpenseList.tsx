@@ -29,7 +29,8 @@ type Expense = {
 
 type ExpenseListProps = {
   expenses: Expense[];
-  onExpenseClick?: (expenseId: Id<"expenses">) => void;
+  onEdit?: (expenseId: Id<"expenses">) => void;
+  onDelete?: (expenseId: Id<"expenses">) => void;
 };
 
 /**
@@ -55,7 +56,7 @@ function groupByYearMonth(expenses: Expense[]): Map<string, Expense[]> {
   return grouped;
 }
 
-export function ExpenseList({ expenses, onExpenseClick }: ExpenseListProps) {
+export function ExpenseList({ expenses, onEdit, onDelete }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
       <div className="text-center py-8 text-slate-500">
@@ -87,7 +88,8 @@ export function ExpenseList({ expenses, onExpenseClick }: ExpenseListProps) {
               <ExpenseCard
                 key={expense._id}
                 expense={expense}
-                onClick={() => onExpenseClick?.(expense._id)}
+                onEdit={onEdit ? () => onEdit(expense._id) : undefined}
+                onDelete={onDelete ? () => onDelete(expense._id) : undefined}
               />
             ))}
           </div>

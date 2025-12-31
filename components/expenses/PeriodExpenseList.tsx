@@ -6,18 +6,28 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { ExpenseCard } from "./ExpenseCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
+type ExpenseForDelete = {
+  _id: Id<"expenses">;
+  amount: number;
+  date: string;
+  categoryIcon: string;
+  categoryName: string;
+};
+
 type PeriodExpenseListProps = {
   groupId: Id<"groups">;
   year: number;
   month: number;
-  onExpenseClick?: (expenseId: Id<"expenses">) => void;
+  onEdit?: (expenseId: Id<"expenses">) => void;
+  onDelete?: (expense: ExpenseForDelete) => void;
 };
 
 export function PeriodExpenseList({
   groupId,
   year,
   month,
-  onExpenseClick,
+  onEdit,
+  onDelete,
 }: PeriodExpenseListProps) {
   const data = useQuery(api.expenses.listByPeriod, { groupId, year, month });
 
@@ -42,7 +52,19 @@ export function PeriodExpenseList({
         <ExpenseCard
           key={expense._id}
           expense={expense}
-          onClick={() => onExpenseClick?.(expense._id)}
+          onEdit={onEdit ? () => onEdit(expense._id) : undefined}
+          onDelete={
+            onDelete
+              ? () =>
+                  onDelete({
+                    _id: expense._id,
+                    amount: expense.amount,
+                    date: expense.date,
+                    categoryIcon: expense.category?.icon ?? "📦",
+                    categoryName: expense.category?.name ?? "カテゴリなし",
+                  })
+              : undefined
+          }
         />
       ))}
 

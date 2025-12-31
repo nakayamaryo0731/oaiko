@@ -3,10 +3,13 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { MemberList } from "./MemberList";
 import { InviteDialog } from "./InviteDialog";
 import { PeriodExpenseList } from "@/components/expenses/PeriodExpenseList";
+import { DeleteExpenseDialog } from "@/components/expenses/DeleteExpenseDialog";
 import {
   SettlementPreview,
   SettlementHistory,
@@ -30,6 +33,14 @@ type GroupDetailProps = {
     isMe: boolean;
   }[];
   myRole: "owner" | "member";
+};
+
+type ExpenseToDelete = {
+  _id: Id<"expenses">;
+  amount: number;
+  date: string;
+  categoryIcon: string;
+  categoryName: string;
 };
 
 /**
@@ -80,6 +91,7 @@ function getSettlementPeriod(
 
 export function GroupDetail({ group, members, myRole }: GroupDetailProps) {
   const router = useRouter();
+  const removeExpense = useMutation(api.expenses.remove);
 
   // 今期の年月を初期値として設定
   const initialPeriod = useMemo(
@@ -89,6 +101,11 @@ export function GroupDetail({ group, members, myRole }: GroupDetailProps) {
 
   const [displayYear, setDisplayYear] = useState(initialPeriod.year);
   const [displayMonth, setDisplayMonth] = useState(initialPeriod.month);
+
+  // 削除ダイアログ用の状態
+  const [expenseToDelete, setExpenseToDelete] =
+    useState<ExpenseToDelete | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 現在の精算期間
   const currentPeriod = useMemo(
@@ -124,6 +141,28 @@ export function GroupDetail({ group, members, myRole }: GroupDetailProps) {
       setDisplayMonth(1);
     } else {
       setDisplayMonth(displayMonth + 1);
+    }
+  };
+
+  const handleEdit = (expenseId: Id<"expenses">) => {
+    router.push(`/groups/${group._id}/expenses/${expenseId}/edit`);
+  };
+
+  const handleDelete = (expense: ExpenseToDelete) => {
+    setExpenseToDelete(expense);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!expenseToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await removeExpense({ expenseId: expenseToDelete._id });
+      setExpenseToDelete(null);
+    } catch (error) {
+      console.error("削除エラー:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -197,9 +236,8 @@ export function GroupDetail({ group, members, myRole }: GroupDetailProps) {
           groupId={group._id}
           year={displayYear}
           month={displayMonth}
-          onExpenseClick={(expenseId) =>
-            router.push(`/groups/${group._id}/expenses/${expenseId}`)
-          }
+          onEdit={handleEdit}
+          onDelete={handleDelete}
         />
       </div>
 
@@ -231,6 +269,22 @@ export function GroupDetail({ group, members, myRole }: GroupDetailProps) {
           </svg>
         </Link>
       </div>
+
+      {/* 削除確認ダイアログ */}
+      {expenseToDelete && (
+        <DeleteExpenseDialog
+          open={!!expenseToDelete}
+          onOpenChange={(open) => !open && setExpenseToDelete(null)}
+          expense={{
+            categoryIcon: expenseToDelete.categoryIcon,
+            categoryName: expenseToDelete.categoryName,
+            amount: expenseToDelete.amount,
+            date: expenseToDelete.date,
+          }}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
+        />
+      )}
     </div>
   );
 }
