@@ -8,6 +8,7 @@
 // ログトピック
 export const LOG_TOPICS = {
   AUTH: "AUTH",
+  USER: "USER",
   GROUP: "GROUP",
   EXPENSE: "EXPENSE",
   SETTLEMENT: "SETTLEMENT",

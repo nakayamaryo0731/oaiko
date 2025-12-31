@@ -1,10 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { InviteDialog } from "./InviteDialog";
 import { CategoryManager } from "@/components/categories";
-import { ChevronLeft, Calendar, Users, Tag, ShoppingCart } from "lucide-react";
+import {
+  ChevronLeft,
+  Calendar,
+  Users,
+  Tag,
+  ShoppingCart,
+  Pencil,
+  Check,
+  X,
+  Home,
+} from "lucide-react";
 
 type Category = {
   _id: Id<"categories">;
@@ -41,6 +54,49 @@ export function GroupSettings({
   categories,
   myRole,
 }: GroupSettingsProps) {
+  const [editingGroupName, setEditingGroupName] = useState(false);
+  const [groupName, setGroupName] = useState(group.name);
+  const [editingClosingDay, setEditingClosingDay] = useState(false);
+  const [closingDay, setClosingDay] = useState(group.closingDay);
+  const [editingDisplayName, setEditingDisplayName] = useState(false);
+  const [displayName, setDisplayName] = useState(
+    members.find((m) => m.isMe)?.displayName ?? "",
+  );
+
+  const updateGroupName = useMutation(api.groups.updateName);
+  const updateClosingDay = useMutation(api.groups.updateClosingDay);
+  const updateDisplayName = useMutation(api.users.updateDisplayName);
+
+  const handleGroupNameSave = async () => {
+    if (groupName.trim() === "") return;
+    try {
+      await updateGroupName({ groupId: group._id, name: groupName.trim() });
+      setEditingGroupName(false);
+    } catch {
+      setGroupName(group.name);
+    }
+  };
+
+  const handleClosingDaySave = async () => {
+    if (closingDay < 1 || closingDay > 28) return;
+    try {
+      await updateClosingDay({ groupId: group._id, closingDay });
+      setEditingClosingDay(false);
+    } catch {
+      setClosingDay(group.closingDay);
+    }
+  };
+
+  const handleDisplayNameSave = async () => {
+    if (displayName.trim() === "") return;
+    try {
+      await updateDisplayName({ displayName: displayName.trim() });
+      setEditingDisplayName(false);
+    } catch {
+      setDisplayName(members.find((m) => m.isMe)?.displayName ?? "");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* ヘッダー */}
@@ -54,6 +110,57 @@ export function GroupSettings({
         <h1 className="text-lg font-bold text-slate-800">グループ設定</h1>
       </div>
 
+      {/* グループ名 */}
+      <section className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+            <Home className="h-5 w-5 text-slate-600" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-slate-500">グループ名</p>
+            {editingGroupName ? (
+              <div className="flex items-center gap-2 mt-1">
+                <input
+                  type="text"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                  className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={50}
+                  autoFocus
+                />
+                <button
+                  onClick={handleGroupNameSave}
+                  className="p-1 text-green-600 hover:bg-green-50 rounded"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setGroupName(group.name);
+                    setEditingGroupName(false);
+                  }}
+                  className="p-1 text-slate-500 hover:bg-slate-100 rounded"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-slate-800">{group.name}</p>
+                {myRole === "owner" && (
+                  <button
+                    onClick={() => setEditingGroupName(true)}
+                    className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
       {/* 締め日 */}
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-center gap-3">
@@ -62,9 +169,53 @@ export function GroupSettings({
           </div>
           <div className="flex-1">
             <p className="text-sm text-slate-500">締め日</p>
-            <p className="font-medium text-slate-800">
-              毎月 {group.closingDay} 日
-            </p>
+            {editingClosingDay ? (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-sm text-slate-600">毎月</span>
+                <select
+                  value={closingDay}
+                  onChange={(e) => setClosingDay(Number(e.target.value))}
+                  className="px-2 py-1 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                >
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-sm text-slate-600">日</span>
+                <button
+                  onClick={handleClosingDaySave}
+                  className="p-1 text-green-600 hover:bg-green-50 rounded"
+                >
+                  <Check className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => {
+                    setClosingDay(group.closingDay);
+                    setEditingClosingDay(false);
+                  }}
+                  className="p-1 text-slate-500 hover:bg-slate-100 rounded"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="font-medium text-slate-800">
+                  毎月 {group.closingDay} 日
+                </p>
+                {myRole === "owner" && (
+                  <button
+                    onClick={() => setEditingClosingDay(true)}
+                    className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -94,12 +245,52 @@ export function GroupSettings({
                 {member.displayName.charAt(0)}
               </div>
               <div className="flex-1">
-                <p className="text-sm font-medium text-slate-800">
-                  {member.displayName}
-                  {member.isMe && (
-                    <span className="ml-1 text-xs text-slate-500">(自分)</span>
-                  )}
-                </p>
+                {member.isMe && editingDisplayName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      className="flex-1 px-2 py-1 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      maxLength={20}
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleDisplayNameSave}
+                      className="p-1 text-green-600 hover:bg-green-50 rounded"
+                    >
+                      <Check className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDisplayName(member.displayName);
+                        setEditingDisplayName(false);
+                      }}
+                      className="p-1 text-slate-500 hover:bg-slate-100 rounded"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium text-slate-800">
+                      {member.displayName}
+                      {member.isMe && (
+                        <span className="ml-1 text-xs text-slate-500">
+                          (自分)
+                        </span>
+                      )}
+                    </p>
+                    {member.isMe && (
+                      <button
+                        onClick={() => setEditingDisplayName(true)}
+                        className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
                 <p className="text-xs text-slate-500">
                   {member.role === "owner" ? "オーナー" : "メンバー"}
                 </p>

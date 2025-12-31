@@ -5,6 +5,7 @@ import { PRESET_CATEGORIES } from "./lib/presetCategories";
 import { getOrThrow } from "./lib/dataHelpers";
 import {
   validateGroupInput,
+  validateClosingDay,
   GROUP_RULES,
   GroupValidationError,
 } from "./domain/group";
@@ -204,5 +205,90 @@ export const createInvitation = authMutation({
     });
 
     return { token, expiresAt };
+  },
+});
+
+
+/**
+ * グループ名更新
+ */
+export const updateName = authMutation({
+  args: {
+    groupId: v.id("groups"),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const group = await getOrThrow(
+      ctx,
+      args.groupId,
+      "グループが見つかりません",
+    );
+
+    await requireGroupOwner(ctx, args.groupId);
+
+    let validated;
+    try {
+      validated = validateGroupInput({ name: args.name });
+    } catch (error) {
+      if (error instanceof GroupValidationError) {
+        ctx.logger.warn("GROUP", "update_name_validation_failed", {
+          reason: error.message,
+        });
+      }
+      throw error;
+    }
+
+    await ctx.db.patch(args.groupId, {
+      name: validated.name,
+      updatedAt: Date.now(),
+    });
+
+    ctx.logger.audit("GROUP", "name_updated", {
+      groupId: args.groupId,
+      oldName: group.name,
+      newName: validated.name,
+    });
+  },
+});
+
+
+/**
+ * 締め日更新
+ */
+export const updateClosingDay = authMutation({
+  args: {
+    groupId: v.id("groups"),
+    closingDay: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const group = await getOrThrow(
+      ctx,
+      args.groupId,
+      "グループが見つかりません",
+    );
+
+    await requireGroupOwner(ctx, args.groupId);
+
+    try {
+      validateClosingDay(args.closingDay);
+    } catch (error) {
+      if (error instanceof GroupValidationError) {
+        ctx.logger.warn("GROUP", "update_closing_day_validation_failed", {
+          reason: error.message,
+        });
+      }
+      throw error;
+    }
+
+    await ctx.db.patch(args.groupId, {
+      closingDay: args.closingDay,
+      updatedAt: Date.now(),
+    });
+
+    ctx.logger.audit("GROUP", "closing_day_updated", {
+      groupId: args.groupId,
+      oldClosingDay: group.closingDay,
+      newClosingDay: args.closingDay,
+    });
   },
 });
