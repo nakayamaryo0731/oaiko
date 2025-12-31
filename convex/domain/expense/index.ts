@@ -1,5 +1,12 @@
 // Types
-export type { SplitResult, SplitMethod, ExpenseInput } from "./types";
+export type {
+  SplitResult,
+  SplitMethod,
+  ExpenseInput,
+  RatioSplitInput,
+  AmountSplitInput,
+  SplitDetails,
+} from "./types";
 export { EXPENSE_RULES } from "./types";
 
 // Validation rules
@@ -9,7 +16,16 @@ export {
   validateDate,
   validateMemo,
   validateExpenseInput,
+  validateRatioSplit,
+  validateAmountSplit,
+  validateFullSplit,
+  validateSplitDetails,
 } from "./rules";
 
 // Split calculation
-export { calculateEqualSplit } from "./splitCalculator";
+export {
+  calculateEqualSplit,
+  calculateRatioSplit,
+  calculateAmountSplit,
+  calculateFullSplit,
+} from "./splitCalculator";
