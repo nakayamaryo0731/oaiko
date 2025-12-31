@@ -30,3 +30,9 @@ export {
   calculateAmountSplit,
   calculateFullSplit,
 } from "./splitCalculator";
+
+// Member resolution
+export {
+  SplitMemberError,
+  resolveTargetMemberIds,
+} from "./memberResolution";
