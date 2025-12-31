@@ -5,7 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
-import { Circle, CheckCircle2, X, Undo2 } from "lucide-react";
+import { X, Undo2 } from "lucide-react";
 
 type ShoppingItemProps = {
   item: {
@@ -61,22 +61,6 @@ export function ShoppingItem({ item, mode }: ShoppingItemProps) {
         isPurchased ? "bg-slate-50" : ""
       }`}
     >
-      {/* 購入チェック */}
-      <button
-        onClick={handleTogglePurchased}
-        disabled={isLoading || (isPurchased && !canUnpurchase)}
-        className={`shrink-0 transition-colors ${
-          isPurchased ? "text-green-600" : "text-slate-400 hover:text-slate-600"
-        } ${isLoading ? "opacity-50" : ""}`}
-        aria-label={isPurchased ? "購入解除" : "購入済みにする"}
-      >
-        {isPurchased ? (
-          <CheckCircle2 className="h-6 w-6" />
-        ) : (
-          <Circle className="h-6 w-6" />
-        )}
-      </button>
-
       {/* アイテム名 */}
       <div className="flex-1 min-w-0">
         <p
@@ -94,27 +78,38 @@ export function ShoppingItem({ item, mode }: ShoppingItemProps) {
 
       {/* アクションボタン */}
       {mode === "pending" && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleRemove}
-          disabled={isLoading}
-          className="shrink-0 text-slate-400 hover:text-red-600"
-          aria-label="削除"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleTogglePurchased}
+            disabled={isLoading}
+            className="shrink-0"
+          >
+            {isLoading ? "..." : "買った"}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleRemove}
+            disabled={isLoading}
+            className="shrink-0 text-slate-400 hover:text-red-600"
+            aria-label="削除"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </>
       )}
       {canUnpurchase && (
         <Button
           variant="ghost"
-          size="icon"
+          size="sm"
           onClick={handleTogglePurchased}
           disabled={isLoading}
-          className="shrink-0 text-slate-400 hover:text-slate-600"
-          aria-label="購入解除"
+          className="shrink-0 text-slate-500 hover:text-slate-700"
         >
-          <Undo2 className="h-4 w-4" />
+          <Undo2 className="h-4 w-4 mr-1" />
+          戻す
         </Button>
       )}
     </div>

@@ -8,27 +8,65 @@ import { ShoppingItemInput } from "./ShoppingItemInput";
 import { ShoppingItem } from "./ShoppingItem";
 import { ShoppingHistory } from "./ShoppingHistory";
 import { Button } from "@/components/ui/button";
-import { History, ShoppingCart, ChevronLeft } from "lucide-react";
+import { History, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 type ShoppingListProps = {
   groupId: Id<"groups">;
 };
 
+function getCurrentYearMonth() {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+}
+
 export function ShoppingList({ groupId }: ShoppingListProps) {
   const [showHistory, setShowHistory] = useState(false);
+  const [historyYear, setHistoryYear] = useState(
+    () => getCurrentYearMonth().year,
+  );
+  const [historyMonth, setHistoryMonth] = useState(
+    () => getCurrentYearMonth().month,
+  );
 
-  const data = useQuery(api.shoppingList.list, { groupId });
+  const pending = useQuery(api.shoppingList.list, { groupId });
+  const purchased = useQuery(
+    api.shoppingList.listPurchasedByMonth,
+    showHistory ? { groupId, year: historyYear, month: historyMonth } : "skip",
+  );
 
-  if (data === undefined) {
+  const currentYearMonth = getCurrentYearMonth();
+  const canGoNext =
+    historyYear < currentYearMonth.year ||
+    (historyYear === currentYearMonth.year &&
+      historyMonth < currentYearMonth.month);
+
+  const goToPreviousMonth = () => {
+    if (historyMonth === 1) {
+      setHistoryYear(historyYear - 1);
+      setHistoryMonth(12);
+    } else {
+      setHistoryMonth(historyMonth - 1);
+    }
+  };
+
+  const goToNextMonth = () => {
+    if (!canGoNext) return;
+    if (historyMonth === 12) {
+      setHistoryYear(historyYear + 1);
+      setHistoryMonth(1);
+    } else {
+      setHistoryMonth(historyMonth + 1);
+    }
+  };
+
+  if (pending === undefined) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-slate-500">読み込み中...</div>
       </div>
     );
   }
-
-  const { pending, purchased } = data;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -42,7 +80,9 @@ export function ShoppingList({ groupId }: ShoppingListProps) {
             <ChevronLeft className="h-5 w-5" />
             <span className="sr-only">戻る</span>
           </Link>
-          <h1 className="text-lg font-semibold">買い物リスト</h1>
+          <h1 className="text-lg font-semibold">
+            {showHistory ? "購入履歴" : "買い物リスト"}
+          </h1>
           <Button
             variant="ghost"
             size="icon"
@@ -63,10 +103,37 @@ export function ShoppingList({ groupId }: ShoppingListProps) {
       <main className="p-4 space-y-4">
         {showHistory ? (
           <>
-            <h2 className="text-sm font-medium text-slate-500">
-              購入履歴（過去30日）
-            </h2>
-            <ShoppingHistory items={purchased} />
+            {/* 月別ナビゲーター */}
+            <div className="flex items-center justify-between bg-white rounded-lg border border-slate-200 p-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToPreviousMonth}
+                aria-label="前月"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              <span className="font-medium">
+                {historyYear}年{historyMonth}月
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={goToNextMonth}
+                disabled={!canGoNext}
+                aria-label="翌月"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+            </div>
+
+            {purchased === undefined ? (
+              <div className="text-center py-8 text-slate-500">
+                読み込み中...
+              </div>
+            ) : (
+              <ShoppingHistory items={purchased} />
+            )}
           </>
         ) : (
           <>
