@@ -157,7 +157,7 @@ export function GroupDetail({ group }: GroupDetailProps) {
   };
 
   const handleEdit = (expenseId: Id<"expenses">) => {
-    router.push(`/groups/${group._id}/expenses/${expenseId}/edit`);
+    router.push(`/groups/${group._id}/expenses/${expenseId}`);
   };
 
   const handleDelete = (expense: ExpenseToDelete) => {
