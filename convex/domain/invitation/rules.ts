@@ -1,15 +1,20 @@
+import { DomainError } from "../../lib/domainError";
 import { type InvitationErrorType } from "./types";
 
 /**
  * 招待バリデーションエラー
  */
-export class InvitationValidationError extends Error {
-  public readonly errorType: InvitationErrorType;
-
+export class InvitationValidationError extends DomainError<InvitationErrorType> {
   constructor(errorType: InvitationErrorType, message: string) {
-    super(message);
+    super(errorType, message);
     this.name = "InvitationValidationError";
-    this.errorType = errorType;
+  }
+
+  /**
+   * エラータイプを取得（後方互換性のため）
+   */
+  get errorType(): InvitationErrorType {
+    return this.code;
   }
 }
 
