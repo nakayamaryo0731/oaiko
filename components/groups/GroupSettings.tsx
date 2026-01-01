@@ -8,7 +8,6 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { InviteDialog } from "./InviteDialog";
 import { CategoryManager } from "@/components/categories";
 import {
-  ChevronLeft,
   Calendar,
   Users,
   Tag,
@@ -17,6 +16,7 @@ import {
   Check,
   X,
   Home,
+  ChevronRight,
 } from "lucide-react";
 
 type Category = {
@@ -99,17 +99,6 @@ export function GroupSettings({
 
   return (
     <div className="space-y-6">
-      {/* ヘッダー */}
-      <div className="flex items-center gap-3">
-        <Link
-          href={`/groups/${group._id}`}
-          className="p-2 -ml-2 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <ChevronLeft className="h-5 w-5 text-slate-600" />
-        </Link>
-        <h1 className="text-lg font-bold text-slate-800">グループ設定</h1>
-      </div>
-
       {/* グループ名 */}
       <section className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-center gap-3">
@@ -333,7 +322,7 @@ export function GroupSettings({
               グループで共有する買い物リスト
             </p>
           </div>
-          <ChevronLeft className="h-5 w-5 text-slate-400 rotate-180" />
+          <ChevronRight className="h-5 w-5 text-slate-400" />
         </Link>
       </section>
     </div>
