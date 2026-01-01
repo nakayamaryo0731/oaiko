@@ -151,18 +151,6 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip"
   );
 
-  const monthlyTrend = useQuery(
-    api.analytics.getMonthlyTrend,
-    group
-      ? {
-          groupId: groupId as Id<"groups">,
-          year: activeYear,
-          month: activeMonth,
-          months: 6,
-        }
-      : "skip"
-  );
-
   // 年次データ
   const yearlyCategory = useQuery(
     api.analytics.getYearlyCategoryBreakdown,
@@ -209,7 +197,6 @@ export default function AnalyticsPage({ params }: PageProps) {
   }
 
   const categoryData = viewType === "month" ? monthlyCategory : yearlyCategory;
-  const trendData = viewType === "month" ? monthlyTrend : yearlyTrend;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -317,17 +304,19 @@ export default function AnalyticsPage({ params }: PageProps) {
             )}
           </section>
 
-          {/* 推移グラフ */}
-          <section>
-            <h3 className="text-sm font-medium text-slate-700 mb-3">
-              月別推移
-            </h3>
-            {trendData === undefined ? (
-              <ChartSkeleton type="bar" />
-            ) : (
-              <MonthlyTrendChart data={trendData.trend} />
-            )}
-          </section>
+          {/* 推移グラフ（年次のみ） */}
+          {viewType === "year" && (
+            <section>
+              <h3 className="text-sm font-medium text-slate-700 mb-3">
+                月別推移
+              </h3>
+              {yearlyTrend === undefined ? (
+                <ChartSkeleton type="bar" />
+              ) : (
+                <MonthlyTrendChart data={yearlyTrend.trend} />
+              )}
+            </section>
+          )}
         </div>
       </main>
     </div>
