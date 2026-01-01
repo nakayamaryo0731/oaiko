@@ -21,7 +21,11 @@ type TabNavigationProps = {
  * - アイコン + ラベルの組み合わせ
  * - アクティブ状態の明確な視覚フィードバック
  */
-export function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
+export function TabNavigation({
+  tabs,
+  activeTab,
+  onChange,
+}: TabNavigationProps) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-slate-200 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-lg mx-auto flex h-14" role="tablist">
