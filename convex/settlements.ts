@@ -90,6 +90,7 @@ export const getPreview = authQuery({
       balances: balancesWithUsers,
       payments: paymentsWithUsers,
       existingSettlementId: existingSettlement?._id ?? null,
+      existingSettlementStatus: existingSettlement?.status ?? null,
       totalExpenses: expenses.length,
       totalAmount: expenses.reduce((sum, e) => sum + e.amount, 0),
     };
