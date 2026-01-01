@@ -66,9 +66,7 @@ export default function TestPaymentPage() {
                 </p>
               )}
               {subscription.cancelAtPeriodEnd && (
-                <p className="text-orange-600">
-                  ※ 期間終了時にキャンセル予定
-                </p>
+                <p className="text-orange-600">※ 期間終了時にキャンセル予定</p>
               )}
             </div>
           ) : (

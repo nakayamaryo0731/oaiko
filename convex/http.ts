@@ -129,8 +129,7 @@ async function handleSubscriptionUpdated(
 ) {
   const currentPeriodEnd =
     (subscription as any).current_period_end ?? Date.now() / 1000;
-  const cancelAtPeriodEnd =
-    (subscription as any).cancel_at_period_end ?? false;
+  const cancelAtPeriodEnd = (subscription as any).cancel_at_period_end ?? false;
 
   await ctx.runMutation(internal.subscriptions.updateSubscriptionStatus, {
     stripeSubscriptionId: subscription.id,
