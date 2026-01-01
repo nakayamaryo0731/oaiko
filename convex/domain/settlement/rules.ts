@@ -43,25 +43,6 @@ export function validateMonth(month: number): void {
 }
 
 /**
- * 締め日のバリデーション
- *
- * @param closingDay 締め日
- * @throws {SettlementValidationError} バリデーションエラーの場合
- */
-export function validateClosingDay(closingDay: number): void {
-  if (!Number.isInteger(closingDay)) {
-    throw new SettlementValidationError("締め日は整数で入力してください");
-  }
-
-  if (
-    closingDay < SETTLEMENT_RULES.MIN_CLOSING_DAY ||
-    closingDay > SETTLEMENT_RULES.MAX_CLOSING_DAY
-  ) {
-    throw new SettlementValidationError("締め日は1〜28の間で設定してください");
-  }
-}
-
-/**
  * 精算期間入力のバリデーション
  *
  * @param year 年
