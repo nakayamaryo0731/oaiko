@@ -6,6 +6,7 @@ import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { GroupList } from "@/components/groups/GroupList";
 import { GroupListSkeleton } from "@/components/ui/skeleton";
+import { AppHeader } from "@/components/ui/AppHeader";
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -53,10 +54,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-4 border-b border-slate-200 flex flex-row justify-between items-center shadow-sm">
-        <h1 className="font-bold text-xl text-slate-800">Oaiko</h1>
-        {isAuthenticated && <UserButton />}
-      </header>
+      <AppHeader rightElement={isAuthenticated ? <UserButton /> : undefined} />
 
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto">
