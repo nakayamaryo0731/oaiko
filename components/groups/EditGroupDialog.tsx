@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,12 +30,6 @@ export function EditGroupDialog({
   isSaving,
 }: EditGroupDialogProps) {
   const [name, setName] = useState(group.name);
-
-  useEffect(() => {
-    if (open) {
-      setName(group.name);
-    }
-  }, [open, group.name]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

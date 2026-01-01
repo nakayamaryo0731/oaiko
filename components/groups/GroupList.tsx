@@ -100,6 +100,7 @@ export function GroupList() {
 
       {editingGroup && (
         <EditGroupDialog
+          key={editingGroup._id}
           open={!!editingGroup}
           onOpenChange={(open) => !open && setEditingGroup(null)}
           group={editingGroup}
