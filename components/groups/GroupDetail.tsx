@@ -13,6 +13,7 @@ import {
 } from "@/components/settlements";
 import { TabNavigation } from "@/components/ui/TabNavigation";
 import { FAB } from "@/components/ui/FAB";
+import { AdBanner } from "@/components/ads";
 import { ClipboardList, Coins, Plus } from "lucide-react";
 
 type TabType = "expenses" | "settlement";
@@ -216,7 +217,7 @@ export function GroupDetail({ group }: GroupDetailProps) {
       </div>
 
       {/* スクロール可能なコンテンツ領域 */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-24">
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-40">
         {/* タブコンテンツ */}
         {activeTab === "expenses" && (
           <div>
@@ -254,6 +255,9 @@ export function GroupDetail({ group }: GroupDetailProps) {
         icon={<Plus />}
         label="支出を記録"
       />
+
+      {/* 広告バナー（TabNavigationの上） */}
+      <AdBanner aboveTabNav skipPageCheck />
 
       {/* 下部タブナビゲーション */}
       <TabNavigation

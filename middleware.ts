@@ -2,9 +2,14 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 // 公開ルート（認証不要）
 const isPublicRoute = createRouteMatcher([
+  "/",
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/invite/(.*)", // 招待リンク
+  "/pricing",
+  "/privacy",
+  "/terms",
+  "/legal/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {

@@ -206,7 +206,7 @@ export const upsertSubscription = internalMutation({
     userId: v.id("users"),
     stripeCustomerId: v.string(),
     stripeSubscriptionId: v.string(),
-    plan: v.union(v.literal("free"), v.literal("pro")),
+    plan: v.union(v.literal("free"), v.literal("premium")),
     status: v.union(
       v.literal("active"),
       v.literal("canceled"),

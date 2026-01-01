@@ -37,11 +37,11 @@ export const settlementStatusValidator = v.union(
 /**
  * サブスクリプションプラン
  * - free: 無料プラン
- * - pro: Proプラン
+ * - premium: プレミアムプラン（広告なし）
  */
 export const subscriptionPlanValidator = v.union(
   v.literal("free"),
-  v.literal("pro"),
+  v.literal("premium"),
 );
 
 /**
