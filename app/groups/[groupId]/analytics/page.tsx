@@ -44,7 +44,7 @@ function getCurrentSettlementYearMonth(closingDay: number): {
 function getSettlementPeriod(
   closingDay: number,
   year: number,
-  month: number
+  month: number,
 ): { startDate: string; endDate: string } {
   const formatDate = (date: Date): string => {
     const y = date.getFullYear();
@@ -79,7 +79,10 @@ export default function AnalyticsPage({ params }: PageProps) {
   // 現在の精算期間を計算
   const currentPeriod = useMemo(() => {
     if (!group)
-      return { year: new Date().getFullYear(), month: new Date().getMonth() + 1 };
+      return {
+        year: new Date().getFullYear(),
+        month: new Date().getMonth() + 1,
+      };
     return getCurrentSettlementYearMonth(group.group.closingDay);
   }, [group]);
 
@@ -88,7 +91,9 @@ export default function AnalyticsPage({ params }: PageProps) {
   const [displayMonth, setDisplayMonth] = useState<number | null>(null);
 
   // 年次表示用の年
-  const [displayYearForYearly, setDisplayYearForYearly] = useState<number | null>(null);
+  const [displayYearForYearly, setDisplayYearForYearly] = useState<
+    number | null
+  >(null);
 
   // 実際に使用する年月（初期値はcurrentPeriod）
   const activeYear = displayYear ?? currentPeriod.year;
@@ -170,7 +175,7 @@ export default function AnalyticsPage({ params }: PageProps) {
           year: activeYear,
           month: activeMonth,
         }
-      : "skip"
+      : "skip",
   );
 
   // 年次データ
@@ -181,7 +186,7 @@ export default function AnalyticsPage({ params }: PageProps) {
           groupId: groupId as Id<"groups">,
           year: activeYearForYearly,
         }
-      : "skip"
+      : "skip",
   );
 
   const yearlyTrend = useQuery(
@@ -193,7 +198,7 @@ export default function AnalyticsPage({ params }: PageProps) {
           month: 12,
           months: 12,
         }
-      : "skip"
+      : "skip",
   );
 
   if (group === undefined) {
