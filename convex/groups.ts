@@ -223,7 +223,8 @@ export const updateName = authMutation({
       "グループが見つかりません",
     );
 
-    await requireGroupOwner(ctx, args.groupId);
+    // メンバーであれば編集可能
+    await requireGroupMember(ctx, args.groupId);
 
     let validated;
     try {
