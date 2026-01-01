@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -13,6 +12,10 @@ import {
   SettlementHistory,
   PeriodNavigator,
 } from "@/components/settlements";
+import { TabNavigation } from "@/components/ui/TabNavigation";
+import { FAB } from "@/components/ui/FAB";
+import { ClipboardList, Coins, Plus } from "lucide-react";
+
 type TabType = "expenses" | "settlement";
 
 type GroupDetailProps = {
@@ -223,60 +226,22 @@ export function GroupDetail({ group }: GroupDetailProps) {
         </div>
       )}
 
-      {/* 支出記録ボタン */}
-      <div className="fixed bottom-12 right-4 z-20">
-        <Link
-          href={`/groups/${group._id}/expenses/new`}
-          className="w-14 h-14 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center justify-center"
-          aria-label="支出を記録"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12 5v14" />
-            <path d="M5 12h14" />
-          </svg>
-        </Link>
-      </div>
+      {/* 支出記録ボタン（FAB） */}
+      <FAB
+        href={`/groups/${group._id}/expenses/new`}
+        icon={<Plus />}
+        label="支出を記録"
+      />
 
       {/* 下部タブナビゲーション */}
-      <div className="fixed bottom-0 left-0 right-0 z-10 bg-white border-t border-slate-200">
-        <div className="max-w-lg mx-auto flex" role="tablist">
-          <button
-            role="tab"
-            aria-selected={activeTab === "expenses"}
-            onClick={() => setActiveTab("expenses")}
-            className={`flex-1 py-4 text-sm font-medium transition-colors ${
-              activeTab === "expenses"
-                ? "text-blue-600 border-t-2 border-blue-500 -mt-px"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            支出
-          </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === "settlement"}
-            onClick={() => setActiveTab("settlement")}
-            className={`flex-1 py-4 text-sm font-medium transition-colors ${
-              activeTab === "settlement"
-                ? "text-blue-600 border-t-2 border-blue-500 -mt-px"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            精算
-          </button>
-        </div>
-      </div>
+      <TabNavigation
+        tabs={[
+          { id: "expenses", label: "支出", icon: <ClipboardList /> },
+          { id: "settlement", label: "精算", icon: <Coins /> },
+        ]}
+        activeTab={activeTab}
+        onChange={(tabId) => setActiveTab(tabId as TabType)}
+      />
 
       {/* 削除確認ダイアログ */}
       {expenseToDelete && (
