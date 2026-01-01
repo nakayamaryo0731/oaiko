@@ -109,10 +109,9 @@ async function handleCheckoutSessionCompleted(
 
   // サブスクリプション詳細を取得
   const subscriptionId = session.subscription as string;
-  const subscriptionResponse =
-    (await stripe.subscriptions.retrieve(
-      subscriptionId,
-    )) as StripeSubscriptionWithPeriod;
+  const subscriptionResponse = (await stripe.subscriptions.retrieve(
+    subscriptionId,
+  )) as unknown as StripeSubscriptionWithPeriod;
 
   await ctx.runMutation(internal.subscriptions.upsertSubscription, {
     userId: userId as Id<"users">,
