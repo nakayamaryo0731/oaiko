@@ -471,11 +471,11 @@ export function ExpenseForm({
       )}
 
       {/* ボタン */}
-      <div className="space-y-3 pt-2">
+      <div className="flex gap-3 pt-2">
         <button
           type="submit"
           disabled={isLoading || !isFormValid}
-          className="w-full py-4 bg-blue-500 text-white font-medium rounded-2xl hover:bg-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 py-4 bg-blue-500 text-white font-medium rounded-2xl hover:bg-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading
             ? isEditMode
@@ -487,7 +487,7 @@ export function ExpenseForm({
         </button>
         <button
           type="button"
-          className="w-full text-sm text-slate-500 hover:text-slate-700 transition-colors"
+          className="px-6 py-4 text-sm text-slate-500 hover:text-slate-700 transition-colors rounded-2xl bg-slate-100 hover:bg-slate-200"
           onClick={handleCancel}
           disabled={isLoading}
         >
