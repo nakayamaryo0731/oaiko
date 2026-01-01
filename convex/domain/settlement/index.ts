@@ -30,6 +30,5 @@ export {
   SettlementValidationError,
   validateYear,
   validateMonth,
-  validateClosingDay,
   validateSettlementPeriodInput,
 } from "./rules";

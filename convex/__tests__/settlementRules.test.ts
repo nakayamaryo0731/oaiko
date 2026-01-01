@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import {
   validateYear,
   validateMonth,
-  validateClosingDay,
   validateSettlementPeriodInput,
   SettlementValidationError,
   SETTLEMENT_RULES,
@@ -45,28 +44,6 @@ describe("settlement/rules", () => {
       expect(() => validateMonth(0)).toThrow(SettlementValidationError);
       expect(() => validateMonth(13)).toThrow(
         "月は1〜12の間で指定してください",
-      );
-    });
-  });
-
-  describe("validateClosingDay", () => {
-    test("有効な締め日は通過する", () => {
-      expect(() => validateClosingDay(1)).not.toThrow();
-      expect(() => validateClosingDay(15)).not.toThrow();
-      expect(() => validateClosingDay(28)).not.toThrow();
-    });
-
-    test("小数はエラー", () => {
-      expect(() => validateClosingDay(15.5)).toThrow(SettlementValidationError);
-      expect(() => validateClosingDay(15.5)).toThrow(
-        "締め日は整数で入力してください",
-      );
-    });
-
-    test("範囲外はエラー", () => {
-      expect(() => validateClosingDay(0)).toThrow(SettlementValidationError);
-      expect(() => validateClosingDay(29)).toThrow(
-        "締め日は1〜28の間で設定してください",
       );
     });
   });
