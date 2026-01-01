@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { use, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { ExpenseForm } from "@/components/expenses/ExpenseForm";
 import { ExpenseDetail } from "@/components/expenses/ExpenseDetail";
 import { DeleteExpenseDialog } from "@/components/expenses/DeleteExpenseDialog";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type PageProps = {
   params: Promise<{
@@ -16,13 +17,56 @@ type PageProps = {
   }>;
 };
 
-export default function ExpenseDetailPage({ params }: PageProps) {
+function ExpenseFormSkeleton() {
+  return (
+    <div className="space-y-6 py-2">
+      {/* 金額 */}
+      <div className="text-center py-4">
+        <div className="h-14 w-48 mx-auto bg-slate-100 rounded-xl animate-pulse" />
+      </div>
+      {/* タイトル + 日付 */}
+      <div className="flex gap-2">
+        <div className="flex-1 h-12 bg-slate-100 rounded-xl animate-pulse" />
+        <div className="w-36 h-12 bg-slate-100 rounded-xl animate-pulse" />
+      </div>
+      {/* カテゴリ */}
+      <div className="space-y-2">
+        <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-10 w-24 bg-slate-100 rounded-full animate-pulse" />
+          <div className="h-10 w-24 bg-slate-100 rounded-full animate-pulse" />
+          <div className="h-10 w-24 bg-slate-100 rounded-full animate-pulse" />
+        </div>
+      </div>
+      {/* 支払者 */}
+      <div className="space-y-2">
+        <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
+        <div className="flex gap-2">
+          <div className="h-10 w-28 bg-slate-100 rounded-full animate-pulse" />
+          <div className="h-10 w-28 bg-slate-100 rounded-full animate-pulse" />
+        </div>
+      </div>
+      {/* 負担方法 */}
+      <div className="space-y-2">
+        <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+        <div className="h-10 w-full bg-slate-100 rounded-xl animate-pulse" />
+      </div>
+      {/* ボタン */}
+      <div className="pt-2">
+        <div className="h-14 w-full bg-slate-100 rounded-2xl animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
+export default function ExpensePage({ params }: PageProps) {
   const router = useRouter();
   const resolvedParams = use(params);
-  const expenseId = resolvedParams.expenseId as Id<"expenses">;
   const groupId = resolvedParams.groupId as Id<"groups">;
+  const expenseId = resolvedParams.expenseId as Id<"expenses">;
 
   const expense = useQuery(api.expenses.getById, { expenseId });
+  const detail = useQuery(api.groups.getDetail, { groupId });
   const removeExpense = useMutation(api.expenses.remove);
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -44,14 +88,14 @@ export default function ExpenseDetailPage({ params }: PageProps) {
     }
   };
 
-  return (
-    <main className="min-h-screen bg-slate-50">
-      {/* ヘッダー */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
+  // ローディング中
+  if (expense === undefined || detail === undefined) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-4 border-b border-slate-200 flex items-center gap-3 shadow-sm">
           <Link
             href={`/groups/${groupId}`}
-            className="text-slate-600 hover:text-slate-800"
+            className="text-slate-600 hover:text-slate-800 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -67,43 +111,213 @@ export default function ExpenseDetailPage({ params }: PageProps) {
               <path d="m15 18-6-6 6-6" />
             </svg>
           </Link>
-          <h1 className="text-lg font-semibold text-slate-800">支出詳細</h1>
-        </div>
-      </header>
-
-      {/* コンテンツ */}
-      <div className="max-w-2xl mx-auto px-4 py-6">
-        {expense === undefined ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-800 mx-auto" />
+          <div className="h-6 w-24 bg-slate-100 rounded animate-pulse" />
+        </header>
+        <main className="flex-1 p-4">
+          <div className="max-w-lg mx-auto bg-white rounded-2xl p-5">
+            <ExpenseFormSkeleton />
           </div>
-        ) : expense === null ? (
+        </main>
+      </div>
+    );
+  }
+
+  // 支出が見つからない
+  if (expense === null) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-4 border-b border-slate-200 flex items-center gap-3 shadow-sm">
+          <Link
+            href={`/groups/${groupId}`}
+            className="text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </Link>
+          <h1 className="font-bold text-xl text-slate-800">支出詳細</h1>
+        </header>
+        <main className="flex-1 p-4">
           <div className="text-center py-12 text-slate-500">
             支出が見つかりません
           </div>
-        ) : (
-          <>
+        </main>
+      </div>
+    );
+  }
+
+  // 精算済みの場合は読み取り専用表示
+  if (expense.isSettled) {
+    return (
+      <div className="flex min-h-screen flex-col bg-slate-50">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-4 border-b border-slate-200 flex items-center gap-3 shadow-sm">
+          <Link
+            href={`/groups/${groupId}`}
+            className="text-slate-600 hover:text-slate-800 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </Link>
+          <h1 className="font-bold text-xl text-slate-800">支出詳細</h1>
+          <span className="ml-auto text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded">
+            精算済み
+          </span>
+        </header>
+        <main className="flex-1 p-4">
+          <div className="max-w-lg mx-auto">
             <ExpenseDetail
               expense={expense}
-              isSettled={expense.isSettled}
+              isSettled={true}
               onDelete={handleDelete}
               isDeleting={isDeleting}
             />
-            <DeleteExpenseDialog
-              open={showDeleteDialog}
-              onOpenChange={setShowDeleteDialog}
-              expense={{
-                categoryIcon: expense.category?.icon ?? "📦",
-                categoryName: expense.category?.name ?? "カテゴリなし",
-                amount: expense.amount,
-                date: expense.date,
-              }}
-              onConfirm={handleConfirmDelete}
-              isDeleting={isDeleting}
-            />
-          </>
-        )}
+          </div>
+        </main>
+        <DeleteExpenseDialog
+          open={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          expense={{
+            categoryIcon: expense.category?.icon ?? "📦",
+            categoryName: expense.category?.name ?? "カテゴリなし",
+            amount: expense.amount,
+            date: expense.date,
+          }}
+          onConfirm={handleConfirmDelete}
+          isDeleting={isDeleting}
+        />
       </div>
-    </main>
+    );
+  }
+
+  // 編集可能な場合はフォームを表示
+  const initialData = {
+    expenseId: expense._id,
+    amount: expense.amount,
+    categoryId: expense.category?._id ?? detail.categories[0]?._id,
+    paidBy: expense.payer?._id ?? detail.members[0]?.userId,
+    date: expense.date,
+    title: expense.title,
+    memo: expense.memo,
+    splitMethod: expense.splitMethod as "equal" | "ratio" | "amount" | "full",
+    ratios:
+      expense.splitMethod === "ratio"
+        ? expense.splits.map((s) => ({
+            userId: s.userId,
+            ratio: Math.round((s.amount / expense.amount) * 100),
+          }))
+        : undefined,
+    amounts:
+      expense.splitMethod === "amount"
+        ? expense.splits.map((s) => ({
+            userId: s.userId,
+            amount: s.amount,
+          }))
+        : undefined,
+    bearerId:
+      expense.splitMethod === "full"
+        ? expense.splits.find((s) => s.amount === expense.amount)?.userId
+        : undefined,
+    splits: expense.splits.map((s) => ({
+      userId: s.userId,
+      amount: s.amount,
+    })),
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md p-4 border-b border-slate-200 flex items-center gap-3 shadow-sm">
+        <Link
+          href={`/groups/${groupId}`}
+          className="text-slate-600 hover:text-slate-800 transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="m15 18-6-6 6-6" />
+          </svg>
+        </Link>
+        <h1 className="font-bold text-xl text-slate-800">支出を編集</h1>
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="ml-auto p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+          aria-label="削除"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M3 6h18" />
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          </svg>
+        </button>
+      </header>
+
+      <main className="flex-1 p-4">
+        <div className="max-w-lg mx-auto bg-white rounded-2xl p-5">
+          <ExpenseForm
+            groupId={groupId}
+            categories={detail.categories}
+            members={detail.members.map((m) => ({
+              userId: m.userId,
+              displayName: m.displayName,
+              isMe: m.isMe,
+            }))}
+            mode="edit"
+            initialData={initialData}
+          />
+        </div>
+      </main>
+
+      <DeleteExpenseDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        expense={{
+          categoryIcon: expense.category?.icon ?? "📦",
+          categoryName: expense.category?.name ?? "カテゴリなし",
+          amount: expense.amount,
+          date: expense.date,
+        }}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
+    </div>
   );
 }
