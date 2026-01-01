@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useMemo } from "react";
+import { use, useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -120,6 +120,28 @@ export default function AnalyticsPage({ params }: PageProps) {
       setDisplayMonth(activeMonth + 1);
     }
   };
+
+  // キーボードショートカット（左右矢印で月次/年次切り替え）
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 入力中は無視
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (e.key === "ArrowLeft") {
+        setViewType("month");
+      } else if (e.key === "ArrowRight") {
+        setViewType("year");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // 年次ナビゲーション
   const canGoNextYear = activeYearForYearly < currentPeriod.year;
