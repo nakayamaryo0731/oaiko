@@ -272,12 +272,16 @@ export const reopen = authMutation({
 
     await requireGroupOwner(ctx, settlement.groupId);
 
-    if (settlement.status !== "settled") {
-      throw new ConvexError("この精算は既に未精算状態です");
+    if (settlement.status === "reopened") {
+      throw new ConvexError("この精算は既に再オープンされています");
+    }
+
+    if (settlement.status === "pending") {
+      throw new ConvexError("この精算はまだ完了していません");
     }
 
     await ctx.db.patch(args.settlementId, {
-      status: "pending",
+      status: "reopened",
       settledAt: undefined,
     });
 
