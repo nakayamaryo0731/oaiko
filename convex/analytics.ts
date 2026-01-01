@@ -84,6 +84,81 @@ export const getCategoryBreakdown = authQuery({
 });
 
 /**
+ * 年間カテゴリ別支出集計
+ */
+export const getYearlyCategoryBreakdown = authQuery({
+  args: {
+    groupId: v.id("groups"),
+    year: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // 認可チェック
+    await requireGroupMember(ctx, args.groupId);
+
+    // 年の開始日と終了日を計算
+    const startDate = `${args.year}-01-01`;
+    const endDate = `${args.year}-12-31`;
+
+    // 年間の支出を取得
+    const allExpenses = await ctx.db
+      .query("expenses")
+      .withIndex("by_group_and_date", (q) => q.eq("groupId", args.groupId))
+      .collect();
+
+    const expenses = allExpenses.filter(
+      (e) => e.date >= startDate && e.date <= endDate
+    );
+
+    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    if (expenses.length === 0) {
+      return {
+        year: args.year,
+        totalAmount: 0,
+        breakdown: [],
+      };
+    }
+
+    // カテゴリ別に集計
+    const categoryTotals = new Map<Id<"categories">, number>();
+    for (const expense of expenses) {
+      const categoryId = expense.categoryId;
+      const current = categoryTotals.get(categoryId) ?? 0;
+      categoryTotals.set(categoryId, current + expense.amount);
+    }
+
+    // カテゴリ情報を取得
+    const categoryIds = [...categoryTotals.keys()];
+    const categories = await Promise.all(
+      categoryIds.map((id) => ctx.db.get(id))
+    );
+
+    const breakdown = categoryIds
+      .map((categoryId, index) => {
+        const category = categories[index];
+        const amount = categoryTotals.get(categoryId) ?? 0;
+        const percentage =
+          totalAmount > 0 ? Math.round((amount / totalAmount) * 1000) / 10 : 0;
+
+        return {
+          categoryId,
+          categoryName: category?.name ?? "不明なカテゴリ",
+          categoryIcon: category?.icon ?? "❓",
+          amount,
+          percentage,
+        };
+      })
+      .sort((a, b) => b.amount - a.amount);
+
+    return {
+      year: args.year,
+      totalAmount,
+      breakdown,
+    };
+  },
+});
+
+/**
  * 月別支出推移
  */
 export const getMonthlyTrend = authQuery({

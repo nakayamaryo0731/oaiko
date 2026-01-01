@@ -7,7 +7,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { GroupDetail } from "@/components/groups/GroupDetail";
 import { GroupDetailSkeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { Settings, ShoppingCart } from "lucide-react";
+import { Settings, ShoppingCart, BarChart3 } from "lucide-react";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -76,6 +76,12 @@ export default function GroupDetailPage({ params }: PageProps) {
         <h1 className="font-bold text-xl text-slate-800 flex-1">
           {detail.group.name}
         </h1>
+        <Link
+          href={`/groups/${detail.group._id}/analytics`}
+          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <BarChart3 className="h-5 w-5 text-slate-600" />
+        </Link>
         <Link
           href={`/groups/${detail.group._id}/shopping`}
           className="p-2 hover:bg-slate-100 rounded-lg transition-colors"

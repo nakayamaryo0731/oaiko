@@ -13,9 +13,7 @@ import {
   SettlementHistory,
   PeriodNavigator,
 } from "@/components/settlements";
-import { AnalyticsSection } from "@/components/analytics";
-
-type TabType = "expenses" | "settlement" | "analytics";
+type TabType = "expenses" | "settlement";
 
 type GroupDetailProps = {
   group: {
@@ -201,18 +199,6 @@ export function GroupDetail({ group }: GroupDetailProps) {
           >
             精算
           </button>
-          <button
-            role="tab"
-            aria-selected={activeTab === "analytics"}
-            onClick={() => setActiveTab("analytics")}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-              activeTab === "analytics"
-                ? "text-blue-600 border-b-2 border-blue-500"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
-          >
-            分析
-          </button>
         </div>
       </div>
 
@@ -244,14 +230,6 @@ export function GroupDetail({ group }: GroupDetailProps) {
             <SettlementHistory groupId={group._id} />
           </div>
         </div>
-      )}
-
-      {activeTab === "analytics" && (
-        <AnalyticsSection
-          groupId={group._id}
-          year={displayYear}
-          month={displayMonth}
-        />
       )}
 
       {/* 支出記録ボタン */}
