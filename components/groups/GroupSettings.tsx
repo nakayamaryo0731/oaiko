@@ -17,6 +17,7 @@ import {
   X,
   Home,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 
 type Category = {
@@ -324,6 +325,38 @@ export function GroupSettings({
           </div>
           <ChevronRight className="h-5 w-5 text-slate-400" />
         </Link>
+      </section>
+
+      {/* プラン管理 */}
+      <section className="bg-white border border-slate-200 rounded-lg">
+        <Link
+          href="/pricing"
+          className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"
+        >
+          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+            <CreditCard className="h-5 w-5 text-slate-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-slate-800">プラン・お支払い</p>
+            <p className="text-sm text-slate-500">Premiumプランの確認・変更</p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-slate-400" />
+        </Link>
+      </section>
+
+      {/* 法的情報 */}
+      <section className="pt-4">
+        <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
+          <Link href="/privacy" className="hover:text-slate-700">
+            プライバシーポリシー
+          </Link>
+          <Link href="/terms" className="hover:text-slate-700">
+            利用規約
+          </Link>
+          <Link href="/legal/tokushoho" className="hover:text-slate-700">
+            特定商取引法に基づく表記
+          </Link>
+        </div>
       </section>
     </div>
   );

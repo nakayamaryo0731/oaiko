@@ -104,7 +104,7 @@ export function GroupList() {
             href="/pricing"
             className="text-sm text-slate-500 hover:text-slate-700"
           >
-            Proプラン・料金について →
+            Premiumプラン・料金について →
           </Link>
         </div>
       </div>

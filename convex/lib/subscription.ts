@@ -16,7 +16,7 @@ export const FREE_PLAN_LIMITS = {
 export async function getUserPlan(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
-): Promise<"free" | "pro"> {
+): Promise<"free" | "premium"> {
   const subscription = await ctx.db
     .query("subscriptions")
     .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -26,37 +26,42 @@ export async function getUserPlan(
     return "free";
   }
 
-  // active または trialing 状態で、かつ有効期限内ならpro
+  // active または trialing 状態で、かつ有効期限内ならpremium
   if (
     (subscription.status === "active" || subscription.status === "trialing") &&
-    subscription.plan === "pro"
+    subscription.plan === "premium"
   ) {
-    return "pro";
+    return "premium";
   }
 
-  // canceled でも期間終了まではpro
+  // canceled でも期間終了まではpremium
   if (
     subscription.status === "canceled" &&
-    subscription.plan === "pro" &&
+    subscription.plan === "premium" &&
     subscription.currentPeriodEnd &&
     subscription.currentPeriodEnd > Date.now()
   ) {
-    return "pro";
+    return "premium";
   }
 
   return "free";
 }
 
 /**
- * Proプランかどうかを確認
+ * プレミアムプランかどうかを確認
  */
-export async function isPro(
+export async function isPremium(
   ctx: QueryCtx | MutationCtx,
   userId: Id<"users">,
 ): Promise<boolean> {
   const plan = await getUserPlan(ctx, userId);
-  return plan === "pro";
+  return plan === "premium";
 }
+
+/**
+ * @deprecated isPremium を使用してください
+ */
+export const isPro = isPremium;
 
 // グループ数・メンバー数の制限は廃止（同棲カップル向けアプリのため不要）
 

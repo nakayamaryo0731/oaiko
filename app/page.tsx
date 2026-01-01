@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import { useConvexAuth, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { GroupList } from "@/components/groups";
 import { GroupListSkeleton } from "@/components/ui/skeleton";
 import { AppHeader } from "@/components/ui/AppHeader";
+import { LandingPage } from "@/components/landing";
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -53,35 +53,18 @@ export default function Home() {
     );
   }
 
+  // 未ログインユーザーにはLPを表示
+  if (!isAuthenticated) {
+    return <LandingPage />;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
-      <AppHeader rightElement={isAuthenticated ? <UserButton /> : undefined} />
+      <AppHeader rightElement={<UserButton />} />
 
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto">
-          {isAuthenticated && isUserReady ? (
-            <GroupList />
-          ) : isAuthenticated ? (
-            <GroupListSkeleton />
-          ) : (
-            <div className="text-center py-12">
-              <h2 className="text-2xl font-bold text-slate-800 mb-4">
-                おあいこ
-              </h2>
-              <p className="text-slate-600 mb-6">
-                割り勘・傾斜折半ができる共有家計簿
-              </p>
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-                <p className="text-slate-600">ログインしてください。</p>
-              </div>
-              <Link
-                href="/pricing"
-                className="text-sm text-slate-500 hover:text-slate-700"
-              >
-                料金プランを見る →
-              </Link>
-            </div>
-          )}
+          {isUserReady ? <GroupList /> : <GroupListSkeleton />}
         </div>
       </main>
     </div>

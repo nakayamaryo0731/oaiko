@@ -117,7 +117,7 @@ async function handleCheckoutSessionCompleted(
     userId: userId as Id<"users">,
     stripeCustomerId: session.customer as string,
     stripeSubscriptionId: subscriptionId,
-    plan: "pro" as const,
+    plan: "premium" as const,
     status: mapSubscriptionStatus(subscriptionResponse.status),
     currentPeriodStart: subscriptionResponse.current_period_start * 1000,
     currentPeriodEnd: subscriptionResponse.current_period_end * 1000,

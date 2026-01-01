@@ -22,7 +22,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPrice, setSelectedPrice] = useState<PriceType>("yearly");
 
-  const isPro = subscription?.plan === "pro";
+  const isPremium = subscription?.plan === "premium";
 
   const handleCheckout = async (priceType: PriceType) => {
     if (!isAuthenticated) {
@@ -82,7 +82,7 @@ export default function PricingPage() {
             new URLSearchParams(window.location.search).get("success") && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-green-800 text-center font-medium">
-                  Proプランへのアップグレードありがとうございます！
+                  Premiumプランへのアップグレードありがとうございます！
                 </p>
               </div>
             )}
@@ -94,10 +94,10 @@ export default function PricingPage() {
                 <div>
                   <p className="text-sm text-slate-500">現在のプラン</p>
                   <p className="font-bold text-slate-800">
-                    {subscription.plan === "pro" ? "Pro" : "Free"}
+                    {subscription.plan === "premium" ? "Premium" : "Free"}
                   </p>
                 </div>
-                {subscription.plan === "pro" && (
+                {subscription.plan === "premium" && (
                   <div className="text-right">
                     {subscription.currentPeriodEnd && (
                       <p className="text-xs text-slate-500">
@@ -117,7 +117,7 @@ export default function PricingPage() {
           )}
 
           {/* プラン切り替えトグル（Freeユーザーのみ） */}
-          {!isPro && (
+          {!isPremium && (
             <div className="flex justify-center mb-6">
               <div className="bg-white border border-slate-200 rounded-full p-1 flex">
                 <button
@@ -151,7 +151,7 @@ export default function PricingPage() {
           <div className="space-y-4">
             {/* Free プラン */}
             <div
-              className={`bg-white border rounded-xl p-6 ${!isPro ? "border-slate-200" : "border-slate-100 opacity-60"}`}
+              className={`bg-white border rounded-xl p-6 ${!isPremium ? "border-slate-200" : "border-slate-100 opacity-60"}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-slate-800">Free</h2>
@@ -175,18 +175,18 @@ export default function PricingPage() {
                   <span>基本的な分析グラフ</span>
                 </li>
               </ul>
-              {!isPro && (
+              {!isPremium && (
                 <div className="text-center text-sm text-slate-500">
                   現在ご利用中
                 </div>
               )}
             </div>
 
-            {/* Pro プラン */}
+            {/* Premium プラン */}
             <div
-              className={`bg-white border-2 rounded-xl p-6 relative ${isPro ? "border-emerald-500" : "border-slate-800"}`}
+              className={`bg-white border-2 rounded-xl p-6 relative ${isPremium ? "border-emerald-500" : "border-slate-800"}`}
             >
-              {!isPro && (
+              {!isPremium && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <span className="bg-slate-800 text-white text-xs font-medium px-3 py-1 rounded-full">
                     おすすめ
@@ -194,7 +194,7 @@ export default function PricingPage() {
                 </div>
               )}
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-slate-800">Pro</h2>
+                <h2 className="text-xl font-bold text-slate-800">Premium</h2>
                 <div className="text-right">
                   {selectedPrice === "monthly" ? (
                     <>
@@ -232,7 +232,7 @@ export default function PricingPage() {
                   <span>広告非表示</span>
                 </li>
               </ul>
-              {isPro ? (
+              {isPremium ? (
                 <button
                   onClick={handleManageSubscription}
                   disabled={loading}
@@ -249,7 +249,7 @@ export default function PricingPage() {
                   {loading
                     ? "処理中..."
                     : isAuthenticated
-                      ? "Proにアップグレード"
+                      ? "Premiumにアップグレード"
                       : "ログインしてアップグレード"}
                 </button>
               )}
@@ -262,7 +262,7 @@ export default function PricingPage() {
             <div className="space-y-3">
               <FaqItem
                 question="いつでも解約できますか？"
-                answer="はい、いつでも解約できます。解約後も期間終了まではProプランをご利用いただけます。"
+                answer="はい、いつでも解約できます。解約後も期間終了まではPremiumプランをご利用いただけます。"
               />
               <FaqItem
                 question="支払い方法は何が使えますか？"
