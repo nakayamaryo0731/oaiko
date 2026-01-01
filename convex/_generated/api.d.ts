@@ -39,6 +39,7 @@ import type * as invitations from "../invitations.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_authorization from "../lib/authorization.js";
 import type * as lib_dataHelpers from "../lib/dataHelpers.js";
+import type * as lib_domainError from "../lib/domainError.js";
 import type * as lib_enrichment from "../lib/enrichment.js";
 import type * as lib_expenseHelper from "../lib/expenseHelper.js";
 import type * as lib_groupHelper from "../lib/groupHelper.js";
@@ -89,6 +90,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/authorization": typeof lib_authorization;
   "lib/dataHelpers": typeof lib_dataHelpers;
+  "lib/domainError": typeof lib_domainError;
   "lib/enrichment": typeof lib_enrichment;
   "lib/expenseHelper": typeof lib_expenseHelper;
   "lib/groupHelper": typeof lib_groupHelper;
