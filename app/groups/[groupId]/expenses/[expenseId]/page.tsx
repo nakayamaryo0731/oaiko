@@ -197,6 +197,7 @@ export default function ExpensePage({ params }: PageProps) {
       userId: s.userId,
       amount: s.amount,
     })),
+    tagIds: expense.tags?.map((t) => t._id),
   };
 
   return (

@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { CategoryPieChart } from "@/components/analytics/CategoryPieChart";
 import { MonthlyTrendChart } from "@/components/analytics/MonthlyTrendChart";
+import { TagBreakdownChart } from "@/components/analytics/TagBreakdownChart";
 import { ChartSkeleton } from "@/components/analytics/ChartSkeleton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatDateISO, formatPeriod } from "@/lib/formatters";
@@ -136,13 +137,13 @@ export default function AnalyticsPage({ params }: PageProps) {
       if (e.key === "ArrowLeft") {
         setViewType("month");
       } else if (e.key === "ArrowRight") {
-        setViewType("year");
+        if (isPremium) setViewType("year");
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [isPremium]);
 
   // 年次ナビゲーション
   const canGoNextYear = activeYearForYearly < currentPeriod.year;
@@ -197,6 +198,29 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
+  // 月次タグ別データ（Premium）
+  const monthlyTagBreakdown = useQuery(
+    api.analytics.getTagBreakdown,
+    group && isPremium
+      ? {
+          groupId: groupId as Id<"groups">,
+          year: activeYear,
+          month: activeMonth,
+        }
+      : "skip",
+  );
+
+  // 年次タグ別データ（Premium）
+  const yearlyTagBreakdown = useQuery(
+    api.analytics.getYearlyTagBreakdown,
+    group && isPremium
+      ? {
+          groupId: groupId as Id<"groups">,
+          year: activeYearForYearly,
+        }
+      : "skip",
+  );
+
   if (group === undefined) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -212,6 +236,8 @@ export default function AnalyticsPage({ params }: PageProps) {
   }
 
   const categoryData = viewType === "month" ? monthlyCategory : yearlyCategory;
+  const tagData =
+    viewType === "month" ? monthlyTagBreakdown : yearlyTagBreakdown;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -219,7 +245,7 @@ export default function AnalyticsPage({ params }: PageProps) {
 
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto space-y-6">
-          {/* 月/年切り替えタブ */}
+          {/* 月次/年次 切り替えタブ */}
           <div className="flex bg-slate-100 rounded-lg p-1">
             <button
               onClick={() => setViewType("month")}
@@ -253,7 +279,7 @@ export default function AnalyticsPage({ params }: PageProps) {
               <Link href="/pricing" className="text-blue-600 hover:underline">
                 Premiumプラン
               </Link>
-              で年次分析・月別推移グラフが利用可能
+              で年次分析・タグ別分析が利用可能
             </p>
           )}
 
@@ -310,7 +336,7 @@ export default function AnalyticsPage({ params }: PageProps) {
             </div>
           )}
 
-          {/* カテゴリ別円グラフ */}
+          {/* カテゴリ別支出 */}
           <section>
             <h3 className="text-sm font-medium text-slate-700 mb-3">
               カテゴリ別支出
@@ -325,7 +351,46 @@ export default function AnalyticsPage({ params }: PageProps) {
             )}
           </section>
 
-          {/* 推移グラフ（年次のみ） */}
+          {/* タグ別支出（Premium） */}
+          {isPremium && (
+            <section>
+              <h3 className="text-sm font-medium text-slate-700 mb-3">
+                タグ別支出
+              </h3>
+              {tagData === undefined ? (
+                <ChartSkeleton type="pie" />
+              ) : (
+                <TagBreakdownChart
+                  data={tagData.breakdown}
+                  totalAmount={tagData.totalAmount}
+                  untaggedAmount={tagData.untaggedAmount}
+                />
+              )}
+            </section>
+          )}
+
+          {/* タグ別へのPremium誘導（非Premium） */}
+          {!isPremium && (
+            <section>
+              <h3 className="text-sm font-medium text-slate-700 mb-3 flex items-center gap-1">
+                タグ別支出
+                <Lock className="h-3 w-3 text-slate-400" />
+              </h3>
+              <div className="bg-slate-50 rounded-xl p-6 text-center">
+                <p className="text-sm text-slate-500">
+                  <Link
+                    href="/pricing"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Premiumプラン
+                  </Link>
+                  でタグ機能が利用可能
+                </p>
+              </div>
+            </section>
+          )}
+
+          {/* 月別推移（年次のみ） */}
           {viewType === "year" && (
             <section>
               <h3 className="text-sm font-medium text-slate-700 mb-3">

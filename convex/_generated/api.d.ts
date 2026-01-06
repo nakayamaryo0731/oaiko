@@ -33,6 +33,9 @@ import type * as domain_shared_money from "../domain/shared/money.js";
 import type * as domain_shopping_index from "../domain/shopping/index.js";
 import type * as domain_shopping_rules from "../domain/shopping/rules.js";
 import type * as domain_shopping_types from "../domain/shopping/types.js";
+import type * as domain_tag_index from "../domain/tag/index.js";
+import type * as domain_tag_types from "../domain/tag/types.js";
+import type * as domain_tag_validation from "../domain/tag/validation.js";
 import type * as expenses from "../expenses.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
@@ -47,11 +50,13 @@ import type * as lib_logger from "../lib/logger.js";
 import type * as lib_presetCategories from "../lib/presetCategories.js";
 import type * as lib_seedData from "../lib/seedData.js";
 import type * as lib_subscription from "../lib/subscription.js";
+import type * as lib_tagAnalyticsHelper from "../lib/tagAnalyticsHelper.js";
 import type * as lib_validators from "../lib/validators.js";
 import type * as seed from "../seed.js";
 import type * as settlements from "../settlements.js";
 import type * as shoppingList from "../shoppingList.js";
 import type * as subscriptions from "../subscriptions.js";
+import type * as tags from "../tags.js";
 import type * as users from "../users.js";
 
 import type {
@@ -86,6 +91,9 @@ declare const fullApi: ApiFromModules<{
   "domain/shopping/index": typeof domain_shopping_index;
   "domain/shopping/rules": typeof domain_shopping_rules;
   "domain/shopping/types": typeof domain_shopping_types;
+  "domain/tag/index": typeof domain_tag_index;
+  "domain/tag/types": typeof domain_tag_types;
+  "domain/tag/validation": typeof domain_tag_validation;
   expenses: typeof expenses;
   groups: typeof groups;
   http: typeof http;
@@ -100,11 +108,13 @@ declare const fullApi: ApiFromModules<{
   "lib/presetCategories": typeof lib_presetCategories;
   "lib/seedData": typeof lib_seedData;
   "lib/subscription": typeof lib_subscription;
+  "lib/tagAnalyticsHelper": typeof lib_tagAnalyticsHelper;
   "lib/validators": typeof lib_validators;
   seed: typeof seed;
   settlements: typeof settlements;
   shoppingList: typeof shoppingList;
   subscriptions: typeof subscriptions;
+  tags: typeof tags;
   users: typeof users;
 }>;
 

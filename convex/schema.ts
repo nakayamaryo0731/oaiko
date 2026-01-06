@@ -144,6 +144,32 @@ export default defineSchema({
   // 用途: グループの買い物リスト（未購入: purchasedAt=null、履歴: purchasedAt!=null）
 
   // ========================================
+  // タグ
+  // ========================================
+  tags: defineTable({
+    groupId: v.id("groups"),
+    name: v.string(),
+    color: v.string(), // Tailwind色名: "red", "blue", "green", etc.
+    lastUsedAt: v.optional(v.number()), // 最近使用日時（上位表示用）
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_group", ["groupId"])
+    .index("by_group_last_used", ["groupId", "lastUsedAt"]),
+  // 用途: グループのタグ一覧、最近使用順での取得
+
+  // ========================================
+  // 支出タグ（中間テーブル）
+  // ========================================
+  expenseTags: defineTable({
+    expenseId: v.id("expenses"),
+    tagId: v.id("tags"),
+  })
+    .index("by_expense", ["expenseId"])
+    .index("by_tag", ["tagId"]),
+  // 用途: 支出のタグ取得、タグの使用状況確認
+
+  // ========================================
   // サブスクリプション
   // ========================================
   subscriptions: defineTable({
