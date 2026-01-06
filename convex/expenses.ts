@@ -8,6 +8,7 @@ import { getGroupMemberIds } from "./lib/groupHelper";
 import { getExpensesByPeriod } from "./lib/expenseHelper";
 import { getOrThrow } from "./lib/dataHelpers";
 import { enrichExpenseList, FALLBACK } from "./lib/enrichment";
+import { canUseTags } from "./lib/subscription";
 import {
   calculateEqualSplit,
   calculateRatioSplit,
@@ -24,6 +25,7 @@ import {
   getSettlementPeriod,
   getSettlementYearMonthForDate,
 } from "./domain/settlement";
+import { TAG_LIMITS } from "./domain/tag";
 
 const splitDetailsValidator = v.union(
   v.object({
@@ -52,6 +54,7 @@ export const create = authMutation({
     memo: v.optional(v.string()),
     splitDetails: v.optional(splitDetailsValidator),
     shoppingItemIds: v.optional(v.array(v.id("shoppingItems"))),
+    tagIds: v.optional(v.array(v.id("tags"))),
   },
   handler: async (ctx, args) => {
     validateExpenseInput({
@@ -168,12 +171,52 @@ export const create = authMutation({
       });
     }
 
+    // タグの紐付け
+    if (args.tagIds && args.tagIds.length > 0) {
+      // Premium機能チェック
+      const canUse = await canUseTags(ctx, ctx.user._id);
+      if (!canUse) {
+        throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
+      }
+
+      // タグ数上限チェック
+      if (args.tagIds.length > TAG_LIMITS.MAX_TAGS_PER_EXPENSE) {
+        throw new ConvexError(
+          `1つの支出につき最大${TAG_LIMITS.MAX_TAGS_PER_EXPENSE}個のタグを設定できます`,
+        );
+      }
+
+      // タグの存在確認とグループ所属確認
+      const now = Date.now();
+      for (const tagId of args.tagIds) {
+        const tag = await ctx.db.get(tagId);
+        if (!tag || tag.groupId !== args.groupId) {
+          throw new ConvexError("無効なタグが指定されました");
+        }
+
+        // expenseTagsに追加
+        await ctx.db.insert("expenseTags", {
+          expenseId,
+          tagId,
+        });
+
+        // タグのlastUsedAtを更新
+        await ctx.db.patch(tagId, { lastUsedAt: now });
+      }
+
+      ctx.logger.info("TAG", "tags_linked_to_expense", {
+        expenseId,
+        tagIds: args.tagIds,
+      });
+    }
+
     ctx.logger.audit("EXPENSE", "created", {
       expenseId,
       groupId: args.groupId,
       amount: args.amount,
       splitMethod: splitDetails.method,
       categoryName: category.name,
+      tagCount: args.tagIds?.length ?? 0,
     });
 
     return expenseId;
@@ -243,15 +286,26 @@ export const getById = authQuery({
     // 認可チェック
     await requireGroupMember(ctx, expense.groupId);
 
-    const [category, payer, createdByUser, splits] = await Promise.all([
-      ctx.db.get(expense.categoryId),
-      ctx.db.get(expense.paidBy),
-      ctx.db.get(expense.createdBy),
-      ctx.db
-        .query("expenseSplits")
-        .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
-        .collect(),
-    ]);
+    const [category, payer, createdByUser, splits, expenseTags] =
+      await Promise.all([
+        ctx.db.get(expense.categoryId),
+        ctx.db.get(expense.paidBy),
+        ctx.db.get(expense.createdBy),
+        ctx.db
+          .query("expenseSplits")
+          .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
+          .collect(),
+        ctx.db
+          .query("expenseTags")
+          .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
+          .collect(),
+      ]);
+
+    // タグ情報を取得
+    const tags = await Promise.all(
+      expenseTags.map((et) => ctx.db.get(et.tagId)),
+    );
+    const validTags = tags.filter((t) => t !== null);
 
     // 精算済みチェック
     const isSettled = await isExpenseSettled(
@@ -305,6 +359,11 @@ export const getById = authQuery({
       createdBy: createdByUser
         ? { _id: createdByUser._id, displayName: createdByUser.displayName }
         : null,
+      tags: validTags.map((t) => ({
+        _id: t._id,
+        name: t.name,
+        color: t.color,
+      })),
       createdAt: expense.createdAt,
       updatedAt: expense.updatedAt,
     };
@@ -391,6 +450,7 @@ export const update = authMutation({
     title: v.optional(v.string()),
     memo: v.optional(v.string()),
     splitDetails: v.optional(splitDetailsValidator),
+    tagIds: v.optional(v.array(v.id("tags"))),
   },
   handler: async (ctx, args) => {
     const expense = await getOrThrow(
@@ -502,12 +562,56 @@ export const update = authMutation({
       ),
     );
 
+    // タグの更新（tagIdsが指定された場合のみ）
+    if (args.tagIds !== undefined) {
+      // 既存のexpenseTagsを削除
+      const existingExpenseTags = await ctx.db
+        .query("expenseTags")
+        .withIndex("by_expense", (q) => q.eq("expenseId", args.expenseId))
+        .collect();
+
+      await Promise.all(existingExpenseTags.map((et) => ctx.db.delete(et._id)));
+
+      // 新しいタグを追加
+      if (args.tagIds.length > 0) {
+        // Premium機能チェック
+        const canUse = await canUseTags(ctx, ctx.user._id);
+        if (!canUse) {
+          throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
+        }
+
+        // タグ数上限チェック
+        if (args.tagIds.length > TAG_LIMITS.MAX_TAGS_PER_EXPENSE) {
+          throw new ConvexError(
+            `1つの支出につき最大${TAG_LIMITS.MAX_TAGS_PER_EXPENSE}個のタグを設定できます`,
+          );
+        }
+
+        const now = Date.now();
+        for (const tagId of args.tagIds) {
+          const tag = await ctx.db.get(tagId);
+          if (!tag || tag.groupId !== expense.groupId) {
+            throw new ConvexError("無効なタグが指定されました");
+          }
+
+          await ctx.db.insert("expenseTags", {
+            expenseId: args.expenseId,
+            tagId,
+          });
+
+          // タグのlastUsedAtを更新
+          await ctx.db.patch(tagId, { lastUsedAt: now });
+        }
+      }
+    }
+
     ctx.logger.audit("EXPENSE", "updated", {
       expenseId: args.expenseId,
       groupId: expense.groupId,
       amount: args.amount,
       splitMethod: splitDetails.method,
       categoryName: category.name,
+      tagCount: args.tagIds?.length,
     });
 
     return args.expenseId;
@@ -554,6 +658,14 @@ export const remove = authMutation({
       .collect();
 
     await Promise.all(splits.map((split) => ctx.db.delete(split._id)));
+
+    // 関連するexpenseTagsを削除
+    const expenseTags = await ctx.db
+      .query("expenseTags")
+      .withIndex("by_expense", (q) => q.eq("expenseId", args.expenseId))
+      .collect();
+
+    await Promise.all(expenseTags.map((et) => ctx.db.delete(et._id)));
 
     // 買い物リストアイテムの連携解除（購入済み状態は維持）
     const linkedItems = await ctx.db

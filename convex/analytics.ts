@@ -4,6 +4,8 @@ import { requireGroupMember } from "./lib/authorization";
 import { getSettlementPeriod, getSettlementLabel } from "./domain/settlement";
 import { getExpensesByPeriod } from "./lib/expenseHelper";
 import { getOrThrow } from "./lib/dataHelpers";
+import { canUseTags } from "./lib/subscription";
+import { calculateTagBreakdown } from "./lib/tagAnalyticsHelper";
 import type { Id } from "./_generated/dataModel";
 
 /**
@@ -227,5 +229,115 @@ export const getMonthlyTrend = authQuery({
     }
 
     return { trend };
+  },
+});
+
+/**
+ * タグ別支出集計（Premium機能）
+ */
+export const getTagBreakdown = authQuery({
+  args: {
+    groupId: v.id("groups"),
+    year: v.number(),
+    month: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // 認可チェック
+    await requireGroupMember(ctx, args.groupId);
+
+    // Premium機能チェック
+    const canUse = await canUseTags(ctx, ctx.user._id);
+    if (!canUse) {
+      return {
+        period: { startDate: "", endDate: "" },
+        totalAmount: 0,
+        breakdown: [],
+        untaggedAmount: 0,
+        isPremium: false,
+      };
+    }
+
+    const group = await getOrThrow(
+      ctx,
+      args.groupId,
+      "グループが見つかりません",
+    );
+
+    const period = getSettlementPeriod(group.closingDay, args.year, args.month);
+    const expenses = await getExpensesByPeriod(ctx, args.groupId, period);
+    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    const { breakdown, untaggedAmount } = await calculateTagBreakdown(
+      ctx,
+      expenses,
+      totalAmount,
+    );
+
+    return {
+      period: {
+        startDate: period.startDate,
+        endDate: period.endDate,
+      },
+      totalAmount,
+      breakdown,
+      untaggedAmount,
+      isPremium: true,
+    };
+  },
+});
+
+/**
+ * 年間タグ別支出集計（Premium機能）
+ */
+export const getYearlyTagBreakdown = authQuery({
+  args: {
+    groupId: v.id("groups"),
+    year: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // 認可チェック
+    await requireGroupMember(ctx, args.groupId);
+
+    // Premium機能チェック
+    const canUse = await canUseTags(ctx, ctx.user._id);
+    if (!canUse) {
+      return {
+        year: args.year,
+        totalAmount: 0,
+        breakdown: [],
+        untaggedAmount: 0,
+        isPremium: false,
+      };
+    }
+
+    // 年の開始日と終了日を計算
+    const startDate = `${args.year}-01-01`;
+    const endDate = `${args.year}-12-31`;
+
+    // 年間の支出を取得
+    const allExpenses = await ctx.db
+      .query("expenses")
+      .withIndex("by_group_and_date", (q) => q.eq("groupId", args.groupId))
+      .collect();
+
+    const expenses = allExpenses.filter(
+      (e) => e.date >= startDate && e.date <= endDate,
+    );
+
+    const totalAmount = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+    const { breakdown, untaggedAmount } = await calculateTagBreakdown(
+      ctx,
+      expenses,
+      totalAmount,
+    );
+
+    return {
+      year: args.year,
+      totalAmount,
+      breakdown,
+      untaggedAmount,
+      isPremium: true,
+    };
   },
 });

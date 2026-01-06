@@ -105,3 +105,13 @@ export async function canExportData(
 ): Promise<boolean> {
   return isPremium(ctx, userId);
 }
+
+/**
+ * タグ機能にアクセスできるかどうかを確認
+ */
+export async function canUseTags(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+): Promise<boolean> {
+  return isPremium(ctx, userId);
+}

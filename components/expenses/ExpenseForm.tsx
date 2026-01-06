@@ -11,6 +11,7 @@ import {
   type SplitDetails,
 } from "./SplitMethodSelector";
 import { ShoppingItemSelector } from "./ShoppingItemSelector";
+import { TagSelector } from "./TagSelector";
 
 type Category = {
   _id: Id<"categories">;
@@ -37,6 +38,7 @@ type InitialData = {
   amounts?: { userId: Id<"users">; amount: number }[];
   bearerId?: Id<"users">;
   splits?: { userId: Id<"users">; amount: number }[];
+  tagIds?: Id<"tags">[];
 };
 
 type ExpenseFormProps = {
@@ -139,6 +141,9 @@ export function ExpenseForm({
   );
   const [shoppingItemIds, setShoppingItemIds] = useState<Id<"shoppingItems">[]>(
     [],
+  );
+  const [tagIds, setTagIds] = useState<Id<"tags">[]>(
+    isEditMode && initialData.tagIds ? initialData.tagIds : [],
   );
 
   const handleMethodChange = (newMethod: SplitMethod) => {
@@ -285,6 +290,7 @@ export function ExpenseForm({
           date,
           title: title.trim() || undefined,
           splitDetails,
+          tagIds: tagIds.length > 0 ? tagIds : [],
         });
       } else {
         await createExpense({
@@ -297,6 +303,7 @@ export function ExpenseForm({
           splitDetails,
           shoppingItemIds:
             shoppingItemIds.length > 0 ? shoppingItemIds : undefined,
+          tagIds: tagIds.length > 0 ? tagIds : undefined,
         });
       }
 
@@ -456,6 +463,15 @@ export function ExpenseForm({
           isPremium={isPremium}
         />
       </div>
+
+      {/* タグ選択 */}
+      <TagSelector
+        groupId={groupId}
+        selectedTagIds={tagIds}
+        onSelectionChange={setTagIds}
+        isPremium={isPremium}
+        disabled={isLoading}
+      />
 
       {/* 買い物リスト連携（新規作成時のみ） */}
       {!isEditMode && (
