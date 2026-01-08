@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 
 type DeleteCategoryDialogProps = {
   open: boolean;
@@ -29,39 +21,21 @@ export function DeleteCategoryDialog({
   isDeleting,
 }: DeleteCategoryDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>カテゴリを削除</DialogTitle>
-          <DialogDescription>
-            このカテゴリを削除してもよろしいですか？
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-4">
-          <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
-            <span className="text-xl">{category.icon}</span>
-            <span className="font-medium">{category.name}</span>
-          </div>
+    <ConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="カテゴリを削除"
+      description="このカテゴリを削除してもよろしいですか？"
+      onConfirm={onConfirm}
+      isLoading={isDeleting}
+      confirmLabel="削除する"
+    >
+      <div className="py-4">
+        <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg">
+          <span className="text-xl">{category.icon}</span>
+          <span className="font-medium">{category.name}</span>
         </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isDeleting}
-          >
-            キャンセル
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "削除中..." : "削除する"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </ConfirmationDialog>
   );
 }

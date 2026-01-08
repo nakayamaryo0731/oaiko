@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
 import { formatDateJapanese, formatAmount } from "@/lib/formatters";
 
 type DeleteExpenseDialogProps = {
@@ -32,51 +24,33 @@ export function DeleteExpenseDialog({
   isDeleting,
 }: DeleteExpenseDialogProps) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>この支出を削除しますか？</DialogTitle>
-          <DialogDescription>
-            削除すると元に戻すことはできません。
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="bg-slate-50 rounded-lg p-4 my-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-slate-200">
-              <span className="text-lg">{expense.categoryIcon}</span>
+    <ConfirmationDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="この支出を削除しますか？"
+      description="削除すると元に戻すことはできません。"
+      onConfirm={onConfirm}
+      isLoading={isDeleting}
+      confirmLabel="削除する"
+    >
+      <div className="bg-slate-50 rounded-lg p-4 my-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center border border-slate-200">
+            <span className="text-lg">{expense.categoryIcon}</span>
+          </div>
+          <div>
+            <div className="font-medium text-slate-800">
+              {expense.categoryName}
             </div>
-            <div>
-              <div className="font-medium text-slate-800">
-                {expense.categoryName}
-              </div>
-              <div className="text-sm text-slate-500">
-                {formatDateJapanese(expense.date)}
-              </div>
-            </div>
-            <div className="ml-auto font-semibold text-slate-800">
-              ¥{formatAmount(expense.amount)}
+            <div className="text-sm text-slate-500">
+              {formatDateJapanese(expense.date)}
             </div>
           </div>
+          <div className="ml-auto font-semibold text-slate-800">
+            ¥{formatAmount(expense.amount)}
+          </div>
         </div>
-
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isDeleting}
-          >
-            キャンセル
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "削除中..." : "削除する"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </ConfirmationDialog>
   );
 }
