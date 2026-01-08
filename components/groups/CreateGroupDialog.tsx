@@ -13,48 +13,35 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useFormDialog } from "@/hooks/useFormDialog";
 
 type CreateGroupDialogProps = {
   children: React.ReactNode;
 };
 
 export function CreateGroupDialog({ children }: CreateGroupDialogProps) {
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const { open, handleOpenChange, isLoading, error, execute } = useFormDialog({
+    onReset: () => {
+      setName("");
+      setDescription("");
+    },
+  });
 
   const createGroup = useMutation(api.groups.create);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || isSubmitting) return;
+    if (!name.trim() || isLoading) return;
 
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      await createGroup({
+    await execute(() =>
+      createGroup({
         name: name.trim(),
         description: description.trim() || undefined,
-      });
-      setOpen(false);
-      setName("");
-      setDescription("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "作成に失敗しました");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      // ダイアログを閉じる時にリセット
-      setError(null);
-    }
+      }),
+    );
   };
 
   return (
@@ -94,9 +81,9 @@ export function CreateGroupDialog({ children }: CreateGroupDialogProps) {
           <Button
             type="submit"
             className="w-full"
-            disabled={!name.trim() || isSubmitting}
+            disabled={!name.trim() || isLoading}
           >
-            {isSubmitting ? "作成中..." : "作成する"}
+            {isLoading ? "作成中..." : "作成する"}
           </Button>
         </form>
       </DialogContent>

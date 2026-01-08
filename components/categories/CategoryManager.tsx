@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CategoryForm } from "./CategoryForm";
 import { DeleteCategoryDialog } from "./DeleteCategoryDialog";
+import { useFormDialog } from "@/hooks/useFormDialog";
 
 type Category = {
   _id: Id<"categories">;
@@ -38,66 +39,50 @@ export function CategoryManager({ groupId, categories }: CategoryManagerProps) {
   const updateCategory = useMutation(api.categories.update);
   const removeCategory = useMutation(api.categories.remove);
 
-  const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"list" | "create" | "edit">("list");
   const [editingCategory, setEditingCategory] =
     useState<EditingCategory | null>(null);
   const [deletingCategory, setDeletingCategory] =
     useState<EditingCategory | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const { open, handleOpenChange, isLoading, error, setError, execute } =
+    useFormDialog({
+      onReset: () => {
+        setMode("list");
+        setEditingCategory(null);
+      },
+    });
 
   const presetCategories = categories.filter((c) => c.isPreset);
   const customCategories = categories.filter((c) => !c.isPreset);
 
   const handleCreate = async (name: string, icon: string) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await createCategory({ groupId, name, icon });
-      setMode("list");
-    } catch (err) {
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
+    await execute(() => createCategory({ groupId, name, icon }), {
+      closeOnSuccess: false,
+    });
+    setMode("list");
   };
 
   const handleUpdate = async (name: string, icon: string) => {
     if (!editingCategory) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      await updateCategory({ categoryId: editingCategory._id, name, icon });
-      setMode("list");
-      setEditingCategory(null);
-    } catch (err) {
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
+    await execute(
+      () => updateCategory({ categoryId: editingCategory._id, name, icon }),
+      { closeOnSuccess: false },
+    );
+    setMode("list");
+    setEditingCategory(null);
   };
 
   const handleDelete = async () => {
     if (!deletingCategory) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      await removeCategory({ categoryId: deletingCategory._id });
+    const result = await execute(
+      () => removeCategory({ categoryId: deletingCategory._id }),
+      { closeOnSuccess: false },
+    );
+    if (result.success) {
       setDeletingCategory(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "削除に失敗しました");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      setMode("list");
-      setEditingCategory(null);
-      setError(null);
+    } else if (result.error) {
+      setError(result.error);
     }
   };
 
