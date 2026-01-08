@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
+import { useFormDialog } from "@/hooks/useFormDialog";
 
 type InviteDialogProps = {
   groupId: Id<"groups">;
@@ -20,28 +21,30 @@ type InviteDialogProps = {
 };
 
 export function InviteDialog({ groupId, groupName }: InviteDialogProps) {
-  const [open, setOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  const { open, handleOpenChange, isLoading, error, execute } = useFormDialog({
+    onReset: () => {
+      setInviteUrl(null);
+      setCopied(false);
+    },
+  });
 
   const createInvitation = useMutation(api.groups.createInvitation);
 
   const handleCreateInvite = async () => {
-    setIsLoading(true);
-    setError(null);
+    const result = await execute(
+      async () => {
+        const invitation = await createInvitation({ groupId });
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/invite/${invitation.token}`;
+      },
+      { closeOnSuccess: false },
+    );
 
-    try {
-      const result = await createInvitation({ groupId });
-      const baseUrl = window.location.origin;
-      setInviteUrl(`${baseUrl}/invite/${result.token}`);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "招待リンクの作成に失敗しました",
-      );
-    } finally {
-      setIsLoading(false);
+    if (result.success && result.data) {
+      setInviteUrl(result.data);
     }
   };
 
@@ -81,16 +84,6 @@ export function InviteDialog({ groupId, groupName }: InviteDialogProps) {
       }
     } else {
       handleCopy();
-    }
-  };
-
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    if (!newOpen) {
-      // ダイアログを閉じる時にリセット
-      setInviteUrl(null);
-      setError(null);
-      setCopied(false);
     }
   };
 
