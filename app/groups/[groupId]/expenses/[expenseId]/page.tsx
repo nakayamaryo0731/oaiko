@@ -230,6 +230,7 @@ export default function ExpensePage({ params }: PageProps) {
             mode="edit"
             initialData={initialData}
             isPremium={isPremium}
+            linkedShoppingItems={expense.linkedShoppingItems}
           />
         </div>
       </main>

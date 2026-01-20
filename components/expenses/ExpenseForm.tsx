@@ -12,6 +12,7 @@ import {
 } from "./SplitMethodSelector";
 import { ShoppingItemSelector } from "./ShoppingItemSelector";
 import { TagSelector } from "./TagSelector";
+import { ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
 
 type Category = {
   _id: Id<"categories">;
@@ -48,6 +49,7 @@ type ExpenseFormProps = {
   mode?: "create" | "edit";
   initialData?: InitialData;
   isPremium?: boolean;
+  linkedShoppingItems?: { _id: Id<"shoppingItems">; name: string }[];
 };
 
 /**
@@ -64,6 +66,7 @@ export function ExpenseForm({
   mode = "create",
   initialData,
   isPremium = false,
+  linkedShoppingItems,
 }: ExpenseFormProps) {
   const router = useRouter();
   const createExpense = useMutation(api.expenses.create);
@@ -145,6 +148,7 @@ export function ExpenseForm({
   const [tagIds, setTagIds] = useState<Id<"tags">[]>(
     isEditMode && initialData.tagIds ? initialData.tagIds : [],
   );
+  const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
 
   const handleMethodChange = (newMethod: SplitMethod) => {
     setSplitMethod(newMethod);
@@ -480,6 +484,46 @@ export function ExpenseForm({
           selectedIds={shoppingItemIds}
           onSelectionChange={setShoppingItemIds}
         />
+      )}
+
+      {/* 連携した買い物リスト（編集時のみ） */}
+      {isEditMode && linkedShoppingItems && linkedShoppingItems.length > 0 && (
+        <div className="border border-blue-200 rounded-xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setIsShoppingListOpen(!isShoppingListOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4 text-blue-500" />
+              <span className="text-sm font-medium text-slate-700">
+                連携した買い物リスト
+              </span>
+              <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                {linkedShoppingItems.length}件
+              </span>
+            </div>
+            {isShoppingListOpen ? (
+              <ChevronUp className="h-4 w-4 text-slate-500" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-slate-500" />
+            )}
+          </button>
+
+          {isShoppingListOpen && (
+            <div className="divide-y divide-slate-100 bg-white">
+              {linkedShoppingItems.map((item) => (
+                <div
+                  key={item._id}
+                  className="flex items-center gap-3 px-4 py-3"
+                >
+                  <span className="text-slate-400">🛒</span>
+                  <span className="text-sm text-slate-700">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       {/* エラー表示 */}

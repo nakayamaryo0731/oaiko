@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import {
   formatTimestamp,
   getSplitMethodLabel,
 } from "@/lib/formatters";
+import { ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
 
 type ExpenseDetailProps = {
   expense: {
@@ -39,6 +41,10 @@ type ExpenseDetailProps = {
       _id: Id<"users">;
       displayName: string;
     } | null;
+    linkedShoppingItems?: {
+      _id: Id<"shoppingItems">;
+      name: string;
+    }[];
     createdAt: number;
     updatedAt: number;
   };
@@ -53,6 +59,8 @@ export function ExpenseDetail({
   onDelete,
   isDeleting,
 }: ExpenseDetailProps) {
+  const [isShoppingListOpen, setIsShoppingListOpen] = useState(false);
+
   return (
     <div className="space-y-6">
       {/* メイン情報 */}
@@ -121,6 +129,47 @@ export function ExpenseDetail({
           ))}
         </div>
       </div>
+
+      {/* 連携した買い物リスト */}
+      {expense.linkedShoppingItems &&
+        expense.linkedShoppingItems.length > 0 && (
+          <div className="border border-blue-200 rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setIsShoppingListOpen(!isShoppingListOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-medium text-slate-700">
+                  連携した買い物リスト
+                </span>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                  {expense.linkedShoppingItems.length}件
+                </span>
+              </div>
+              {isShoppingListOpen ? (
+                <ChevronUp className="h-4 w-4 text-slate-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-slate-500" />
+              )}
+            </button>
+
+            {isShoppingListOpen && (
+              <div className="divide-y divide-slate-100 bg-white">
+                {expense.linkedShoppingItems.map((item) => (
+                  <div
+                    key={item._id}
+                    className="flex items-center gap-3 px-4 py-3"
+                  >
+                    <span className="text-slate-400">🛒</span>
+                    <span className="text-sm text-slate-700">{item.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
       {/* メタ情報 */}
       <div className="text-xs text-slate-400 space-y-1">
