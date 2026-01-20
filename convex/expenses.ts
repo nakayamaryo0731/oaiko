@@ -286,20 +286,33 @@ export const getById = authQuery({
     // 認可チェック
     await requireGroupMember(ctx, expense.groupId);
 
-    const [category, payer, createdByUser, splits, expenseTags] =
-      await Promise.all([
-        ctx.db.get(expense.categoryId),
-        ctx.db.get(expense.paidBy),
-        ctx.db.get(expense.createdBy),
-        ctx.db
-          .query("expenseSplits")
-          .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
-          .collect(),
-        ctx.db
-          .query("expenseTags")
-          .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
-          .collect(),
-      ]);
+    const [
+      category,
+      payer,
+      createdByUser,
+      splits,
+      expenseTags,
+      linkedShoppingItems,
+    ] = await Promise.all([
+      ctx.db.get(expense.categoryId),
+      ctx.db.get(expense.paidBy),
+      ctx.db.get(expense.createdBy),
+      ctx.db
+        .query("expenseSplits")
+        .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
+        .collect(),
+      ctx.db
+        .query("expenseTags")
+        .withIndex("by_expense", (q) => q.eq("expenseId", expense._id))
+        .collect(),
+      ctx.db
+        .query("shoppingItems")
+        .withIndex("by_group_and_purchased", (q) =>
+          q.eq("groupId", expense.groupId),
+        )
+        .filter((q) => q.eq(q.field("linkedExpenseId"), expense._id))
+        .collect(),
+    ]);
 
     // タグ情報を取得
     const tags = await Promise.all(
@@ -363,6 +376,10 @@ export const getById = authQuery({
         _id: t._id,
         name: t.name,
         color: t.color,
+      })),
+      linkedShoppingItems: linkedShoppingItems.map((item) => ({
+        _id: item._id,
+        name: item.name,
       })),
       createdAt: expense.createdAt,
       updatedAt: expense.updatedAt,
