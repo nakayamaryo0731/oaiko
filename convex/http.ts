@@ -6,6 +6,8 @@ import { Id } from "./_generated/dataModel";
 import { mapSubscriptionStatus } from "./lib/stripeHelpers";
 import { Logger } from "./lib/logger";
 
+const STRIPE_API_VERSION = "2025-12-15.clover" as const;
+
 // Stripe Invoice の拡張型
 type StripeInvoiceWithSubscription = Stripe.Invoice & {
   subscription?: string;
@@ -32,7 +34,9 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const logger = new Logger();
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: STRIPE_API_VERSION,
+    });
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
@@ -123,7 +127,9 @@ async function handleCheckoutSessionCompleted(
     return;
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: STRIPE_API_VERSION,
+  });
 
   // サブスクリプション詳細を取得
   const subscriptionId = session.subscription as string;

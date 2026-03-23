@@ -13,12 +13,14 @@ import Stripe from "stripe";
 // Stripe初期化
 // ========================================
 
+const STRIPE_API_VERSION = "2025-12-15.clover" as const;
+
 function getStripe() {
   const apiKey = process.env.STRIPE_SECRET_KEY;
   if (!apiKey) {
     throw new Error("STRIPE_SECRET_KEY is not set");
   }
-  return new Stripe(apiKey);
+  return new Stripe(apiKey, { apiVersion: STRIPE_API_VERSION });
 }
 
 // ========================================
@@ -313,8 +315,8 @@ export const updateSubscriptionStatus = internalMutation({
   handler: async (ctx, args) => {
     const subscription = await ctx.db
       .query("subscriptions")
-      .filter((q) =>
-        q.eq(q.field("stripeSubscriptionId"), args.stripeSubscriptionId),
+      .withIndex("by_stripe_subscription", (q) =>
+        q.eq("stripeSubscriptionId", args.stripeSubscriptionId),
       )
       .unique();
 
@@ -348,8 +350,8 @@ export const deleteSubscription = internalMutation({
   handler: async (ctx, args) => {
     const subscription = await ctx.db
       .query("subscriptions")
-      .filter((q) =>
-        q.eq(q.field("stripeSubscriptionId"), args.stripeSubscriptionId),
+      .withIndex("by_stripe_subscription", (q) =>
+        q.eq("stripeSubscriptionId", args.stripeSubscriptionId),
       )
       .unique();
 
