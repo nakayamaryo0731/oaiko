@@ -291,7 +291,7 @@ function HeroSection() {
               <div className="flex justify-center mb-1">
                 <div className="w-20 h-5 bg-slate-800 rounded-b-xl" />
               </div>
-              <div className="bg-white rounded-[1.25rem] overflow-hidden">
+              <div className="bg-white rounded-4xl overflow-hidden">
                 <Image
                   src="/screenshots/screenshot-hero.png"
                   alt="Pairbo アプリの支出一覧画面 - カップルの共有家計簿"
@@ -500,7 +500,7 @@ function ComparisonSection() {
         </p>
 
         <div className="overflow-x-auto -mx-4 px-4">
-          <table className="w-full text-sm min-w-[480px]">
+          <table className="w-full text-sm min-w-120">
             <thead>
               <tr className="border-b border-slate-200">
                 <th className="text-left py-3 pr-4 font-medium text-slate-500 w-2/5">

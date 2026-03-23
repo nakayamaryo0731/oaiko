@@ -5,7 +5,7 @@ import { getSettlementPeriod, getSettlementLabel } from "./domain/settlement";
 import { getExpensesByPeriod } from "./lib/expenseHelper";
 import { getOrThrow } from "./lib/dataHelpers";
 import { buildCategoryBreakdown } from "./lib/analyticsHelper";
-import { canUseTags } from "./lib/subscription";
+import { canUseTags, canAccessYearlyAnalytics } from "./lib/subscription";
 import { calculateTagBreakdown } from "./lib/tagAnalyticsHelper";
 
 /**
@@ -67,6 +67,15 @@ export const getYearlyCategoryBreakdown = authQuery({
   handler: async (ctx, args) => {
     // 認可チェック
     await requireGroupMember(ctx, args.groupId);
+
+    const canUse = await canAccessYearlyAnalytics(ctx, ctx.user._id);
+    if (!canUse) {
+      return {
+        year: args.year,
+        totalAmount: 0,
+        breakdown: [],
+      };
+    }
 
     // 年の開始日と終了日を計算
     const startDate = `${args.year}-01-01`;
@@ -294,6 +303,15 @@ export const getAllTimeCategoryBreakdown = authQuery({
   handler: async (ctx, args) => {
     // 認可チェック
     await requireGroupMember(ctx, args.groupId);
+
+    const canUse = await canAccessYearlyAnalytics(ctx, ctx.user._id);
+    if (!canUse) {
+      return {
+        totalAmount: 0,
+        breakdown: [],
+        periodLabel: null,
+      };
+    }
 
     // 全支出を取得
     const allExpenses = await ctx.db
