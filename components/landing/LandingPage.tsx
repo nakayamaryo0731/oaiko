@@ -678,12 +678,12 @@ function FooterSection() {
             >
               特定商取引法に基づく表記
             </Link>
-            <a
-              href="mailto:pairbo.app@gmail.com"
+            <Link
+              href="/sign-in"
               className="hover:text-white transition-colors"
             >
               お問い合わせ
-            </a>
+            </Link>
           </div>
         </div>
         <div className="mt-8 pt-4 border-t border-slate-800 text-center text-sm">
