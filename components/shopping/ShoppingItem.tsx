@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { X, Undo2 } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 type ShoppingItemProps = {
   item: {
@@ -31,6 +32,7 @@ export function ShoppingItem({ item, mode }: ShoppingItemProps) {
     try {
       if (mode === "pending") {
         await markPurchased({ itemId: item._id });
+        trackEvent("mark_purchased");
       } else if (!item.linkedExpenseId) {
         await unmarkPurchased({ itemId: item._id });
       }

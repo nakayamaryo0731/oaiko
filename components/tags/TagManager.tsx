@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { trackEvent } from "@/lib/analytics";
 import {
   DndContext,
   closestCenter,
@@ -210,6 +211,7 @@ export function TagManager({ groupId }: TagManagerProps) {
     await execute(() => createTag({ groupId, name, color }), {
       closeOnSuccess: false,
     });
+    trackEvent("create_tag");
     setMode("list");
   };
 

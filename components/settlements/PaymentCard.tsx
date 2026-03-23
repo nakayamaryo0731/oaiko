@@ -6,6 +6,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { formatTimestamp, formatAmount } from "@/lib/formatters";
+import { trackEvent } from "@/lib/analytics";
 import { CircleCheck, Circle } from "lucide-react";
 import { MemberColorDot } from "@/components/ui/MemberColorDot";
 
@@ -32,6 +33,7 @@ export function PaymentCard({ payment, memberColors }: PaymentCardProps) {
     setIsMarking(true);
     try {
       await markPaid({ paymentId: payment._id });
+      trackEvent("mark_payment");
     } finally {
       setIsMarking(false);
     }

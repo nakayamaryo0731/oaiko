@@ -14,6 +14,7 @@ import { TagBreakdownChart } from "@/components/analytics/TagBreakdownChart";
 import { ChartSkeleton } from "@/components/analytics/ChartSkeleton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatPeriod } from "@/lib/formatters";
+import { trackEvent } from "@/lib/analytics";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -36,6 +37,10 @@ export default function AnalyticsPage({ params }: PageProps) {
   );
 
   const isPremium = subscription?.plan === "premium";
+
+  useEffect(() => {
+    trackEvent("view_analytics");
+  }, []);
 
   // 月次ナビゲーション（精算期間ベース）
   const {
@@ -242,7 +247,15 @@ export default function AnalyticsPage({ params }: PageProps) {
               月次
             </button>
             <button
-              onClick={() => isPremium && setViewType("year")}
+              onClick={() => {
+                if (isPremium) {
+                  setViewType("year");
+                } else {
+                  trackEvent("premium_gate_hit", {
+                    feature: "yearly_analytics",
+                  });
+                }
+              }}
               disabled={!isPremium}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-1 ${
                 viewType === "year"
@@ -256,7 +269,15 @@ export default function AnalyticsPage({ params }: PageProps) {
               {!isPremium && <Lock className="h-3 w-3" />}
             </button>
             <button
-              onClick={() => isPremium && setViewType("all")}
+              onClick={() => {
+                if (isPremium) {
+                  setViewType("all");
+                } else {
+                  trackEvent("premium_gate_hit", {
+                    feature: "yearly_analytics",
+                  });
+                }
+              }}
               disabled={!isPremium}
               className={`flex-1 py-2 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-1 ${
                 viewType === "all"
