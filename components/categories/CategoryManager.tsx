@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import { trackEvent } from "@/lib/analytics";
 import {
   DndContext,
   closestCenter,
@@ -156,6 +157,7 @@ export function CategoryManager({ groupId, categories }: CategoryManagerProps) {
     await execute(() => createCategory({ groupId, name, icon }), {
       closeOnSuccess: false,
     });
+    trackEvent("create_category");
     setMode("list");
   };
 

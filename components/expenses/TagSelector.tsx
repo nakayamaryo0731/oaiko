@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getTagColorClasses } from "@/lib/tagColors";
+import { trackEvent } from "@/lib/analytics";
 
 const MAX_TAGS_PER_EXPENSE = 10;
 
@@ -131,7 +132,10 @@ export function TagSelector({
         <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
           タグ
         </span>
-        <div className="p-3 bg-slate-50 rounded-xl text-sm text-slate-500">
+        <div
+          className="p-3 bg-slate-50 rounded-xl text-sm text-slate-500 cursor-pointer"
+          onClick={() => trackEvent("premium_gate_hit", { feature: "tags" })}
+        >
           <span className="inline-flex items-center gap-1">
             <span className="text-yellow-500">★</span>
             タグ機能はPremiumプランでご利用いただけます

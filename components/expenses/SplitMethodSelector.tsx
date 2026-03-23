@@ -2,6 +2,7 @@
 
 import type { Id } from "@/convex/_generated/dataModel";
 import { MemberColorDot } from "@/components/ui/MemberColorDot";
+import { trackEvent } from "@/lib/analytics";
 
 export type SplitMethod = "equal" | "ratio" | "amount" | "full";
 
@@ -97,7 +98,13 @@ export function SplitMethodSelector({
                     ? "bg-white text-slate-700 border-slate-300 hover:border-slate-400"
                     : "bg-slate-50 text-slate-400 border-slate-200 cursor-not-allowed"
               }`}
-              onClick={() => isAvailable && onMethodChange(m)}
+              onClick={() => {
+                if (isAvailable) {
+                  onMethodChange(m);
+                } else if (isPremiumOnly && !isPremium) {
+                  trackEvent("premium_gate_hit", { feature: "sloped_split" });
+                }
+              }}
               title={
                 isPremiumOnly && !isPremium
                   ? "Premiumプランで利用可能"

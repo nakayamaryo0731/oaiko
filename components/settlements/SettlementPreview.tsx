@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
 import { buildMemberColorMap } from "@/lib/userColors";
+import { trackEvent } from "@/lib/analytics";
 
 type SettlementPreviewProps = {
   groupId: Id<"groups">;
@@ -42,6 +43,7 @@ export function SettlementPreview({
     setIsCreating(true);
     try {
       await createSettlement({ groupId, year, month });
+      trackEvent("create_settlement");
     } finally {
       setIsCreating(false);
     }

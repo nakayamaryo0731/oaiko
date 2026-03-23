@@ -7,6 +7,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 type ShoppingItemInputProps = {
   groupId: Id<"groups">;
@@ -29,6 +30,7 @@ export function ShoppingItemInput({ groupId }: ShoppingItemInputProps) {
 
     try {
       await addItem({ groupId, name: name.trim() });
+      trackEvent("add_shopping_item");
       setName("");
       inputRef.current?.focus();
     } catch (err) {
