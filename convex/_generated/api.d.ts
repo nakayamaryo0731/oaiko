@@ -39,6 +39,7 @@ import type * as domain_tag_validation from "../domain/tag/validation.js";
 import type * as expenses from "../expenses.js";
 import type * as groups from "../groups.js";
 import type * as http from "../http.js";
+import type * as inquiries from "../inquiries.js";
 import type * as invitations from "../invitations.js";
 import type * as lib_analyticsHelper from "../lib/analyticsHelper.js";
 import type * as lib_auth from "../lib/auth.js";
@@ -99,6 +100,7 @@ declare const fullApi: ApiFromModules<{
   expenses: typeof expenses;
   groups: typeof groups;
   http: typeof http;
+  inquiries: typeof inquiries;
   invitations: typeof invitations;
   "lib/analyticsHelper": typeof lib_analyticsHelper;
   "lib/auth": typeof lib_auth;

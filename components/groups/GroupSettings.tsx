@@ -23,10 +23,12 @@ import {
   Home,
   ChevronRight,
   CreditCard,
+  MessageCircle,
   Star,
   Shield,
   Check,
 } from "lucide-react";
+import { InquiryDialog } from "@/components/inquiries/InquiryDialog";
 import { useInlineEdit } from "@/hooks/useInlineEdit";
 import { InlineEditText, InlineEditDisplay } from "@/components/ui/InlineEdit";
 
@@ -374,6 +376,22 @@ export function GroupSettings({
           </div>
           <ChevronRight className="h-5 w-5 text-slate-400" />
         </Link>
+      </section>
+
+      {/* お問い合わせ */}
+      <section className="bg-white border border-slate-200 rounded-lg">
+        <InquiryDialog>
+          <button className="flex items-center gap-3 p-4 w-full text-left hover:bg-slate-50 transition-colors">
+            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
+              <MessageCircle className="h-5 w-5 text-slate-600" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-slate-800">お問い合わせ</p>
+              <p className="text-sm text-slate-500">機能要望・不具合報告など</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-slate-400" />
+          </button>
+        </InquiryDialog>
       </section>
 
       {/* 管理者モード */}
