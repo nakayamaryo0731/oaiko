@@ -6,6 +6,7 @@ import {
   settlementStatusValidator,
   subscriptionPlanValidator,
   subscriptionStatusValidator,
+  inquiryCategoryValidator,
 } from "./lib/validators";
 
 export default defineSchema({
@@ -193,4 +194,15 @@ export default defineSchema({
     .index("by_stripe_customer", ["stripeCustomerId"])
     .index("by_stripe_subscription", ["stripeSubscriptionId"]),
   // 用途: ユーザーのサブスク状態取得、Stripe Webhook処理
+
+  // ========================================
+  // 問い合わせ
+  // ========================================
+  inquiries: defineTable({
+    userId: v.id("users"),
+    category: inquiryCategoryValidator,
+    body: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+  // 用途: ユーザーからの問い合わせ管理
 });

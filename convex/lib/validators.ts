@@ -59,3 +59,15 @@ export const subscriptionStatusValidator = v.union(
   v.literal("past_due"),
   v.literal("trialing"),
 );
+
+/**
+ * 問い合わせカテゴリ
+ * - feature_request: 機能要望
+ * - bug_report: 不具合報告
+ * - other: その他
+ */
+export const inquiryCategoryValidator = v.union(
+  v.literal("feature_request"),
+  v.literal("bug_report"),
+  v.literal("other"),
+);
