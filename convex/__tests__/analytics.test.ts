@@ -233,7 +233,7 @@ describe("analytics", () => {
   });
 
   describe("getAllTimeCategoryBreakdown", () => {
-    test("全期間のカテゴリ別支出を集計できる", async () => {
+    test("Premiumユーザーは全期間のカテゴリ別支出を集計できる", async () => {
       const t = convexTest(schema, modules);
 
       const groupId = await t
@@ -249,6 +249,23 @@ describe("analytics", () => {
       const category1 = detail.categories[0];
       const category2 = detail.categories[1];
       const payerId = detail.members[0].userId;
+
+      // Premiumサブスクリプションを設定
+      const now = Date.now();
+      await t.run(async (ctx) => {
+        await ctx.db.insert("subscriptions", {
+          userId: payerId,
+          stripeCustomerId: "cus_test",
+          stripeSubscriptionId: "sub_test",
+          plan: "premium",
+          status: "active",
+          currentPeriodStart: now - 30 * 24 * 60 * 60 * 1000,
+          currentPeriodEnd: now + 30 * 24 * 60 * 60 * 1000,
+          cancelAtPeriodEnd: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
 
       // 複数年に跨る支出を登録
       await t.withIdentity(userAIdentity).mutation(api.expenses.create, {
@@ -290,7 +307,7 @@ describe("analytics", () => {
       expect(result.breakdown[1].amount).toBe(1500);
     });
 
-    test("支出がない場合はnullのperiodLabelを返す", async () => {
+    test("Freeユーザーは空の結果を返す", async () => {
       const t = convexTest(schema, modules);
 
       const groupId = await t
@@ -298,6 +315,61 @@ describe("analytics", () => {
         .mutation(api.groups.create, {
           name: "テストグループ",
         });
+
+      const detail = await t
+        .withIdentity(userAIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      const payerId = detail.members[0].userId;
+      const categoryId = detail.categories[0]._id;
+
+      await t.withIdentity(userAIdentity).mutation(api.expenses.create, {
+        groupId,
+        amount: 1000,
+        categoryId,
+        paidBy: payerId,
+        date: "2024-01-01",
+      });
+
+      const result = await t
+        .withIdentity(userAIdentity)
+        .query(api.analytics.getAllTimeCategoryBreakdown, {
+          groupId,
+        });
+
+      expect(result.totalAmount).toBe(0);
+      expect(result.breakdown).toHaveLength(0);
+      expect(result.periodLabel).toBeNull();
+    });
+
+    test("Premiumユーザーで支出がない場合はnullのperiodLabelを返す", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.groups.create, {
+          name: "テストグループ",
+        });
+
+      const detail = await t
+        .withIdentity(userAIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      const now = Date.now();
+      await t.run(async (ctx) => {
+        await ctx.db.insert("subscriptions", {
+          userId: detail.members[0].userId,
+          stripeCustomerId: "cus_test",
+          stripeSubscriptionId: "sub_test",
+          plan: "premium",
+          status: "active",
+          currentPeriodStart: now - 30 * 24 * 60 * 60 * 1000,
+          currentPeriodEnd: now + 30 * 24 * 60 * 60 * 1000,
+          cancelAtPeriodEnd: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
 
       const result = await t
         .withIdentity(userAIdentity)

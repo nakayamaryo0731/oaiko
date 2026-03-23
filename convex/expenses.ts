@@ -8,7 +8,7 @@ import { getGroupMemberIds } from "./lib/groupHelper";
 import { getExpensesByPeriod, isExpenseSettled } from "./lib/expenseHelper";
 import { getOrThrow } from "./lib/dataHelpers";
 import { enrichExpenseList, FALLBACK } from "./lib/enrichment";
-import { canUseTags } from "./lib/subscription";
+import { canUseTags, canUseSlopedSplit } from "./lib/subscription";
 import {
   calculateEqualSplit,
   calculateRatioSplit,
@@ -92,6 +92,15 @@ export const create = authMutation({
     const targetMemberIds = resolveTargetMemberIds(splitDetails, allMemberIds);
 
     validateSplitDetails(splitDetails, args.amount, targetMemberIds);
+
+    if (splitDetails.method === "ratio" || splitDetails.method === "amount") {
+      const canUse = await canUseSlopedSplit(ctx, ctx.user._id);
+      if (!canUse) {
+        throw new ConvexError(
+          "傾斜折半機能はPremiumプランでご利用いただけます",
+        );
+      }
+    }
 
     const splits = calculateSplits(
       splitDetails,
@@ -803,6 +812,15 @@ export const update = authMutation({
     const targetMemberIds = resolveTargetMemberIds(splitDetails, allMemberIds);
 
     validateSplitDetails(splitDetails, args.amount, targetMemberIds);
+
+    if (splitDetails.method === "ratio" || splitDetails.method === "amount") {
+      const canUse = await canUseSlopedSplit(ctx, ctx.user._id);
+      if (!canUse) {
+        throw new ConvexError(
+          "傾斜折半機能はPremiumプランでご利用いただけます",
+        );
+      }
+    }
 
     const splits = calculateSplits(
       splitDetails,

@@ -641,7 +641,7 @@ describe("expenses", () => {
       expect(expense.memo).toBe("更新後のメモ");
     });
 
-    test("分割方法を変更できる", async () => {
+    test("分割方法を変更できる（Premiumユーザー）", async () => {
       const t = convexTest(schema, modules);
 
       const groupId = await t
@@ -669,6 +669,23 @@ describe("expenses", () => {
       const userB = detail.members.find(
         (m) => m.displayName === "ユーザーB",
       )!.userId;
+
+      // Premiumサブスクリプションを設定
+      const now = Date.now();
+      await t.run(async (ctx) => {
+        await ctx.db.insert("subscriptions", {
+          userId: userA,
+          stripeCustomerId: "cus_test",
+          stripeSubscriptionId: "sub_test",
+          plan: "premium",
+          status: "active",
+          currentPeriodStart: now - 30 * 24 * 60 * 60 * 1000,
+          currentPeriodEnd: now + 30 * 24 * 60 * 60 * 1000,
+          cancelAtPeriodEnd: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
 
       // 最初は均等分割
       const expenseId = await t
@@ -706,6 +723,63 @@ describe("expenses", () => {
       const splitB = expense.splits.find((s) => s.userId === userB);
       expect(splitA?.amount).toBe(700);
       expect(splitB?.amount).toBe(300);
+    });
+
+    test("Freeユーザーは傾斜折半に変更できない", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.groups.create, {
+          name: "テストグループ",
+        });
+
+      const { token } = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.groups.createInvitation, { groupId });
+
+      await t
+        .withIdentity(userBIdentity)
+        .mutation(api.invitations.accept, { token });
+
+      const detail = await t
+        .withIdentity(userAIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      const categoryId = detail.categories[0]._id;
+      const userA = detail.members.find(
+        (m) => m.displayName === "ユーザーA",
+      )!.userId;
+      const userB = detail.members.find(
+        (m) => m.displayName === "ユーザーB",
+      )!.userId;
+
+      const expenseId = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.expenses.create, {
+          groupId,
+          amount: 1000,
+          categoryId,
+          paidBy: userA,
+          date: "2024-12-30",
+        });
+
+      await expect(
+        t.withIdentity(userAIdentity).mutation(api.expenses.update, {
+          expenseId,
+          amount: 1000,
+          categoryId,
+          paidBy: userA,
+          date: "2024-12-30",
+          splitDetails: {
+            method: "ratio",
+            ratios: [
+              { userId: userA, ratio: 70 },
+              { userId: userB, ratio: 30 },
+            ],
+          },
+        }),
+      ).rejects.toThrow("傾斜折半機能はPremiumプランでご利用いただけます");
     });
 
     test("グループメンバーでない場合はエラー", async () => {
