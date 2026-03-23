@@ -558,7 +558,7 @@ function TestimonialsSection() {
     <section className="px-4 py-16">
       <div className="max-w-3xl mx-auto">
         <h2 className="text-2xl font-bold text-slate-800 text-center mb-2">
-          こんなシーンで使われています
+          こんなシーンで活躍
         </h2>
         <p className="text-slate-500 text-center mb-10">
           お財布が別のまま、フェアに支出管理
@@ -678,16 +678,36 @@ function FooterSection() {
             >
               特定商取引法に基づく表記
             </Link>
-            <Link
-              href="/sign-in"
+            <a
+              href="https://x.com/RONnakayama"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-white transition-colors"
             >
-              お問い合わせ
-            </Link>
+              お問い合わせ（X）
+            </a>
           </div>
         </div>
-        <div className="mt-8 pt-4 border-t border-slate-800 text-center text-sm">
+        <div className="mt-8 pt-4 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm">
           <p>&copy; {new Date().getFullYear()} Pairbo. All rights reserved.</p>
+          <div className="flex gap-4">
+            <a
+              href="https://x.com/RONnakayama"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              X（Twitter）
+            </a>
+            <a
+              href="https://zenn.dev/r0nr0n"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Zenn
+            </a>
+          </div>
         </div>
       </div>
     </footer>
