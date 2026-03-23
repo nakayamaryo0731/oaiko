@@ -23,7 +23,7 @@ export default clerkMiddleware(async (auth, request) => {
 export const config = {
   matcher: [
     // Next.js の内部ファイルと静的ファイルを除外
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|xml|txt)).*)",
     // API routes
     "/(api|trpc)(.*)",
   ],
