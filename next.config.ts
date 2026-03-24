@@ -1,7 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
-import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
 const withSerwist = withSerwistInit({
   swSrc: "app/sw.ts",
@@ -50,5 +49,3 @@ export default withSentryConfig(withSerwist(nextConfig), {
     },
   },
 });
-
-initOpenNextCloudflareForDev();
