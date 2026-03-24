@@ -374,6 +374,7 @@ export function ExpenseForm({
           <input
             type="number"
             inputMode="numeric"
+            pattern="[0-9]*"
             placeholder="0"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
