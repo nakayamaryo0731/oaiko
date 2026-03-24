@@ -1,6 +1,7 @@
 [build]
   command = "pnpm build"
   publish = ".next"
+  ignore_submodules = true
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
