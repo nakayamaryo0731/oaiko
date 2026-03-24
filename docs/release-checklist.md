@@ -11,11 +11,11 @@
 ### 1. 本番環境キーの切り替え
 
 - [ ] **Clerk**: テストキー (`pk_test_`, `sk_test_`) → 本番キー (`pk_live_`, `sk_live_`) に切り替え
-- [ ] **Stripe**: Stripe ダッシュボードでライブモードの商品・価格を作成し、Convex 環境変数に設定
-  - [ ] `STRIPE_SECRET_KEY` → `sk_live_...`
-  - [ ] `STRIPE_WEBHOOK_SECRET` → 本番 Webhook シークレット
-  - [ ] `STRIPE_PRICE_MONTHLY` → 本番 Price ID
-  - [ ] `STRIPE_PRICE_YEARLY` → 本番 Price ID
+- [x] **Stripe**: Stripe ダッシュボードでライブモードの商品・価格を作成し、Convex 環境変数に設定 → **本番稼働済み（2026-03時点）**
+  - [x] `STRIPE_SECRET_KEY` → `sk_live_...`
+  - [x] `STRIPE_WEBHOOK_SECRET` → 本番 Webhook シークレット
+  - [x] `STRIPE_PRICE_MONTHLY` → 本番 Price ID
+  - [x] `STRIPE_PRICE_YEARLY` → 本番 Price ID
 - [ ] **CLERK_ISSUER_URL**: Convex 環境変数に本番 Clerk 発行者 URL を設定（現在未設定の可能性）
 - [ ] GitHub Secrets も本番値に更新
   - [ ] `NEXT_PUBLIC_CONVEX_URL`
