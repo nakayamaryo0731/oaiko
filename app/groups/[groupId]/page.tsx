@@ -25,25 +25,27 @@ export default function GroupDetailPage({ params }: PageProps) {
     <div className="flex items-center gap-0.5">
       <Link
         href={`/groups/${detail.group._id}/analytics`}
-        className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors"
+        className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors"
+        aria-label="分析"
       >
         <BarChart3 className="h-5 w-5 text-slate-600" />
       </Link>
       <Link
         href={`/groups/${detail.group._id}/settings`}
-        className="w-9 h-9 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors"
+        className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors"
+        aria-label="設定"
       >
         <Settings className="h-5 w-5 text-slate-600" />
       </Link>
-      <div className="w-9 h-9 flex items-center justify-center">
+      <div className="w-11 h-11 flex items-center justify-center">
         <UserButton />
       </div>
     </div>
   ) : (
     <div className="flex items-center gap-0.5">
-      <div className="w-9 h-9" />
-      <div className="w-9 h-9" />
-      <div className="w-9 h-9" />
+      <div className="w-11 h-11" />
+      <div className="w-11 h-11" />
+      <div className="w-11 h-11" />
     </div>
   );
 

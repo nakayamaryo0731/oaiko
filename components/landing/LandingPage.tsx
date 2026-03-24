@@ -622,6 +622,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     <div className="border border-slate-200 rounded-lg bg-white">
       <button
         onClick={() => setOpen(!open)}
+        aria-expanded={open}
         className="w-full p-4 text-left flex items-center justify-between gap-4"
       >
         <span className="font-medium text-slate-800 text-sm">{q}</span>
