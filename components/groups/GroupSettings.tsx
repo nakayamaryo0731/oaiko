@@ -416,6 +416,12 @@ export function GroupSettings({
               }
             />
           </div>
+          <Link
+            href="/admin"
+            className="mt-3 block text-center text-sm font-medium text-amber-700 hover:text-amber-900 border border-amber-300 rounded-lg py-2 hover:bg-amber-100 transition-colors"
+          >
+            管理者ダッシュボード →
+          </Link>
         </section>
       )}
 

@@ -1,0 +1,124 @@
+import { convexTest } from "convex-test";
+import { describe, expect, test } from "vitest";
+import schema from "../schema";
+import { api } from "../_generated/api";
+
+const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+
+const adminIdentity = {
+  subject: "admin_clerk_id",
+  name: "管理者",
+  email: "admin@example.com",
+};
+
+const userIdentity = {
+  subject: "user_clerk_id",
+  name: "一般ユーザー",
+  email: "user@example.com",
+};
+
+async function setupAdmin(t: ReturnType<typeof convexTest>) {
+  // ユーザー作成
+  await t.withIdentity(adminIdentity).mutation(api.users.ensureUser, {});
+  // isAdminフラグを付与
+  const user = await t.run(async (ctx) => {
+    const users = await ctx.db.query("users").collect();
+    return users.find((u) => u.clerkId === "admin_clerk_id") ?? null;
+  });
+  if (user) {
+    await t.run(async (ctx) => {
+      await ctx.db.patch(user._id, { isAdmin: true });
+    });
+  }
+}
+
+async function setupNormalUser(t: ReturnType<typeof convexTest>) {
+  await t.withIdentity(userIdentity).mutation(api.users.ensureUser, {});
+}
+
+describe("admin", () => {
+  describe("getSummary", () => {
+    test("管理者はサマリーを取得できる", async () => {
+      const t = convexTest(schema, modules);
+      await setupAdmin(t);
+
+      const summary = await t
+        .withIdentity(adminIdentity)
+        .query(api.admin.getSummary, {});
+
+      expect(summary.totalUsers).toBe(1);
+      expect(summary.dau).toBe(0);
+      expect(summary.wau).toBe(0);
+      expect(summary.mau).toBe(0);
+      expect(summary.totalGroups).toBe(0);
+      expect(summary.totalExpenses).toBe(0);
+      expect(summary.premiumCount).toBe(0);
+    });
+
+    test("非管理者はサマリーを取得できない", async () => {
+      const t = convexTest(schema, modules);
+      await setupNormalUser(t);
+
+      await expect(
+        t.withIdentity(userIdentity).query(api.admin.getSummary, {}),
+      ).rejects.toThrow("管理者権限が必要です");
+    });
+  });
+
+  describe("getUsers", () => {
+    test("管理者はユーザー一覧を取得できる", async () => {
+      const t = convexTest(schema, modules);
+      await setupAdmin(t);
+      await setupNormalUser(t);
+
+      const users = await t
+        .withIdentity(adminIdentity)
+        .query(api.admin.getUsers, {});
+
+      expect(users).toHaveLength(2);
+      const admin = users.find((u) => u.displayName === "管理者");
+      expect(admin).toBeDefined();
+      expect(admin?.plan).toBe("free");
+      expect(admin?.groupCount).toBe(0);
+      expect(admin?.expenseCount).toBe(0);
+    });
+
+    test("非管理者はユーザー一覧を取得できない", async () => {
+      const t = convexTest(schema, modules);
+      await setupNormalUser(t);
+
+      await expect(
+        t.withIdentity(userIdentity).query(api.admin.getUsers, {}),
+      ).rejects.toThrow("管理者権限が必要です");
+    });
+  });
+
+  describe("getGroups", () => {
+    test("管理者はグループ一覧を取得できる", async () => {
+      const t = convexTest(schema, modules);
+      await setupAdmin(t);
+
+      // グループ作成
+      await t
+        .withIdentity(adminIdentity)
+        .mutation(api.groups.create, { name: "テストグループ" });
+
+      const groups = await t
+        .withIdentity(adminIdentity)
+        .query(api.admin.getGroups, {});
+
+      expect(groups).toHaveLength(1);
+      expect(groups[0].name).toBe("テストグループ");
+      expect(groups[0].memberCount).toBe(1);
+    });
+
+    test("非管理者はグループ一覧を取得できない", async () => {
+      const t = convexTest(schema, modules);
+      await setupNormalUser(t);
+
+      await expect(
+        t.withIdentity(userIdentity).query(api.admin.getGroups, {}),
+      ).rejects.toThrow("管理者権限が必要です");
+    });
+  });
+});
