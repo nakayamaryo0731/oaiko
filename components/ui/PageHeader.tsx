@@ -32,7 +32,8 @@ export function PageHeader({
       <div className="relative flex items-center justify-between px-4 h-14">
         <Link
           href={backHref}
-          className="z-10 text-slate-600 hover:text-slate-800 transition-colors"
+          className="z-10 p-2 -ml-2 text-slate-600 hover:text-slate-800 transition-colors"
+          aria-label="戻る"
         >
           <ChevronLeft className="h-6 w-6" />
         </Link>

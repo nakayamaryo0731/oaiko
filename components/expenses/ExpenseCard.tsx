@@ -215,7 +215,7 @@ export function ExpenseCard({
                 <button
                   type="button"
                   onClick={handleDuplicate}
-                  className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
+                  className="p-2.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition-colors"
                   aria-label="複製"
                 >
                   <Copy className="w-4 h-4" />
@@ -225,7 +225,7 @@ export function ExpenseCard({
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                  className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
                   aria-label="削除"
                 >
                   <Trash2 className="w-4 h-4" />

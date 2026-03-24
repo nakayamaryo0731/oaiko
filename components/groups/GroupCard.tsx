@@ -55,7 +55,7 @@ export function GroupCard({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 mr-2"
+            className="h-10 w-10 mr-2"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-4 w-4" />
