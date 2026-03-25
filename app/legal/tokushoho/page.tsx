@@ -64,7 +64,7 @@ export default function TokushohoPage() {
                 </th>
                 <td className="py-4 text-slate-800">
                   <p>
-                    Premiumプラン：月額300円（税込）または年額2,400円（税込）
+                    Premiumプラン：月額100円（税込）または年額1,000円（税込）
                   </p>
                   <p className="text-sm text-slate-500 mt-1">
                     ※ 最新の価格は

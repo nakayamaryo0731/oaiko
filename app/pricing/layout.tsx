@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   },
   title: "料金プラン | Pairbo - 2人のための共有家計簿",
   description:
-    "Pairboの料金プラン。基本機能は無料、Premiumプラン（月額300円/年額2,400円）で傾斜折半・詳細分析が利用可能。",
+    "Pairboの料金プラン。基本機能は無料、Premiumプラン（月額100円/年額1,000円）で傾斜折半・詳細分析が利用可能。",
   openGraph: {
     title: "料金プラン | Pairbo",
     description:
