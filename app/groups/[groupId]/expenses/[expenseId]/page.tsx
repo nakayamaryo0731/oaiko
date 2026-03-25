@@ -184,10 +184,17 @@ export default function ExpensePage({ params }: PageProps) {
     splitMethod: expense.splitMethod as "equal" | "ratio" | "amount" | "full",
     ratios:
       expense.splitMethod === "ratio"
-        ? expense.splits.map((s) => ({
-            userId: s.userId,
-            ratio: Math.round((s.amount / expense.amount) * 100),
-          }))
+        ? (() => {
+            const rawRatios = expense.splits.map((s) => ({
+              userId: s.userId,
+              ratio: Math.round((s.amount / expense.amount) * 100),
+            }));
+            const total = rawRatios.reduce((sum, r) => sum + r.ratio, 0);
+            if (total !== 100 && rawRatios.length > 0) {
+              rawRatios[0].ratio += 100 - total;
+            }
+            return rawRatios;
+          })()
         : undefined,
     amounts:
       expense.splitMethod === "amount"

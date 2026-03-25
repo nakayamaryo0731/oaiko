@@ -725,6 +725,98 @@ describe("expenses", () => {
       expect(splitB?.amount).toBe(300);
     });
 
+    test("割合指定の支出の金額変更で端数ズレが起きない", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.groups.create, {
+          name: "テストグループ",
+        });
+
+      const { token } = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.groups.createInvitation, { groupId });
+
+      await t
+        .withIdentity(userBIdentity)
+        .mutation(api.invitations.accept, { token });
+
+      const detail = await t
+        .withIdentity(userAIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      const categoryId = detail.categories[0]._id;
+      const userA = detail.members.find(
+        (m) => m.displayName === "ユーザーA",
+      )!.userId;
+      const userB = detail.members.find(
+        (m) => m.displayName === "ユーザーB",
+      )!.userId;
+
+      const now = Date.now();
+      await t.run(async (ctx) => {
+        await ctx.db.insert("subscriptions", {
+          userId: userA,
+          stripeCustomerId: "cus_test2",
+          stripeSubscriptionId: "sub_test2",
+          plan: "premium",
+          status: "active",
+          currentPeriodStart: now - 30 * 24 * 60 * 60 * 1000,
+          currentPeriodEnd: now + 30 * 24 * 60 * 60 * 1000,
+          cancelAtPeriodEnd: false,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+
+      // 割合指定で3310円を50:50で作成
+      const expenseId = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.expenses.create, {
+          groupId,
+          amount: 3310,
+          categoryId,
+          paidBy: userA,
+          date: "2024-12-30",
+          splitDetails: {
+            method: "ratio",
+            ratios: [
+              { userId: userA, ratio: 50 },
+              { userId: userB, ratio: 50 },
+            ],
+          },
+        });
+
+      // 金額を3311円に変更（割合は50:50のまま）
+      await t.withIdentity(userAIdentity).mutation(api.expenses.update, {
+        expenseId,
+        amount: 3311,
+        categoryId,
+        paidBy: userA,
+        date: "2024-12-30",
+        splitDetails: {
+          method: "ratio",
+          ratios: [
+            { userId: userA, ratio: 50 },
+            { userId: userB, ratio: 50 },
+          ],
+        },
+      });
+
+      const expense = await t
+        .withIdentity(userAIdentity)
+        .query(api.expenses.getById, { expenseId });
+
+      expect(expense.amount).toBe(3311);
+      const splitA = expense.splits.find((s) => s.userId === userA);
+      const splitB = expense.splits.find((s) => s.userId === userB);
+      // 3311 * 50/100 = 1655.5 → floor = 1655、端数1は支払者に
+      expect(splitA!.amount + splitB!.amount).toBe(3311);
+      expect(splitA!.amount).toBe(1656);
+      expect(splitB!.amount).toBe(1655);
+    });
+
     test("Freeユーザーは傾斜折半に変更できない", async () => {
       const t = convexTest(schema, modules);
 
