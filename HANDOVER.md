@@ -50,7 +50,7 @@
 **プラン設計**
 
 - Free: 基本機能 + 広告表示
-- Premium: ¥300/月 or ¥2,400/年（広告非表示、詳細分析、データエクスポート予定）
+- Premium: ¥100/月 or ¥1,000/年（広告非表示、詳細分析、データエクスポート予定）
 - 注: グループ・メンバー数制限は廃止（同棲カップル向けアプリのため不要）
 
 **次のステップ**
@@ -214,7 +214,7 @@ Deploy: Vercel + Convex
 
 ### サブスクリプション機能
 
-- **プラン**: Free / Premium（¥300/月 or ¥2,400/年）
+- **プラン**: Free / Premium（¥100/月 or ¥1,000/年）
 - **決済**: Stripe Checkout
 - **管理**: Stripe Customer Portal
 - **状態管理**: active, canceled, past_due, trialing

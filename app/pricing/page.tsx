@@ -49,7 +49,7 @@ function PricingContent() {
       });
       trackEvent("upgrade_premium", {
         price_type: priceType,
-        value: priceType === "monthly" ? 300 : 2400,
+        value: priceType === "monthly" ? 100 : 1000,
         currency: "JPY",
       });
       window.location.href = url;
@@ -203,17 +203,17 @@ function PricingContent() {
                   {selectedPrice === "monthly" ? (
                     <>
                       <span className="text-2xl font-bold text-slate-800">
-                        ¥300
+                        ¥100
                       </span>
                       <span className="text-slate-500">/月</span>
                     </>
                   ) : (
                     <>
                       <span className="text-2xl font-bold text-slate-800">
-                        ¥2,400
+                        ¥1,000
                       </span>
                       <span className="text-slate-500">/年</span>
-                      <p className="text-xs text-emerald-600">月額¥200相当</p>
+                      <p className="text-xs text-emerald-600">月額¥83相当</p>
                     </>
                   )}
                 </div>
