@@ -6,7 +6,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { MemberBalanceList } from "./MemberBalanceList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo } from "react";
-import { ChevronRight, X, Banknote } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { PayPayButton } from "./PayPayButton";
@@ -167,8 +167,6 @@ function CompactSettlement({
 }: CompactSettlementProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const isMobile = useIsMobile();
-  const me = useQuery(api.users.getMe);
-  const showPayPay = isMobile && me?.isAdmin;
 
   return (
     <>
@@ -203,7 +201,7 @@ function CompactSettlement({
                   <span className="font-medium text-slate-800">
                     ¥{payment.amount.toLocaleString()}
                   </span>
-                  {showPayPay && (
+                  {isMobile && (
                     <a
                       href="paypay://"
                       onClick={async (e) => {
@@ -213,10 +211,9 @@ function CompactSettlement({
                         );
                         trackEvent("paypay_transfer");
                       }}
-                      className="p-1 text-[#FF0033] hover:bg-[#FF0033]/10 rounded"
-                      aria-label={`PayPayで${payment.amount}円を送金`}
+                      className="text-[10px] font-bold text-[#FF0033] hover:bg-[#FF0033]/10 px-1.5 py-0.5 rounded"
                     >
-                      <Banknote className="h-4 w-4" />
+                      PayPay
                     </a>
                   )}
                 </span>
@@ -321,7 +318,7 @@ function CompactSettlement({
                             ¥{payment.amount.toLocaleString()}
                           </span>
                         </div>
-                        {showPayPay && (
+                        {isMobile && (
                           <div className="mt-2">
                             <PayPayButton amount={payment.amount} />
                           </div>
