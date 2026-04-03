@@ -101,7 +101,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
       </div>
 
       {/* 支出一覧 */}
-      <div className="px-4 pt-16 pb-32 scrollbar-hide">
+      <div className="px-4 pt-[4.5rem] pb-32 scrollbar-hide">
         <PeriodExpenseList
           groupId={group._id}
           year={displayYear}
