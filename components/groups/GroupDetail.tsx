@@ -111,9 +111,14 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
         />
       </div>
 
-      {/* 精算カード（タブナビの上に固定） */}
+      {/* 精算カード + FAB（タブナビの上に固定） */}
       <div className="fixed bottom-14 left-0 right-0 z-10 bg-slate-50 pb-[env(safe-area-inset-bottom)]">
-        <div className="max-w-lg mx-auto px-4 py-2">
+        <div className="max-w-lg mx-auto px-4 py-2 relative">
+          <FAB
+            href={`/groups/${group._id}/expenses/new`}
+            icon={<Plus />}
+            label="支出を記録"
+          />
           <SettlementPreview
             groupId={group._id}
             year={displayYear}
@@ -122,13 +127,6 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           />
         </div>
       </div>
-
-      {/* 支出記録ボタン（FAB） */}
-      <FAB
-        href={`/groups/${group._id}/expenses/new`}
-        icon={<Plus />}
-        label="支出を記録"
-      />
 
       {/* 削除確認ダイアログ */}
       {expenseToDelete && (
