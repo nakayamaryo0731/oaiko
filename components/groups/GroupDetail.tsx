@@ -84,7 +84,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-56px)]">
+    <div className="flex flex-col h-full">
       {/* 固定ヘッダー（期間ナビ） */}
       <div className="bg-white border-b border-slate-200 shrink-0">
         <div className="px-4 py-3">
