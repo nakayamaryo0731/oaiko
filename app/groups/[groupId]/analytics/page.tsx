@@ -182,13 +182,22 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
+  const handleTabChange = (tabId: string) => {
+    if (tabId === "expenses") router.push(`/groups/${groupId}`);
+    else if (tabId === "settings") router.push(`/groups/${groupId}/settings`);
+  };
+
   if (group === undefined) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col pb-14">
         <PageHeader
-          backHref={`/groups/${groupId}`}
+          backHref="/groups?list=true"
           isLoading
-          rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+          rightElement={
+            <div className="w-11 h-11 flex items-center justify-center">
+              <UserButton />
+            </div>
+          }
         />
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto space-y-6">
@@ -196,6 +205,15 @@ export default function AnalyticsPage({ params }: PageProps) {
             <ChartSkeleton type="bar" />
           </div>
         </main>
+        <TabNavigation
+          tabs={[
+            { id: "expenses", label: "支出", icon: <ClipboardList /> },
+            { id: "analytics", label: "分析", icon: <BarChart3 /> },
+            { id: "settings", label: "設定", icon: <Settings /> },
+          ]}
+          activeTab="analytics"
+          onChange={handleTabChange}
+        />
       </div>
     );
   }
@@ -241,17 +259,16 @@ export default function AnalyticsPage({ params }: PageProps) {
     router.push(`/groups/${groupId}/expenses?${params.toString()}`);
   };
 
-  const handleTabChange = (tabId: string) => {
-    if (tabId === "expenses") router.push(`/groups/${groupId}`);
-    else if (tabId === "settings") router.push(`/groups/${groupId}/settings`);
-  };
-
   return (
     <div className="flex min-h-screen flex-col pb-14">
       <PageHeader
-        backHref={`/groups/${groupId}`}
+        backHref="/groups?list=true"
         title={group.group.name}
-        rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+        rightElement={
+          <div className="w-11 h-11 flex items-center justify-center">
+            <UserButton />
+          </div>
+        }
       />
 
       <main className="flex-1 p-4">

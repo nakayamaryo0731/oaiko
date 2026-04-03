@@ -45,9 +45,7 @@ export function PageHeader({
             <h1 className="text-lg font-semibold">{title}</h1>
           )}
         </div>
-        <div className="z-10">
-          {rightElement ?? <div className="w-6" />}
-        </div>
+        <div className="z-10">{rightElement ?? <div className="w-6" />}</div>
       </div>
     </header>
   );

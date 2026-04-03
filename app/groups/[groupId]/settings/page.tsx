@@ -23,18 +23,26 @@ export default function GroupSettingsPage({ params }: PageProps) {
     groupId: groupId as Id<"groups">,
   });
 
+  const handleTabChange = (tabId: string) => {
+    if (tabId === "expenses") router.push(`/groups/${groupId}`);
+    else if (tabId === "analytics") router.push(`/groups/${groupId}/analytics`);
+  };
+
   if (detail === undefined) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col pb-14">
         <PageHeader
-          backHref={`/groups/${groupId}`}
+          backHref="/groups?list=true"
           isLoading
-          rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+          rightElement={
+            <div className="w-11 h-11 flex items-center justify-center">
+              <UserButton />
+            </div>
+          }
         />
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto">
             <div className="space-y-6">
-              {/* セクションスケルトン */}
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
@@ -44,21 +52,29 @@ export default function GroupSettingsPage({ params }: PageProps) {
             </div>
           </div>
         </main>
+        <TabNavigation
+          tabs={[
+            { id: "expenses", label: "支出", icon: <ClipboardList /> },
+            { id: "analytics", label: "分析", icon: <BarChart3 /> },
+            { id: "settings", label: "設定", icon: <Settings /> },
+          ]}
+          activeTab="settings"
+          onChange={handleTabChange}
+        />
       </div>
     );
   }
 
-  const handleTabChange = (tabId: string) => {
-    if (tabId === "expenses") router.push(`/groups/${groupId}`);
-    else if (tabId === "analytics") router.push(`/groups/${groupId}/analytics`);
-  };
-
   return (
     <div className="flex min-h-screen flex-col pb-14">
       <PageHeader
-        backHref={`/groups/${groupId}`}
+        backHref="/groups?list=true"
         title={detail.group.name}
-        rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+        rightElement={
+          <div className="w-11 h-11 flex items-center justify-center">
+            <UserButton />
+          </div>
+        }
       />
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto">

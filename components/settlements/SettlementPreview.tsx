@@ -339,7 +339,6 @@ function CompactSettlement({
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         </div>
