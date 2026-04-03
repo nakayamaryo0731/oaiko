@@ -7,7 +7,7 @@ import { MemberBalanceList } from "./MemberBalanceList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
-import { X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
 import { trackEvent } from "@/lib/analytics";
 
@@ -209,9 +209,12 @@ function CompactSettlement({
       {/* コンパクト表示（カード風） */}
       <button
         onClick={() => setModalOpen(true)}
-        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-left"
+        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-left relative"
       >
-        <div className="text-xs font-medium text-slate-500 mb-1.5">精算</div>
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-medium text-slate-500">精算</span>
+          <ChevronRight className="h-4 w-4 text-slate-300" />
+        </div>
         {preview.payments.length > 0 ? (
           <div className="space-y-1.5">
             {preview.payments.slice(0, 3).map((payment, index) => (
