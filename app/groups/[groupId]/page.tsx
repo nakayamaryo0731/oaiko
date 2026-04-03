@@ -53,14 +53,14 @@ export default function GroupDetailPage({ params }: PageProps) {
   }
 
   return (
-    <div className="h-dvh flex flex-col bg-slate-50">
+    <div className="min-h-screen bg-slate-50">
       <PageHeader
         backHref="/groups?list=true"
         title={detail.group.name}
         rightElement={rightElement}
       />
-      <main className="flex-1 min-h-0">
-        <div className="max-w-lg mx-auto h-full">
+      <main>
+        <div className="max-w-lg mx-auto">
           <GroupDetail group={detail.group} members={detail.members} />
         </div>
       </main>

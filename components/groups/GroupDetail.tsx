@@ -84,9 +84,9 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       {/* 固定ヘッダー（期間ナビ） */}
-      <div className="bg-white border-b border-slate-200 shrink-0">
+      <div className="sticky top-14 z-10 bg-white border-b border-slate-200">
         <div className="px-4 py-3">
           <PeriodNavigator
             year={displayYear}
@@ -100,8 +100,8 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
         </div>
       </div>
 
-      {/* 支出一覧（スクロール領域） */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      {/* 支出一覧 */}
+      <div className="px-4 py-4 pb-32">
         <PeriodExpenseList
           groupId={group._id}
           year={displayYear}
@@ -113,14 +113,16 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
         />
       </div>
 
-      {/* 精算カード（固定下部） */}
-      <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2">
-        <SettlementPreview
-          groupId={group._id}
-          year={displayYear}
-          month={displayMonth}
-          compact
-        />
+      {/* 精算カード（タブナビの上に固定） */}
+      <div className="fixed bottom-14 left-0 right-0 z-10 border-t border-slate-200 bg-white px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+        <div className="max-w-lg mx-auto">
+          <SettlementPreview
+            groupId={group._id}
+            year={displayYear}
+            month={displayMonth}
+            compact
+          />
+        </div>
       </div>
 
       {/* 支出記録ボタン（FAB） */}
