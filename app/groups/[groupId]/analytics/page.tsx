@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TabNavigation } from "@/components/ui/TabNavigation";
+import { UserButton } from "@clerk/nextjs";
 import { CategoryPieChart } from "@/components/analytics/CategoryPieChart";
 import { MonthlyTrendChart } from "@/components/analytics/MonthlyTrendChart";
 import { TagBreakdownChart } from "@/components/analytics/TagBreakdownChart";
@@ -184,7 +185,11 @@ export default function AnalyticsPage({ params }: PageProps) {
   if (group === undefined) {
     return (
       <div className="flex min-h-screen flex-col">
-        <PageHeader backHref={`/groups/${groupId}`} isLoading />
+        <PageHeader
+          backHref={`/groups/${groupId}`}
+          isLoading
+          rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+        />
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto space-y-6">
             <ChartSkeleton type="pie" />
@@ -243,7 +248,11 @@ export default function AnalyticsPage({ params }: PageProps) {
 
   return (
     <div className="flex min-h-screen flex-col pb-14">
-      <PageHeader backHref={`/groups/${groupId}`} title="分析" />
+      <PageHeader
+        backHref={`/groups/${groupId}`}
+        title={group.group.name}
+        rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+      />
 
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto space-y-6">

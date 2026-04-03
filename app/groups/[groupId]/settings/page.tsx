@@ -9,6 +9,7 @@ import { GroupSettings } from "@/components/groups";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TabNavigation } from "@/components/ui/TabNavigation";
 import { ClipboardList, BarChart3, Settings } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
 import { buildMemberColorMap } from "@/lib/userColors";
 
 type PageProps = {
@@ -25,7 +26,11 @@ export default function GroupSettingsPage({ params }: PageProps) {
   if (detail === undefined) {
     return (
       <div className="flex min-h-screen flex-col">
-        <PageHeader backHref={`/groups/${groupId}`} isLoading />
+        <PageHeader
+          backHref={`/groups/${groupId}`}
+          isLoading
+          rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+        />
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto">
             <div className="space-y-6">
@@ -50,7 +55,11 @@ export default function GroupSettingsPage({ params }: PageProps) {
 
   return (
     <div className="flex min-h-screen flex-col pb-14">
-      <PageHeader backHref={`/groups/${groupId}`} title="グループ設定" />
+      <PageHeader
+        backHref={`/groups/${groupId}`}
+        title={detail.group.name}
+        rightElement={<div className="w-11 h-11 flex items-center justify-center"><UserButton /></div>}
+      />
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto">
           <GroupSettings
