@@ -83,33 +83,36 @@ export const listMyGroups = authQuery({
       .withIndex("by_user", (q) => q.eq("userId", ctx.user._id))
       .collect();
 
-    const groups = await Promise.all(
-      memberships.map(async (membership) => {
-        const group = await ctx.db.get(membership.groupId);
+    const groupIds = memberships.map((m) => m.groupId);
+    const [groupDocs, membersByGroup] = await Promise.all([
+      Promise.all(groupIds.map((id) => ctx.db.get(id))),
+      Promise.all(
+        groupIds.map((groupId) =>
+          ctx.db
+            .query("groupMembers")
+            .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId))
+            .collect(),
+        ),
+      ),
+    ]);
+
+    const groups = memberships
+      .map((membership, i) => {
+        const group = groupDocs[i];
         if (!group) return null;
-
-        const allMembers = await ctx.db
-          .query("groupMembers")
-          .withIndex("by_group_and_user", (q) =>
-            q.eq("groupId", membership.groupId),
-          )
-          .collect();
-
         return {
           _id: group._id,
           name: group.name,
           description: group.description,
           closingDay: group.closingDay,
-          memberCount: allMembers.length,
+          memberCount: membersByGroup[i].length,
           myRole: membership.role,
           joinedAt: membership.joinedAt,
         };
-      }),
-    );
+      })
+      .filter((g): g is NonNullable<typeof g> => g !== null);
 
-    return groups
-      .filter((g): g is NonNullable<typeof g> => g !== null)
-      .sort((a, b) => b.joinedAt - a.joinedAt);
+    return groups.sort((a, b) => b.joinedAt - a.joinedAt);
   },
 });
 

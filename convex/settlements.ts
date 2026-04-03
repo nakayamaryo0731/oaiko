@@ -333,29 +333,28 @@ export const listByGroup = authQuery({
       .withIndex("by_group_and_period", (q) => q.eq("groupId", args.groupId))
       .collect();
 
-    const settlementsWithPayments = await Promise.all(
-      settlements.map(async (settlement) => {
-        const payments = await ctx.db
+    const allPayments = await Promise.all(
+      settlements.map((s) =>
+        ctx.db
           .query("settlementPayments")
-          .withIndex("by_settlement", (q) =>
-            q.eq("settlementId", settlement._id),
-          )
-          .collect();
-
-        const paidCount = payments.filter((p) => p.isPaid).length;
-
-        return {
-          _id: settlement._id,
-          periodStart: settlement.periodStart,
-          periodEnd: settlement.periodEnd,
-          status: settlement.status,
-          settledAt: settlement.settledAt,
-          createdAt: settlement.createdAt,
-          paymentCount: payments.length,
-          paidCount,
-        };
-      }),
+          .withIndex("by_settlement", (q) => q.eq("settlementId", s._id))
+          .collect(),
+      ),
     );
+
+    const settlementsWithPayments = settlements.map((settlement, i) => {
+      const payments = allPayments[i];
+      return {
+        _id: settlement._id,
+        periodStart: settlement.periodStart,
+        periodEnd: settlement.periodEnd,
+        status: settlement.status,
+        settledAt: settlement.settledAt,
+        createdAt: settlement.createdAt,
+        paymentCount: payments.length,
+        paidCount: payments.filter((p) => p.isPaid).length,
+      };
+    });
 
     return settlementsWithPayments.sort((a, b) =>
       b.periodStart.localeCompare(a.periodStart),
