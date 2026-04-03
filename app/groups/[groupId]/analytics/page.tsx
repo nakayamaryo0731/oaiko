@@ -5,9 +5,17 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
-import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  ClipboardList,
+  BarChart3,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TabNavigation } from "@/components/ui/TabNavigation";
 import { CategoryPieChart } from "@/components/analytics/CategoryPieChart";
 import { MonthlyTrendChart } from "@/components/analytics/MonthlyTrendChart";
 import { TagBreakdownChart } from "@/components/analytics/TagBreakdownChart";
@@ -228,8 +236,13 @@ export default function AnalyticsPage({ params }: PageProps) {
     router.push(`/groups/${groupId}/expenses?${params.toString()}`);
   };
 
+  const handleTabChange = (tabId: string) => {
+    if (tabId === "expenses") router.push(`/groups/${groupId}`);
+    else if (tabId === "settings") router.push(`/groups/${groupId}/settings`);
+  };
+
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-14">
       <PageHeader backHref={`/groups/${groupId}`} title="分析" />
 
       <main className="flex-1 p-4">
@@ -437,6 +450,16 @@ export default function AnalyticsPage({ params }: PageProps) {
           )}
         </div>
       </main>
+
+      <TabNavigation
+        tabs={[
+          { id: "expenses", label: "支出", icon: <ClipboardList /> },
+          { id: "analytics", label: "分析", icon: <BarChart3 /> },
+          { id: "settings", label: "設定", icon: <Settings /> },
+        ]}
+        activeTab="analytics"
+        onChange={handleTabChange}
+      />
     </div>
   );
 }
