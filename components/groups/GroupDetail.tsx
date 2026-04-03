@@ -99,8 +99,18 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           />
         </div>
       </div>
-      {/* 期間ナビのスペーサー（py-2=16px + PeriodNavigator p-2=16px + コンテンツ約40px） */}
-      <div className="h-[4.5rem]" />
+      {/* 期間ナビのスペーサー（同じ内容を不可視で描画して高さを確保） */}
+      <div className="invisible px-4 py-2" aria-hidden="true">
+        <PeriodNavigator
+          year={displayYear}
+          month={displayMonth}
+          startDate={period!.startDate}
+          endDate={period!.endDate}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          canGoNext={canGoNext}
+        />
+      </div>
 
       {/* 支出一覧 */}
       <div className="px-4 pb-32 scrollbar-hide">
