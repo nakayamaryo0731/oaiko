@@ -211,6 +211,7 @@ function CompactSettlement({
         onClick={() => setModalOpen(true)}
         className="w-full bg-white border border-slate-200 rounded-lg p-3 text-left"
       >
+        <div className="text-xs font-medium text-slate-500 mb-1.5">精算</div>
         {preview.payments.length > 0 ? (
           <div className="space-y-1.5">
             {preview.payments.slice(0, 3).map((payment, index) => (
