@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -246,6 +247,13 @@ function CompactSettlement({
                 </span>
               ))}
             </div>
+          ) : isAlreadySettled && preview.existingSettlementId ? (
+            <Link
+              href={`/groups/${groupId}/settlements/${preview.existingSettlementId}`}
+              className="text-sm text-blue-600 hover:text-blue-800"
+            >
+              精算済み（詳細）
+            </Link>
           ) : isAlreadySettled ? (
             <span className="text-sm text-slate-500">精算済み</span>
           ) : (
@@ -375,10 +383,14 @@ function CompactSettlement({
                 </Button>
               )}
 
-              {isAlreadySettled && (
-                <div className="text-center text-sm text-slate-500 py-2">
-                  この期間は精算済みです
-                </div>
+              {isAlreadySettled && preview.existingSettlementId && (
+                <Link
+                  href={`/groups/${groupId}/settlements/${preview.existingSettlementId}`}
+                  className="block w-full text-center text-sm text-blue-600 hover:text-blue-800 py-2"
+                  onClick={() => setModalOpen(false)}
+                >
+                  精算済み（詳細を確認・取り消し）
+                </Link>
               )}
             </div>
           </div>
