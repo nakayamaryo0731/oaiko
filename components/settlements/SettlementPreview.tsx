@@ -273,12 +273,12 @@ function CompactSettlement({
 
       {/* モーダル（ボトムシート） */}
       {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => setModalOpen(false)}
           />
-          <div className="relative w-full max-w-lg bg-white rounded-t-2xl p-4 pb-8 max-h-[80dvh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white rounded-2xl p-4 max-h-[80dvh] overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-slate-800">
                 精算の詳細
