@@ -8,29 +8,56 @@ import { jaJP } from "@clerk/localizations";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+const HEARTBEAT_INTERVAL = 30 * 60 * 1000; // 30分
+
 /**
- * PWAがバックグラウンドから復帰した時にClerkセッションをリフレッシュする。
- * iOS PWAではプロセスが kill されるとインメモリのトークンが失われるため、
- * visibilitychange で明示的に touch して再ログインを防ぐ。
+ * セッションを維持するためのキープアライブ。
+ * - visibilitychange: バックグラウンド復帰時（iOS PWA / Android Chrome）
+ * - focus: PCブラウザのタブ切り替え復帰時
+ * - 定期ハートビート: 長時間アクティブ時のトークン失効防止
+ *
+ * session.touch() が失敗した場合、getToken({ skipCache: true }) で
+ * トークンの強制再取得を試みてからサインアウトにフォールバックする。
  */
 function SessionKeepAlive() {
   const { session } = useSession();
+  const { getToken } = useAuth();
 
   useEffect(() => {
     if (!session) return;
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        session.touch().catch(() => {
-          // セッションが無効な場合は何もしない（Clerkが自動でサインアウト処理する）
-        });
+    const refreshSession = async () => {
+      try {
+        await session.touch();
+      } catch {
+        try {
+          await getToken({ skipCache: true });
+        } catch {
+          // 両方失敗した場合はClerkの自動サインアウトに任せる
+        }
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshSession();
+      }
+    };
+
+    const handleFocus = () => {
+      refreshSession();
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () =>
+    window.addEventListener("focus", handleFocus);
+    const heartbeat = setInterval(refreshSession, HEARTBEAT_INTERVAL);
+
+    return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [session]);
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(heartbeat);
+    };
+  }, [session, getToken]);
 
   return null;
 }
