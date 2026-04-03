@@ -7,7 +7,7 @@ import { MemberBalanceList } from "./MemberBalanceList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
-import { ChevronUp, X } from "lucide-react";
+import { X } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
 import { trackEvent } from "@/lib/analytics";
 
@@ -206,19 +206,19 @@ function CompactSettlement({
 
   return (
     <>
-      {/* コンパクト表示 */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex-1 min-w-0 text-left"
-        >
-          {preview.payments.length > 0 ? (
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {preview.payments.map((payment, index) => (
-                <span
-                  key={index}
-                  className="text-sm text-slate-700 flex items-center gap-1"
-                >
+      {/* コンパクト表示（カード風） */}
+      <button
+        onClick={() => setModalOpen(true)}
+        className="w-full bg-white border border-slate-200 rounded-lg p-3 text-left"
+      >
+        {preview.payments.length > 0 ? (
+          <div className="space-y-1.5">
+            {preview.payments.slice(0, 3).map((payment, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between text-sm"
+              >
+                <span className="text-slate-700 flex items-center gap-1">
                   {memberColors[payment.fromUserId] && (
                     <span
                       className="inline-block w-2 h-2 rounded-full shrink-0"
@@ -228,24 +228,22 @@ function CompactSettlement({
                     />
                   )}
                   {payment.fromUserName} → {payment.toUserName}
-                  <span className="font-medium">
-                    ¥{payment.amount.toLocaleString()}
-                  </span>
                 </span>
-              ))}
-            </div>
-          ) : (
-            <span className="text-sm text-slate-500">精算なし</span>
-          )}
-        </button>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="shrink-0 p-1 text-slate-400"
-          aria-label="精算の詳細"
-        >
-          <ChevronUp className="h-4 w-4" />
-        </button>
-      </div>
+                <span className="font-medium text-slate-800">
+                  ¥{payment.amount.toLocaleString()}
+                </span>
+              </div>
+            ))}
+            {preview.payments.length > 3 && (
+              <div className="text-xs text-blue-600">
+                他{preview.payments.length - 3}件の精算
+              </div>
+            )}
+          </div>
+        ) : (
+          <span className="text-sm text-slate-500">精算なし</span>
+        )}
+      </button>
 
       {/* モーダル（ボトムシート） */}
       {modalOpen && (
