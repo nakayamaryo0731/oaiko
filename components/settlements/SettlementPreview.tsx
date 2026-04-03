@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -63,10 +62,6 @@ export function SettlementPreview({
       <CompactSettlement
         preview={preview}
         memberColors={memberColors}
-        isOwner={isOwner}
-        isAlreadySettled={isAlreadySettled}
-        isCreating={isCreating}
-        onConfirm={handleConfirm}
         groupId={groupId}
         year={year}
         month={month}
@@ -195,10 +190,6 @@ type CompactSettlementProps = {
     existingSettlementStatus: string | null;
   };
   memberColors: Record<string, string>;
-  isOwner: boolean;
-  isAlreadySettled: boolean;
-  isCreating: boolean;
-  onConfirm: () => void;
   groupId: Id<"groups">;
   year: number;
   month: number;
@@ -207,10 +198,6 @@ type CompactSettlementProps = {
 function CompactSettlement({
   preview,
   memberColors,
-  isOwner,
-  isAlreadySettled,
-  isCreating,
-  onConfirm,
   groupId,
   year,
   month,
@@ -247,29 +234,10 @@ function CompactSettlement({
                 </span>
               ))}
             </div>
-          ) : isAlreadySettled && preview.existingSettlementId ? (
-            <Link
-              href={`/groups/${groupId}/settlements/${preview.existingSettlementId}`}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              精算済み（詳細）
-            </Link>
-          ) : isAlreadySettled ? (
-            <span className="text-sm text-slate-500">精算済み</span>
           ) : (
             <span className="text-sm text-slate-500">精算なし</span>
           )}
         </button>
-        {isOwner && !isAlreadySettled && preview.payments.length > 0 && (
-          <Button
-            onClick={onConfirm}
-            disabled={isCreating}
-            size="sm"
-            className="shrink-0"
-          >
-            {isCreating ? "確定中..." : "確定"}
-          </Button>
-        )}
         <button
           onClick={() => setModalOpen(true)}
           className="shrink-0 p-1 text-slate-400"
@@ -370,28 +338,6 @@ function CompactSettlement({
                 </div>
               )}
 
-              {isOwner && !isAlreadySettled && preview.payments.length > 0 && (
-                <Button
-                  onClick={() => {
-                    onConfirm();
-                    setModalOpen(false);
-                  }}
-                  disabled={isCreating}
-                  className="w-full"
-                >
-                  {isCreating ? "確定中..." : "精算を確定"}
-                </Button>
-              )}
-
-              {isAlreadySettled && preview.existingSettlementId && (
-                <Link
-                  href={`/groups/${groupId}/settlements/${preview.existingSettlementId}`}
-                  className="block w-full text-center text-sm text-blue-600 hover:text-blue-800 py-2"
-                  onClick={() => setModalOpen(false)}
-                >
-                  精算済み（詳細を確認・取り消し）
-                </Link>
-              )}
             </div>
           </div>
         </div>
