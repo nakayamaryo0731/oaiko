@@ -99,8 +99,8 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           />
         </div>
       </div>
-      {/* 期間ナビのスペーサー */}
-      <div className="h-14" />
+      {/* 期間ナビのスペーサー（py-2=16px + PeriodNavigator p-2=16px + コンテンツ約40px） */}
+      <div className="h-[4.5rem]" />
 
       {/* 支出一覧 */}
       <div className="px-4 pb-32 scrollbar-hide">
