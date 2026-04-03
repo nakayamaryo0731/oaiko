@@ -28,25 +28,30 @@ export function PageHeader({
   rightElement,
 }: PageHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-slate-200">
-      <div className="relative flex items-center justify-between px-4 h-14">
-        <Link
-          href={backHref}
-          className="z-10 p-2 -ml-2 text-slate-600 hover:text-slate-800 transition-colors"
-          aria-label="戻る"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </Link>
-        {/* タイトルを絶対中央配置 */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {isLoading ? (
-            <div className="h-5 w-20 bg-slate-100 rounded animate-pulse" />
-          ) : (
-            <h1 className="text-lg font-semibold">{title}</h1>
-          )}
+    <>
+      <header className="fixed top-0 left-0 right-0 z-20 bg-white border-b border-slate-200">
+        <div className="relative flex items-center justify-between px-4 h-14">
+          <Link
+            href={backHref}
+            className="z-10 p-2 -ml-2 text-slate-600 hover:text-slate-800 transition-colors"
+            aria-label="戻る"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Link>
+          {/* タイトルを絶対中央配置 */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            {isLoading ? (
+              <div className="h-5 w-20 bg-slate-100 rounded animate-pulse" />
+            ) : (
+              <h1 className="text-lg font-semibold">{title}</h1>
+            )}
+          </div>
+          <div className="z-10">
+            {rightElement ?? <div className="w-6" />}
+          </div>
         </div>
-        <div className="z-10">{rightElement ?? <div className="w-6" />}</div>
-      </div>
-    </header>
+      </header>
+      <div className="h-14" />
+    </>
   );
 }
