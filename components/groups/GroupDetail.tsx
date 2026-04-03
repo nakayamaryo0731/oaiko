@@ -85,22 +85,8 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
 
   return (
     <div className="flex flex-col">
-      {/* 期間ナビ（固定） */}
-      <div className="fixed top-14 left-0 right-0 z-10 bg-slate-50 px-4 py-2">
-        <div className="max-w-lg mx-auto">
-          <PeriodNavigator
-            year={displayYear}
-            month={displayMonth}
-            startDate={period!.startDate}
-            endDate={period!.endDate}
-            onPrevious={goToPreviousMonth}
-            onNext={goToNextMonth}
-            canGoNext={canGoNext}
-          />
-        </div>
-      </div>
-      {/* 期間ナビのスペーサー（同じ内容を不可視で描画して高さを確保） */}
-      <div className="invisible px-4 py-2" aria-hidden="true">
+      {/* 期間ナビ（sticky: ヘッダーの下に固定） */}
+      <div className="sticky top-14 z-10 bg-slate-50 px-4 py-2">
         <PeriodNavigator
           year={displayYear}
           month={displayMonth}
