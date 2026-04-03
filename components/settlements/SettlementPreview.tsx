@@ -14,12 +14,14 @@ type SettlementPreviewProps = {
   groupId: Id<"groups">;
   year: number;
   month: number;
+  compact?: boolean;
 };
 
 export function SettlementPreview({
   groupId,
   year,
   month,
+  compact = false,
 }: SettlementPreviewProps) {
   const preview = useQuery(api.settlements.getPreview, {
     groupId,
@@ -53,6 +55,52 @@ export function SettlementPreview({
   const isAlreadySettled =
     preview.existingSettlementId !== null &&
     preview.existingSettlementStatus !== "reopened";
+
+  if (compact) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="flex-1 min-w-0">
+          {preview.payments.length > 0 ? (
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {preview.payments.map((payment, index) => (
+                <span
+                  key={index}
+                  className="text-sm text-slate-700 flex items-center gap-1"
+                >
+                  {memberColors[payment.fromUserId] && (
+                    <span
+                      className="inline-block w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: memberColors[payment.fromUserId],
+                      }}
+                    />
+                  )}
+                  {payment.fromUserName} → {payment.toUserName}
+                  <span className="font-medium">
+                    ¥{payment.amount.toLocaleString()}
+                  </span>
+                </span>
+              ))}
+            </div>
+          ) : isAlreadySettled ? (
+            <span className="text-sm text-slate-500">精算済み</span>
+          ) : (
+            <span className="text-sm text-slate-500">精算なし</span>
+          )}
+        </div>
+        {isOwner && !isAlreadySettled && preview.payments.length > 0 && (
+          <Button
+            onClick={handleConfirm}
+            disabled={isCreating}
+            size="sm"
+            className="shrink-0"
+          >
+            {isCreating ? "確定中..." : "精算を確定"}
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg p-4">

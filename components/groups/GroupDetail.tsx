@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
@@ -52,13 +52,6 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
 
   const memberColors = useMemo(() => buildMemberColorMap(members), [members]);
 
-  // 支出サマリー取得（固定表示用）
-  const expenseData = useQuery(api.expenses.listByPeriod, {
-    groupId: group._id,
-    year: displayYear,
-    month: displayMonth,
-  });
-
   // 削除ダイアログ用の状態
   const [expenseToDelete, setExpenseToDelete] =
     useState<ExpenseToDelete | null>(null);
@@ -91,10 +84,10 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
   };
 
   return (
-    <div className="flex flex-col">
-      {/* 固定ヘッダー（期間ナビ + サマリー） */}
-      <div className="sticky top-14 z-10 bg-white border-b border-slate-200">
-        <div className="px-4 py-4">
+    <div className="flex flex-col h-[calc(100dvh-56px)]">
+      {/* 固定ヘッダー（期間ナビ） */}
+      <div className="bg-white border-b border-slate-200 shrink-0">
+        <div className="px-4 py-3">
           <PeriodNavigator
             year={displayYear}
             month={displayMonth}
@@ -105,18 +98,10 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
             canGoNext={canGoNext}
           />
         </div>
-        <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100">
-          <span className="text-sm text-slate-600">
-            {expenseData?.totalCount ?? 0}件の支出
-          </span>
-          <span className="text-lg font-semibold text-slate-800">
-            ¥{(expenseData?.totalAmount ?? 0).toLocaleString()}
-          </span>
-        </div>
       </div>
 
-      {/* コンテンツ領域 */}
-      <div className="px-4 py-6 pb-40">
+      {/* 支出一覧（スクロール領域） */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 pb-20">
         <PeriodExpenseList
           groupId={group._id}
           year={displayYear}
@@ -126,16 +111,16 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           onDuplicate={handleDuplicate}
           onDelete={handleDelete}
         />
+      </div>
 
-        {/* 精算カード */}
-        <div className="mt-6">
-          <h2 className="font-medium text-slate-800 mb-3">今月の精算</h2>
-          <SettlementPreview
-            groupId={group._id}
-            year={displayYear}
-            month={displayMonth}
-          />
-        </div>
+      {/* 精算カード（固定下部） */}
+      <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2">
+        <SettlementPreview
+          groupId={group._id}
+          year={displayYear}
+          month={displayMonth}
+          compact
+        />
       </div>
 
       {/* 支出記録ボタン（FAB） */}
