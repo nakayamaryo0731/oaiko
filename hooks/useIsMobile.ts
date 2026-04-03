@@ -5,6 +5,7 @@ function subscribe() {
 }
 
 function getSnapshot(): boolean {
+  if (process.env.NODE_ENV === "development") return true;
   return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
     navigator.userAgent,
   );

@@ -6,8 +6,11 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { MemberBalanceList } from "./MemberBalanceList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo } from "react";
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, X, Banknote } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { PayPayButton } from "./PayPayButton";
+import { trackEvent } from "@/lib/analytics";
 
 type SettlementPreviewProps = {
   groupId: Id<"groups">;
@@ -163,6 +166,9 @@ function CompactSettlement({
   month,
 }: CompactSettlementProps) {
   const [modalOpen, setModalOpen] = useState(false);
+  const isMobile = useIsMobile();
+  const me = useQuery(api.users.getMe);
+  const showPayPay = isMobile && me?.isAdmin;
 
   return (
     <>
@@ -193,8 +199,26 @@ function CompactSettlement({
                   )}
                   {payment.fromUserName} → {payment.toUserName}
                 </span>
-                <span className="font-medium text-slate-800">
-                  ¥{payment.amount.toLocaleString()}
+                <span className="flex items-center gap-1.5">
+                  <span className="font-medium text-slate-800">
+                    ¥{payment.amount.toLocaleString()}
+                  </span>
+                  {showPayPay && (
+                    <a
+                      href="paypay://"
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await navigator.clipboard.writeText(
+                          String(payment.amount),
+                        );
+                        trackEvent("paypay_transfer");
+                      }}
+                      className="p-1 text-[#FF0033] hover:bg-[#FF0033]/10 rounded"
+                      aria-label={`PayPayで${payment.amount}円を送金`}
+                    >
+                      <Banknote className="h-4 w-4" />
+                    </a>
+                  )}
                 </span>
               </div>
             ))}
@@ -268,32 +292,40 @@ function CompactSettlement({
                     {preview.payments.map((payment, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2"
+                        className="bg-slate-50 rounded-lg px-3 py-2"
                       >
-                        <span className="text-sm flex items-center gap-1">
-                          {memberColors[payment.fromUserId] && (
-                            <span
-                              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{
-                                backgroundColor:
-                                  memberColors[payment.fromUserId],
-                              }}
-                            />
-                          )}
-                          {payment.fromUserName} →{" "}
-                          {memberColors[payment.toUserId] && (
-                            <span
-                              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{
-                                backgroundColor: memberColors[payment.toUserId],
-                              }}
-                            />
-                          )}
-                          {payment.toUserName}
-                        </span>
-                        <span className="font-medium">
-                          ¥{payment.amount.toLocaleString()}
-                        </span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm flex items-center gap-1">
+                            {memberColors[payment.fromUserId] && (
+                              <span
+                                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor:
+                                    memberColors[payment.fromUserId],
+                                }}
+                              />
+                            )}
+                            {payment.fromUserName} →{" "}
+                            {memberColors[payment.toUserId] && (
+                              <span
+                                className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor:
+                                    memberColors[payment.toUserId],
+                                }}
+                              />
+                            )}
+                            {payment.toUserName}
+                          </span>
+                          <span className="font-medium">
+                            ¥{payment.amount.toLocaleString()}
+                          </span>
+                        </div>
+                        {showPayPay && (
+                          <div className="mt-2">
+                            <PayPayButton amount={payment.amount} />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
