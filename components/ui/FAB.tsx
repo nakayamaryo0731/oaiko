@@ -20,8 +20,8 @@ export function FAB({ href, icon, label }: FABProps) {
 
   const hasBanner = subscription?.plan !== "premium";
   const bottomValue = hasBanner
-    ? "calc(9rem + env(safe-area-inset-bottom))"
-    : "calc(5.5rem + env(safe-area-inset-bottom))";
+    ? "calc(14rem + env(safe-area-inset-bottom))"
+    : "calc(10.5rem + env(safe-area-inset-bottom))";
 
   return (
     <Link

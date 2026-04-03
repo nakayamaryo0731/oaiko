@@ -4,11 +4,7 @@ import { use, useState, useMemo } from "react";
 import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import {
-  ExpenseForm,
-  ExpenseDetail,
-  DeleteExpenseDialog,
-} from "@/components/expenses";
+import { ExpenseForm, DeleteExpenseDialog } from "@/components/expenses";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Trash2 } from "lucide-react";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
@@ -132,47 +128,7 @@ export default function ExpensePage({ params }: PageProps) {
     );
   }
 
-  // 精算済みの場合は読み取り専用表示
-  if (expense.isSettled) {
-    return (
-      <div className="flex min-h-screen flex-col bg-slate-50">
-        <PageHeader
-          backHref={`/groups/${groupId}`}
-          title="支出詳細"
-          rightElement={
-            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-1 rounded">
-              精算済み
-            </span>
-          }
-        />
-        <main className="flex-1 p-4">
-          <div className="max-w-lg mx-auto">
-            <ExpenseDetail
-              expense={expense}
-              isSettled={true}
-              onDelete={handleDelete}
-              isDeleting={isDeleting}
-              memberColors={memberColors}
-            />
-          </div>
-        </main>
-        <DeleteExpenseDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          expense={{
-            categoryIcon: expense.category?.icon ?? DEFAULT_ICON,
-            categoryName: expense.category?.name ?? "カテゴリなし",
-            amount: expense.amount,
-            date: expense.date,
-          }}
-          onConfirm={handleConfirmDelete}
-          isDeleting={isDeleting}
-        />
-      </div>
-    );
-  }
-
-  // 編集可能な場合はフォームを表示
+  // フォームを表示
   const initialData = {
     expenseId: expense._id,
     amount: expense.amount,
