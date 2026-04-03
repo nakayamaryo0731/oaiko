@@ -482,40 +482,6 @@ describe("expenses", () => {
       ).rejects.toThrow("このグループにアクセスする権限がありません");
     });
 
-    test("isSettledフラグが返される", async () => {
-      const t = convexTest(schema, modules);
-
-      const groupId = await t
-        .withIdentity(userAIdentity)
-        .mutation(api.groups.create, {
-          name: "テストグループ",
-        });
-
-      const detail = await t
-        .withIdentity(userAIdentity)
-        .query(api.groups.getDetail, { groupId });
-
-      const categoryId = detail.categories[0]._id;
-      const payerId = detail.members[0].userId;
-
-      const expenseId = await t
-        .withIdentity(userAIdentity)
-        .mutation(api.expenses.create, {
-          groupId,
-          amount: 1000,
-          categoryId,
-          paidBy: payerId,
-          date: "2024-12-30",
-        });
-
-      const expense = await t
-        .withIdentity(userAIdentity)
-        .query(api.expenses.getById, { expenseId });
-
-      // 未精算の状態ではfalse
-      expect(expense.isSettled).toBe(false);
-    });
-
     test("連携した買い物リストアイテムが取得できる", async () => {
       const t = convexTest(schema, modules);
 

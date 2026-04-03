@@ -5,7 +5,7 @@ import {
   requireUserIsGroupMember,
 } from "./lib/authorization";
 import { getGroupMemberIds } from "./lib/groupHelper";
-import { getExpensesByPeriod, isExpenseSettled } from "./lib/expenseHelper";
+import { getExpensesByPeriod } from "./lib/expenseHelper";
 import { getOrThrow } from "./lib/dataHelpers";
 import { enrichExpenseList, FALLBACK } from "./lib/enrichment";
 import { canUseTags, canUseSlopedSplit } from "./lib/subscription";
@@ -284,11 +284,6 @@ export const getById = authQuery({
       args.expenseId,
       "支出が見つかりません",
     );
-    const group = await getOrThrow(
-      ctx,
-      expense.groupId,
-      "グループが見つかりません",
-    );
 
     // 認可チェック
     await requireGroupMember(ctx, expense.groupId);
@@ -327,14 +322,6 @@ export const getById = authQuery({
     );
     const validTags = tags.filter((t) => t !== null);
 
-    // 精算済みチェック
-    const isSettled = await isExpenseSettled(
-      ctx,
-      expense.date,
-      expense.groupId,
-      group.closingDay,
-    );
-
     const splitUserIds = [...new Set(splits.map((s) => s.userId))];
     const splitUsers = await Promise.all(
       splitUserIds.map((id) => ctx.db.get(id)),
@@ -356,7 +343,6 @@ export const getById = authQuery({
       title: expense.title,
       memo: expense.memo,
       splitMethod: expense.splitMethod,
-      isSettled,
       category: category
         ? { _id: category._id, name: category.name, icon: category.icon }
         : null,
@@ -747,38 +733,8 @@ export const update = authMutation({
       args.expenseId,
       "支出が見つかりません",
     );
-    const group = await getOrThrow(
-      ctx,
-      expense.groupId,
-      "グループが見つかりません",
-    );
-
     // 認可チェック
     await requireGroupMember(ctx, expense.groupId);
-
-    // 精算済みチェック
-    const isSettled = await isExpenseSettled(
-      ctx,
-      expense.date,
-      expense.groupId,
-      group.closingDay,
-    );
-    if (isSettled) {
-      throw new ConvexError("精算済みの期間の支出は編集できません");
-    }
-
-    // 日付が変更される場合、変更先の期間も精算済みかチェック
-    if (args.date !== expense.date) {
-      const isNewDateSettled = await isExpenseSettled(
-        ctx,
-        args.date,
-        expense.groupId,
-        group.closingDay,
-      );
-      if (isNewDateSettled) {
-        throw new ConvexError("精算済みの期間への日付変更はできません");
-      }
-    }
 
     // バリデーション
     validateExpenseInput({
@@ -929,25 +885,8 @@ export const remove = authMutation({
       args.expenseId,
       "支出が見つかりません",
     );
-    const group = await getOrThrow(
-      ctx,
-      expense.groupId,
-      "グループが見つかりません",
-    );
-
     // 認可チェック
     await requireGroupMember(ctx, expense.groupId);
-
-    // 精算済みチェック
-    const isSettled = await isExpenseSettled(
-      ctx,
-      expense.date,
-      expense.groupId,
-      group.closingDay,
-    );
-    if (isSettled) {
-      throw new ConvexError("精算済みの期間の支出は削除できません");
-    }
 
     // 関連するsplitsを削除
     const splits = await ctx.db
@@ -1011,23 +950,8 @@ export const updateCategory = authMutation({
       args.expenseId,
       "支出が見つかりません",
     );
-    const group = await getOrThrow(
-      ctx,
-      expense.groupId,
-      "グループが見つかりません",
-    );
 
     await requireGroupMember(ctx, expense.groupId);
-
-    const isSettled = await isExpenseSettled(
-      ctx,
-      expense.date,
-      expense.groupId,
-      group.closingDay,
-    );
-    if (isSettled) {
-      throw new ConvexError("精算済みの期間の支出は編集できません");
-    }
 
     const category = await ctx.db.get(args.categoryId);
     if (!category || category.groupId !== expense.groupId) {
@@ -1058,23 +982,8 @@ export const updateTags = authMutation({
       args.expenseId,
       "支出が見つかりません",
     );
-    const group = await getOrThrow(
-      ctx,
-      expense.groupId,
-      "グループが見つかりません",
-    );
 
     await requireGroupMember(ctx, expense.groupId);
-
-    const isSettled = await isExpenseSettled(
-      ctx,
-      expense.date,
-      expense.groupId,
-      group.closingDay,
-    );
-    if (isSettled) {
-      throw new ConvexError("精算済みの期間の支出は編集できません");
-    }
 
     if (args.tagIds.length > 0) {
       const canUse = await canUseTags(ctx, ctx.user._id);

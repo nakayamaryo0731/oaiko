@@ -1,15 +1,13 @@
 "use client";
 
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { MemberBalanceList } from "./MemberBalanceList";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
 import { ChevronRight, X } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
-import { trackEvent } from "@/lib/analytics";
 
 type SettlementPreviewProps = {
   groupId: Id<"groups">;
@@ -30,32 +28,14 @@ export function SettlementPreview({
     month,
   });
   const groupDetail = useQuery(api.groups.getDetail, { groupId });
-  const isOwner = groupDetail?.myRole === "owner";
-  const createSettlement = useMutation(api.settlements.create);
   const memberColors = useMemo(
     () => (groupDetail ? buildMemberColorMap(groupDetail.members) : {}),
     [groupDetail],
   );
-  const [isCreating, setIsCreating] = useState(false);
 
   if (preview === undefined) {
     return <SettlementPreviewSkeleton />;
   }
-
-  const handleConfirm = async () => {
-    setIsCreating(true);
-    try {
-      await createSettlement({ groupId, year, month });
-      trackEvent("create_settlement");
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  // reopened状態の精算は「精算済み」として扱わない（再精算可能）
-  const isAlreadySettled =
-    preview.existingSettlementId !== null &&
-    preview.existingSettlementStatus !== "reopened";
 
   if (compact) {
     return (
@@ -140,26 +120,8 @@ export function SettlementPreview({
         </div>
       )}
 
-      {/* 精算確定ボタン */}
-      {isOwner && !isAlreadySettled && (
-        <Button
-          onClick={handleConfirm}
-          disabled={isCreating}
-          className="w-full"
-        >
-          {isCreating ? "確定中..." : "精算を確定"}
-        </Button>
-      )}
-
-      {/* 精算済みの場合 */}
-      {isAlreadySettled && (
-        <div className="text-center text-sm text-slate-500 py-2">
-          この期間は精算済みです
-        </div>
-      )}
-
       {/* 支出がない場合 */}
-      {preview.totalExpenses === 0 && !isAlreadySettled && (
+      {preview.totalExpenses === 0 && (
         <div className="text-center text-sm text-slate-500 py-2">
           この期間の支出はありません
         </div>
@@ -186,8 +148,6 @@ type CompactSettlementProps = {
       toUserName: string;
       amount: number;
     }[];
-    existingSettlementId: Id<"settlements"> | null;
-    existingSettlementStatus: string | null;
   };
   memberColors: Record<string, string>;
   groupId: Id<"groups">;
