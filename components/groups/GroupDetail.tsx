@@ -85,7 +85,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-56px)]">
-      {/* 固定ヘッダー（期間ナビ） */}
+      {/* 固定ヘッダー（期間ナビ + 精算カード） */}
       <div className="bg-white border-b border-slate-200 shrink-0">
         <div className="px-4 py-3">
           <PeriodNavigator
@@ -96,6 +96,14 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
             onPrevious={goToPreviousMonth}
             onNext={goToNextMonth}
             canGoNext={canGoNext}
+          />
+        </div>
+        <div className="px-4 py-2 border-t border-slate-100 bg-slate-50">
+          <SettlementPreview
+            groupId={group._id}
+            year={displayYear}
+            month={displayMonth}
+            compact
           />
         </div>
       </div>
@@ -110,16 +118,6 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           onEdit={handleEdit}
           onDuplicate={handleDuplicate}
           onDelete={handleDelete}
-        />
-      </div>
-
-      {/* 精算カード（固定下部） */}
-      <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-2">
-        <SettlementPreview
-          groupId={group._id}
-          year={displayYear}
-          month={displayMonth}
-          compact
         />
       </div>
 
