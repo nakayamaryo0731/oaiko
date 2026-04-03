@@ -7,6 +7,7 @@ import { MemberBalanceList } from "./MemberBalanceList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { useState, useMemo } from "react";
+import { ChevronUp, X } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
 import { trackEvent } from "@/lib/analytics";
 
@@ -58,47 +59,17 @@ export function SettlementPreview({
 
   if (compact) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex-1 min-w-0">
-          {preview.payments.length > 0 ? (
-            <div className="flex flex-wrap gap-x-4 gap-y-1">
-              {preview.payments.map((payment, index) => (
-                <span
-                  key={index}
-                  className="text-sm text-slate-700 flex items-center gap-1"
-                >
-                  {memberColors[payment.fromUserId] && (
-                    <span
-                      className="inline-block w-2 h-2 rounded-full shrink-0"
-                      style={{
-                        backgroundColor: memberColors[payment.fromUserId],
-                      }}
-                    />
-                  )}
-                  {payment.fromUserName} → {payment.toUserName}
-                  <span className="font-medium">
-                    ¥{payment.amount.toLocaleString()}
-                  </span>
-                </span>
-              ))}
-            </div>
-          ) : isAlreadySettled ? (
-            <span className="text-sm text-slate-500">精算済み</span>
-          ) : (
-            <span className="text-sm text-slate-500">精算なし</span>
-          )}
-        </div>
-        {isOwner && !isAlreadySettled && preview.payments.length > 0 && (
-          <Button
-            onClick={handleConfirm}
-            disabled={isCreating}
-            size="sm"
-            className="shrink-0"
-          >
-            {isCreating ? "確定中..." : "精算を確定"}
-          </Button>
-        )}
-      </div>
+      <CompactSettlement
+        preview={preview}
+        memberColors={memberColors}
+        isOwner={isOwner}
+        isAlreadySettled={isAlreadySettled}
+        isCreating={isCreating}
+        onConfirm={handleConfirm}
+        groupId={groupId}
+        year={year}
+        month={month}
+      />
     );
   }
 
@@ -198,6 +169,222 @@ export function SettlementPreview({
         </div>
       )}
     </div>
+  );
+}
+
+type CompactSettlementProps = {
+  preview: {
+    totalExpenses: number;
+    totalAmount: number;
+    balances: {
+      userId: Id<"users">;
+      displayName: string;
+      net: number;
+      paid: number;
+      owed: number;
+    }[];
+    payments: {
+      fromUserId: Id<"users">;
+      fromUserName: string;
+      toUserId: Id<"users">;
+      toUserName: string;
+      amount: number;
+    }[];
+    existingSettlementId: Id<"settlements"> | null;
+    existingSettlementStatus: string | null;
+  };
+  memberColors: Record<string, string>;
+  isOwner: boolean;
+  isAlreadySettled: boolean;
+  isCreating: boolean;
+  onConfirm: () => void;
+  groupId: Id<"groups">;
+  year: number;
+  month: number;
+};
+
+function CompactSettlement({
+  preview,
+  memberColors,
+  isOwner,
+  isAlreadySettled,
+  isCreating,
+  onConfirm,
+  groupId,
+  year,
+  month,
+}: CompactSettlementProps) {
+  const [modalOpen, setModalOpen] = useState(false);
+
+  return (
+    <>
+      {/* コンパクト表示 */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setModalOpen(true)}
+          className="flex-1 min-w-0 text-left"
+        >
+          {preview.payments.length > 0 ? (
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {preview.payments.map((payment, index) => (
+                <span
+                  key={index}
+                  className="text-sm text-slate-700 flex items-center gap-1"
+                >
+                  {memberColors[payment.fromUserId] && (
+                    <span
+                      className="inline-block w-2 h-2 rounded-full shrink-0"
+                      style={{
+                        backgroundColor: memberColors[payment.fromUserId],
+                      }}
+                    />
+                  )}
+                  {payment.fromUserName} → {payment.toUserName}
+                  <span className="font-medium">
+                    ¥{payment.amount.toLocaleString()}
+                  </span>
+                </span>
+              ))}
+            </div>
+          ) : isAlreadySettled ? (
+            <span className="text-sm text-slate-500">精算済み</span>
+          ) : (
+            <span className="text-sm text-slate-500">精算なし</span>
+          )}
+        </button>
+        {isOwner && !isAlreadySettled && preview.payments.length > 0 && (
+          <Button
+            onClick={onConfirm}
+            disabled={isCreating}
+            size="sm"
+            className="shrink-0"
+          >
+            {isCreating ? "確定中..." : "確定"}
+          </Button>
+        )}
+        <button
+          onClick={() => setModalOpen(true)}
+          className="shrink-0 p-1 text-slate-400"
+          aria-label="精算の詳細"
+        >
+          <ChevronUp className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* モーダル（ボトムシート） */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setModalOpen(false)}
+          />
+          <div className="relative w-full max-w-lg bg-white rounded-t-2xl p-4 pb-8 max-h-[80dvh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-800">
+                精算の詳細
+              </h3>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600"
+                aria-label="閉じる"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex gap-4 text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500">支出数:</span>
+                  <span className="font-medium">{preview.totalExpenses}件</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span className="text-slate-500">合計:</span>
+                  <span className="font-medium">
+                    ¥{preview.totalAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              {preview.balances.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-slate-600 mb-2">
+                    各メンバーの収支
+                  </h4>
+                  <MemberBalanceList
+                    balances={preview.balances}
+                    memberColors={memberColors}
+                    groupId={groupId}
+                    year={year}
+                    month={month}
+                  />
+                </div>
+              )}
+
+              {preview.payments.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-slate-600 mb-2">
+                    精算方法
+                  </h4>
+                  <div className="space-y-2">
+                    {preview.payments.map((payment, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-2"
+                      >
+                        <span className="text-sm flex items-center gap-1">
+                          {memberColors[payment.fromUserId] && (
+                            <span
+                              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{
+                                backgroundColor:
+                                  memberColors[payment.fromUserId],
+                              }}
+                            />
+                          )}
+                          {payment.fromUserName} →{" "}
+                          {memberColors[payment.toUserId] && (
+                            <span
+                              className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{
+                                backgroundColor: memberColors[payment.toUserId],
+                              }}
+                            />
+                          )}
+                          {payment.toUserName}
+                        </span>
+                        <span className="font-medium">
+                          ¥{payment.amount.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isOwner && !isAlreadySettled && preview.payments.length > 0 && (
+                <Button
+                  onClick={() => {
+                    onConfirm();
+                    setModalOpen(false);
+                  }}
+                  disabled={isCreating}
+                  className="w-full"
+                >
+                  {isCreating ? "確定中..." : "精算を確定"}
+                </Button>
+              )}
+
+              {isAlreadySettled && (
+                <div className="text-center text-sm text-slate-500 py-2">
+                  この期間は精算済みです
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
