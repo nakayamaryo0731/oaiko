@@ -87,7 +87,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
     <div className="flex flex-col">
       {/* 固定ヘッダー（期間ナビ） */}
       <div className="fixed top-14 left-0 right-0 z-10 bg-white border-b border-slate-200">
-        <div className="max-w-lg mx-auto px-4 py-3">
+        <div className="max-w-lg mx-auto px-4 py-1.5">
           <PeriodNavigator
             year={displayYear}
             month={displayMonth}
@@ -101,7 +101,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
       </div>
 
       {/* 支出一覧 */}
-      <div className="px-4 pt-20 pb-32 scrollbar-hide">
+      <div className="px-4 pt-16 pb-32 scrollbar-hide">
         <PeriodExpenseList
           groupId={group._id}
           year={displayYear}
