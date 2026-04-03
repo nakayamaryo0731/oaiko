@@ -5,9 +5,18 @@ import { useQuery, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
-import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  ClipboardList,
+  BarChart3,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TabNavigation } from "@/components/ui/TabNavigation";
+import { UserButton } from "@clerk/nextjs";
 import { CategoryPieChart } from "@/components/analytics/CategoryPieChart";
 import { MonthlyTrendChart } from "@/components/analytics/MonthlyTrendChart";
 import { TagBreakdownChart } from "@/components/analytics/TagBreakdownChart";
@@ -173,16 +182,38 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
+  const handleTabChange = (tabId: string) => {
+    if (tabId === "expenses") router.push(`/groups/${groupId}`);
+    else if (tabId === "settings") router.push(`/groups/${groupId}/settings`);
+  };
+
   if (group === undefined) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <PageHeader backHref={`/groups/${groupId}`} isLoading />
+      <div className="flex min-h-screen flex-col pb-14">
+        <PageHeader
+          backHref="/groups?list=true"
+          isLoading
+          rightElement={
+            <div className="w-11 h-11 flex items-center justify-center">
+              <UserButton />
+            </div>
+          }
+        />
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto space-y-6">
             <ChartSkeleton type="pie" />
             <ChartSkeleton type="bar" />
           </div>
         </main>
+        <TabNavigation
+          tabs={[
+            { id: "expenses", label: "支出", icon: <ClipboardList /> },
+            { id: "analytics", label: "分析", icon: <BarChart3 /> },
+            { id: "settings", label: "設定", icon: <Settings /> },
+          ]}
+          activeTab="analytics"
+          onChange={handleTabChange}
+        />
       </div>
     );
   }
@@ -229,8 +260,16 @@ export default function AnalyticsPage({ params }: PageProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <PageHeader backHref={`/groups/${groupId}`} title="分析" />
+    <div className="flex min-h-screen flex-col pb-14">
+      <PageHeader
+        backHref="/groups?list=true"
+        title={group.group.name}
+        rightElement={
+          <div className="w-11 h-11 flex items-center justify-center">
+            <UserButton />
+          </div>
+        }
+      />
 
       <main className="flex-1 p-4">
         <div className="max-w-lg mx-auto space-y-6">
@@ -437,6 +476,16 @@ export default function AnalyticsPage({ params }: PageProps) {
           )}
         </div>
       </main>
+
+      <TabNavigation
+        tabs={[
+          { id: "expenses", label: "支出", icon: <ClipboardList /> },
+          { id: "analytics", label: "分析", icon: <BarChart3 /> },
+          { id: "settings", label: "設定", icon: <Settings /> },
+        ]}
+        activeTab="analytics"
+        onChange={handleTabChange}
+      />
     </div>
   );
 }

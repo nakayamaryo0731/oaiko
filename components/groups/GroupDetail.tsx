@@ -1,24 +1,16 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
 import { PeriodExpenseList, DeleteExpenseDialog } from "@/components/expenses";
-import {
-  SettlementPreview,
-  SettlementHistory,
-  PeriodNavigator,
-} from "@/components/settlements";
-import { TabNavigation } from "@/components/ui/TabNavigation";
+import { SettlementPreview, PeriodNavigator } from "@/components/settlements";
 import { FAB } from "@/components/ui/FAB";
-import { AdBanner } from "@/components/ads";
-import { ClipboardList, Coins, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
-
-type TabType = "expenses" | "settlement";
 
 type Member = {
   userId: Id<"users">;
@@ -60,41 +52,10 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
 
   const memberColors = useMemo(() => buildMemberColorMap(members), [members]);
 
-  const [activeTab, setActiveTab] = useState<TabType>("expenses");
-
-  // 支出サマリー取得（固定表示用）
-  const expenseData = useQuery(api.expenses.listByPeriod, {
-    groupId: group._id,
-    year: displayYear,
-    month: displayMonth,
-  });
-
   // 削除ダイアログ用の状態
   const [expenseToDelete, setExpenseToDelete] =
     useState<ExpenseToDelete | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // キーボードショートカット（左右矢印でタブ切り替え）
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // 入力中は無視
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      if (e.key === "ArrowLeft") {
-        setActiveTab("expenses");
-      } else if (e.key === "ArrowRight") {
-        setActiveTab("settlement");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   const handleEdit = (expenseId: Id<"expenses">) => {
     router.push(`/groups/${group._id}/expenses/${expenseId}`);
@@ -124,65 +85,42 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
 
   return (
     <div className="flex flex-col">
-      {/* 固定ヘッダー（期間ナビ + サマリー） */}
-      <div className="sticky top-14 z-10 bg-white border-b border-slate-200">
-        <div className="px-4 py-4">
-          <PeriodNavigator
-            year={displayYear}
-            month={displayMonth}
-            startDate={period!.startDate}
-            endDate={period!.endDate}
-            onPrevious={goToPreviousMonth}
-            onNext={goToNextMonth}
-            canGoNext={canGoNext}
-          />
-        </div>
-        {/* 支出サマリー（支出タブ時のみ表示） */}
-        {activeTab === "expenses" && (
-          <div className="flex items-center justify-between px-4 py-2 bg-slate-50 border-t border-slate-100">
-            <span className="text-sm text-slate-600">
-              {expenseData?.totalCount ?? 0}件の支出
-            </span>
-            <span className="text-lg font-semibold text-slate-800">
-              ¥{(expenseData?.totalAmount ?? 0).toLocaleString()}
-            </span>
-          </div>
-        )}
+      {/* 期間ナビ（sticky: ヘッダーの下に固定） */}
+      <div className="sticky top-14 z-10 bg-slate-50 px-4 py-2">
+        <PeriodNavigator
+          year={displayYear}
+          month={displayMonth}
+          startDate={period!.startDate}
+          endDate={period!.endDate}
+          onPrevious={goToPreviousMonth}
+          onNext={goToNextMonth}
+          canGoNext={canGoNext}
+        />
       </div>
 
-      {/* コンテンツ領域 */}
-      <div className="px-4 py-6 pb-40">
-        {/* タブコンテンツ */}
-        {activeTab === "expenses" && (
-          <div>
-            <PeriodExpenseList
-              groupId={group._id}
-              year={displayYear}
-              month={displayMonth}
-              memberColors={memberColors}
-              onEdit={handleEdit}
-              onDuplicate={handleDuplicate}
-              onDelete={handleDelete}
-            />
-          </div>
-        )}
+      {/* 支出一覧 */}
+      <div className="px-4 pb-32 scrollbar-hide">
+        <PeriodExpenseList
+          groupId={group._id}
+          year={displayYear}
+          month={displayMonth}
+          memberColors={memberColors}
+          onEdit={handleEdit}
+          onDuplicate={handleDuplicate}
+          onDelete={handleDelete}
+        />
+      </div>
 
-        {activeTab === "settlement" && (
-          <div className="space-y-6">
-            <div>
-              <h2 className="font-medium text-slate-800 mb-3">今期の精算</h2>
-              <SettlementPreview
-                groupId={group._id}
-                year={displayYear}
-                month={displayMonth}
-              />
-            </div>
-            <div>
-              <h2 className="font-medium text-slate-800 mb-3">過去の精算</h2>
-              <SettlementHistory groupId={group._id} />
-            </div>
-          </div>
-        )}
+      {/* 精算カード（タブナビの上に固定） */}
+      <div className="fixed bottom-14 left-0 right-0 z-10 bg-slate-50 pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-lg mx-auto px-4 py-2">
+          <SettlementPreview
+            groupId={group._id}
+            year={displayYear}
+            month={displayMonth}
+            compact
+          />
+        </div>
       </div>
 
       {/* 支出記録ボタン（FAB） */}
@@ -190,19 +128,6 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
         href={`/groups/${group._id}/expenses/new`}
         icon={<Plus />}
         label="支出を記録"
-      />
-
-      {/* 広告バナー（TabNavigationの上） */}
-      <AdBanner aboveTabNav skipPageCheck />
-
-      {/* 下部タブナビゲーション */}
-      <TabNavigation
-        tabs={[
-          { id: "expenses", label: "支出", icon: <ClipboardList /> },
-          { id: "settlement", label: "精算", icon: <Coins /> },
-        ]}
-        activeTab={activeTab}
-        onChange={(tabId) => setActiveTab(tabId as TabType)}
       />
 
       {/* 削除確認ダイアログ */}

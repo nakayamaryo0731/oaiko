@@ -28,7 +28,7 @@ export function PageHeader({
   rightElement,
 }: PageHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 bg-white border-b border-slate-200">
+    <header className="sticky top-0 z-20 bg-white border-b border-slate-200">
       <div className="relative flex items-center justify-between px-4 h-14">
         <Link
           href={backHref}

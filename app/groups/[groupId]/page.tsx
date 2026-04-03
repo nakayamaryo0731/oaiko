@@ -1,14 +1,16 @@
 "use client";
 
 import { use } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { GroupDetail } from "@/components/groups";
 import { GroupDetailSkeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Settings, BarChart3 } from "lucide-react";
+import { TabNavigation } from "@/components/ui/TabNavigation";
+import { AdBanner } from "@/components/ads";
+import { ClipboardList, BarChart3, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
 type PageProps = {
@@ -17,37 +19,21 @@ type PageProps = {
 
 export default function GroupDetailPage({ params }: PageProps) {
   const { groupId } = use(params);
+  const router = useRouter();
   const detail = useQuery(api.groups.getDetail, {
     groupId: groupId as Id<"groups">,
   });
 
-  const rightIcons = detail ? (
-    <div className="flex items-center gap-0.5">
-      <Link
-        href={`/groups/${detail.group._id}/analytics`}
-        className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors"
-        aria-label="分析"
-      >
-        <BarChart3 className="h-5 w-5 text-slate-600" />
-      </Link>
-      <Link
-        href={`/groups/${detail.group._id}/settings`}
-        className="w-11 h-11 flex items-center justify-center hover:bg-slate-100 rounded-lg transition-colors"
-        aria-label="設定"
-      >
-        <Settings className="h-5 w-5 text-slate-600" />
-      </Link>
-      <div className="w-11 h-11 flex items-center justify-center">
-        <UserButton />
-      </div>
-    </div>
-  ) : (
-    <div className="flex items-center gap-0.5">
-      <div className="w-11 h-11" />
-      <div className="w-11 h-11" />
-      <div className="w-11 h-11" />
+  const rightElement = (
+    <div className="w-11 h-11 flex items-center justify-center">
+      <UserButton />
     </div>
   );
+
+  const handleTabChange = (tabId: string) => {
+    if (tabId === "analytics") router.push(`/groups/${groupId}/analytics`);
+    else if (tabId === "settings") router.push(`/groups/${groupId}/settings`);
+  };
 
   if (detail === undefined) {
     return (
@@ -55,7 +41,7 @@ export default function GroupDetailPage({ params }: PageProps) {
         <PageHeader
           backHref="/groups?list=true"
           isLoading
-          rightElement={rightIcons}
+          rightElement={rightElement}
         />
         <main className="p-4">
           <div className="max-w-lg mx-auto">
@@ -71,13 +57,25 @@ export default function GroupDetailPage({ params }: PageProps) {
       <PageHeader
         backHref="/groups?list=true"
         title={detail.group.name}
-        rightElement={rightIcons}
+        rightElement={rightElement}
       />
       <main>
         <div className="max-w-lg mx-auto">
           <GroupDetail group={detail.group} members={detail.members} />
         </div>
       </main>
+
+      <AdBanner aboveTabNav skipPageCheck />
+
+      <TabNavigation
+        tabs={[
+          { id: "expenses", label: "支出", icon: <ClipboardList /> },
+          { id: "analytics", label: "分析", icon: <BarChart3 /> },
+          { id: "settings", label: "設定", icon: <Settings /> },
+        ]}
+        activeTab="expenses"
+        onChange={handleTabChange}
+      />
     </div>
   );
 }

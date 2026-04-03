@@ -23,7 +23,7 @@ export function PeriodNavigator({
   canGoNext,
 }: PeriodNavigatorProps) {
   return (
-    <div className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
+    <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2">
       <button
         onClick={onPrevious}
         className="p-2 hover:bg-slate-200 rounded-full transition-colors"
