@@ -112,8 +112,8 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
       </div>
 
       {/* 精算カード（タブナビの上に固定） */}
-      <div className="fixed bottom-14 left-0 right-0 z-10 border-t border-slate-200 bg-slate-50 px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
-        <div className="max-w-lg mx-auto">
+      <div className="fixed bottom-14 left-0 right-0 z-10 pb-[env(safe-area-inset-bottom)]">
+        <div className="max-w-lg mx-auto px-4 py-2">
           <SettlementPreview
             groupId={group._id}
             year={displayYear}
