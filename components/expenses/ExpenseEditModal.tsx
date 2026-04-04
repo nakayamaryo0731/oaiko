@@ -105,34 +105,33 @@ export function ExpenseEditModal({
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex flex-col">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-        <div className="relative mt-auto w-full max-w-lg mx-auto bg-white rounded-t-2xl max-h-[90dvh] overflow-y-auto shadow-xl">
-          {/* ヘッダー */}
-          <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-            <button
-              onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 rounded-lg"
-              aria-label="閉じる"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <h3 className="font-semibold text-slate-800">支出を編集</h3>
-            {expense && expense !== null && (
+        <div className="relative w-full max-w-md bg-white rounded-2xl p-4 max-h-[95dvh] overflow-y-auto overflow-x-hidden shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-slate-800">支出を編集</h3>
+            <div className="flex items-center gap-1">
+              {expense && expense !== null && (
+                <button
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={isDeleting}
+                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  aria-label="削除"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              )}
               <button
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={isDeleting}
-                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                aria-label="削除"
+                onClick={onClose}
+                className="p-2 text-slate-400 hover:text-slate-600"
+                aria-label="閉じる"
               >
-                <Trash2 className="h-5 w-5" />
+                <X className="h-5 w-5" />
               </button>
-            )}
-            {(!expense || expense === null) && <div className="w-9" />}
+            </div>
           </div>
 
-          {/* コンテンツ */}
-          <div className="p-4">
+          <div>
             {isLoading ? (
               <div className="space-y-6 py-2">
                 <div className="text-center py-4">
