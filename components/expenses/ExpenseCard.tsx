@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Copy, Trash2, ChevronDown } from "lucide-react";
 import { formatDateShort, formatAmount } from "@/lib/formatters";
@@ -67,7 +68,7 @@ function buildSplitGradient(
  * - 2行構成でスペース効率化
  * - 背景色で負担割合を表示
  */
-export function ExpenseCard({
+export const ExpenseCard = memo(function ExpenseCard({
   expense,
   tags,
   memberColors,
@@ -111,9 +112,11 @@ export function ExpenseCard({
     onTagsClick?.();
   };
 
-  const backgroundGradient = memberColors
-    ? buildSplitGradient(splits, amount, memberColors)
-    : "none";
+  const backgroundGradient = useMemo(
+    () =>
+      memberColors ? buildSplitGradient(splits, amount, memberColors) : "none",
+    [splits, amount, memberColors],
+  );
 
   return (
     <div
@@ -237,4 +240,4 @@ export function ExpenseCard({
       </div>
     </div>
   );
-}
+});

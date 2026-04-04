@@ -17,10 +17,30 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { TabNavigation } from "@/components/ui/TabNavigation";
 import { UserButton } from "@clerk/nextjs";
-import { CategoryPieChart } from "@/components/analytics/CategoryPieChart";
-import { MonthlyTrendChart } from "@/components/analytics/MonthlyTrendChart";
-import { TagBreakdownChart } from "@/components/analytics/TagBreakdownChart";
+import dynamic from "next/dynamic";
 import { ChartSkeleton } from "@/components/analytics/ChartSkeleton";
+
+const CategoryPieChart = dynamic(
+  () =>
+    import("@/components/analytics/CategoryPieChart").then(
+      (m) => m.CategoryPieChart,
+    ),
+  { loading: () => <ChartSkeleton type="pie" /> },
+);
+const MonthlyTrendChart = dynamic(
+  () =>
+    import("@/components/analytics/MonthlyTrendChart").then(
+      (m) => m.MonthlyTrendChart,
+    ),
+  { loading: () => <ChartSkeleton type="bar" /> },
+);
+const TagBreakdownChart = dynamic(
+  () =>
+    import("@/components/analytics/TagBreakdownChart").then(
+      (m) => m.TagBreakdownChart,
+    ),
+  { loading: () => <ChartSkeleton type="pie" /> },
+);
 import { PageHeader } from "@/components/ui/PageHeader";
 import { formatPeriod } from "@/lib/formatters";
 import { trackEvent } from "@/lib/analytics";
@@ -104,10 +124,10 @@ export default function AnalyticsPage({ params }: PageProps) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isPremium]);
 
-  // 月次データ
+  // 月次データ（月次タブ表示時のみ）
   const monthlyCategory = useQuery(
     api.analytics.getCategoryBreakdown,
-    group
+    group && viewType === "month"
       ? {
           groupId: groupId as Id<"groups">,
           year: activeYear,
@@ -116,10 +136,10 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
-  // 年次データ
+  // 年次データ（年次タブ表示時のみ）
   const yearlyCategory = useQuery(
     api.analytics.getYearlyCategoryBreakdown,
-    group
+    group && viewType === "year"
       ? {
           groupId: groupId as Id<"groups">,
           year: activeYearForYearly,
@@ -129,7 +149,7 @@ export default function AnalyticsPage({ params }: PageProps) {
 
   const yearlyTrend = useQuery(
     api.analytics.getMonthlyTrend,
-    group
+    group && viewType === "year"
       ? {
           groupId: groupId as Id<"groups">,
           year: activeYearForYearly,
@@ -139,10 +159,10 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
-  // 月次タグ別データ（Premium）
+  // 月次タグ別データ（Premium・月次タブ表示時のみ）
   const monthlyTagBreakdown = useQuery(
     api.analytics.getTagBreakdown,
-    group && isPremium
+    group && isPremium && viewType === "month"
       ? {
           groupId: groupId as Id<"groups">,
           year: activeYear,
@@ -151,10 +171,10 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
-  // 年次タグ別データ（Premium）
+  // 年次タグ別データ（Premium・年次タブ表示時のみ）
   const yearlyTagBreakdown = useQuery(
     api.analytics.getYearlyTagBreakdown,
-    group && isPremium
+    group && isPremium && viewType === "year"
       ? {
           groupId: groupId as Id<"groups">,
           year: activeYearForYearly,
@@ -162,20 +182,20 @@ export default function AnalyticsPage({ params }: PageProps) {
       : "skip",
   );
 
-  // 全期間カテゴリ別データ（Premium）
+  // 全期間カテゴリ別データ（Premium・全期間タブ表示時のみ）
   const allTimeCategory = useQuery(
     api.analytics.getAllTimeCategoryBreakdown,
-    group && isPremium
+    group && isPremium && viewType === "all"
       ? {
           groupId: groupId as Id<"groups">,
         }
       : "skip",
   );
 
-  // 全期間タグ別データ（Premium）
+  // 全期間タグ別データ（Premium・全期間タブ表示時のみ）
   const allTimeTagBreakdown = useQuery(
     api.analytics.getAllTimeTagBreakdown,
-    group && isPremium
+    group && isPremium && viewType === "all"
       ? {
           groupId: groupId as Id<"groups">,
         }
