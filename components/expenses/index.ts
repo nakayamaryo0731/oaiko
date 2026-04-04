@@ -1,6 +1,7 @@
 export { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 export { ExpenseCard } from "./ExpenseCard";
 export { ExpenseDetail } from "./ExpenseDetail";
+export { ExpenseEditModal } from "./ExpenseEditModal";
 export { ExpenseForm } from "./ExpenseForm";
 export { ExpenseList } from "./ExpenseList";
 export { PeriodExpenseList } from "./PeriodExpenseList";

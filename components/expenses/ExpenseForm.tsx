@@ -54,6 +54,7 @@ type ExpenseFormProps = {
   isPremium?: boolean;
   linkedShoppingItems?: { _id: Id<"shoppingItems">; name: string }[];
   memberColors?: Record<string, string>;
+  onClose?: () => void;
 };
 
 /**
@@ -72,6 +73,7 @@ export function ExpenseForm({
   isPremium = false,
   linkedShoppingItems,
   memberColors,
+  onClose,
 }: ExpenseFormProps) {
   const router = useRouter();
   const createExpense = useMutation(api.expenses.create);
@@ -318,7 +320,11 @@ export function ExpenseForm({
         });
       }
 
-      router.push(`/groups/${groupId}`);
+      if (onClose) {
+        onClose();
+      } else {
+        router.push(`/groups/${groupId}`);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -332,7 +338,11 @@ export function ExpenseForm({
   };
 
   const handleCancel = () => {
-    router.push(`/groups/${groupId}`);
+    if (onClose) {
+      onClose();
+    } else {
+      router.push(`/groups/${groupId}`);
+    }
   };
 
   const isSplitValid = (): boolean => {

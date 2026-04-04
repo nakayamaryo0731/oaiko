@@ -6,7 +6,11 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
-import { PeriodExpenseList, DeleteExpenseDialog } from "@/components/expenses";
+import {
+  PeriodExpenseList,
+  DeleteExpenseDialog,
+  ExpenseEditModal,
+} from "@/components/expenses";
 import { SettlementPreview, PeriodNavigator } from "@/components/settlements";
 import { FAB } from "@/components/ui/FAB";
 import { Plus } from "lucide-react";
@@ -57,8 +61,11 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
     useState<ExpenseToDelete | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [editingExpenseId, setEditingExpenseId] =
+    useState<Id<"expenses"> | null>(null);
+
   const handleEdit = (expenseId: Id<"expenses">) => {
-    router.push(`/groups/${group._id}/expenses/${expenseId}`);
+    setEditingExpenseId(expenseId);
   };
 
   const handleDuplicate = (expenseId: Id<"expenses">) => {
@@ -141,6 +148,15 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           }}
           onConfirm={handleConfirmDelete}
           isDeleting={isDeleting}
+        />
+      )}
+
+      {/* 支出編集モーダル */}
+      {editingExpenseId && (
+        <ExpenseEditModal
+          expenseId={editingExpenseId}
+          groupId={group._id}
+          onClose={() => setEditingExpenseId(null)}
         />
       )}
     </div>
