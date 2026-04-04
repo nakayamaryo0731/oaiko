@@ -104,8 +104,10 @@ export default defineSchema({
     expenseId: v.id("expenses"),
     userId: v.id("users"),
     amount: v.number(),
-  }).index("by_expense", ["expenseId"]),
-  // 用途: 支出の負担配分取得
+  })
+    .index("by_expense", ["expenseId"])
+    .index("by_user", ["userId"]),
+  // 用途: 支出の負担配分取得、ユーザー別の負担検索
 
   // ========================================
   // 精算
@@ -131,8 +133,11 @@ export default defineSchema({
     amount: v.number(),
     isPaid: v.boolean(),
     paidAt: v.optional(v.number()),
-  }).index("by_settlement", ["settlementId"]),
-  // 用途: 精算の支払い詳細取得
+  })
+    .index("by_settlement", ["settlementId"])
+    .index("by_from_user", ["fromUserId"])
+    .index("by_to_user", ["toUserId"]),
+  // 用途: 精算の支払い詳細取得、ユーザー別の支払い検索
 
   // ========================================
   // 買い物リスト
