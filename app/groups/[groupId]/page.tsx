@@ -10,7 +10,6 @@ import { AnalyticsContent } from "@/components/analytics/AnalyticsContent";
 import { GroupDetailSkeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TabNavigation } from "@/components/ui/TabNavigation";
-import { AdBanner } from "@/components/ads";
 import { ClipboardList, BarChart3, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { buildMemberColorMap } from "@/lib/userColors";
@@ -117,8 +116,6 @@ export default function GroupDetailPage({ params }: PageProps) {
           )}
         </div>
       </main>
-
-      {activeTab === "expenses" && <AdBanner aboveTabNav skipPageCheck />}
 
       <TabNavigation
         tabs={tabs}
