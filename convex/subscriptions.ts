@@ -13,7 +13,7 @@ import Stripe from "stripe";
 // Stripe初期化
 // ========================================
 
-const STRIPE_API_VERSION = "2025-12-15.clover" as const;
+const STRIPE_API_VERSION = "2026-03-25.dahlia" as const;
 
 function getStripe() {
   const apiKey = process.env.STRIPE_SECRET_KEY;
