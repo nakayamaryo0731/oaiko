@@ -1,13 +1,25 @@
 "use client";
 
 import { use, useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { GroupDetail } from "@/components/groups";
-import { GroupSettings } from "@/components/groups";
-import { AnalyticsContent } from "@/components/analytics/AnalyticsContent";
 import { GroupDetailSkeleton } from "@/components/ui/skeleton";
+
+const GroupSettings = dynamic(
+  () =>
+    import("@/components/groups/GroupSettings").then((m) => m.GroupSettings),
+  { loading: () => <GroupDetailSkeleton /> },
+);
+const AnalyticsContent = dynamic(
+  () =>
+    import("@/components/analytics/AnalyticsContent").then(
+      (m) => m.AnalyticsContent,
+    ),
+  { loading: () => <GroupDetailSkeleton /> },
+);
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TabNavigation } from "@/components/ui/TabNavigation";
 import { ClipboardList, BarChart3, Settings } from "lucide-react";

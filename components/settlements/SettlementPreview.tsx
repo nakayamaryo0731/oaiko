@@ -17,6 +17,7 @@ type SettlementPreviewProps = {
   year: number;
   month: number;
   compact?: boolean;
+  memberColors?: Record<string, string>;
 };
 
 export function SettlementPreview({
@@ -24,16 +25,22 @@ export function SettlementPreview({
   year,
   month,
   compact = false,
+  memberColors: externalMemberColors,
 }: SettlementPreviewProps) {
   const preview = useQuery(api.settlements.getPreview, {
     groupId,
     year,
     month,
   });
-  const groupDetail = useQuery(api.groups.getDetail, { groupId });
+  const groupDetail = useQuery(
+    api.groups.getDetail,
+    externalMemberColors ? "skip" : { groupId },
+  );
   const memberColors = useMemo(
-    () => (groupDetail ? buildMemberColorMap(groupDetail.members) : {}),
-    [groupDetail],
+    () =>
+      externalMemberColors ??
+      (groupDetail ? buildMemberColorMap(groupDetail.members) : {}),
+    [externalMemberColors, groupDetail],
   );
 
   if (preview === undefined) {

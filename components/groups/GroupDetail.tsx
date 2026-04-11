@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
-import {
-  PeriodExpenseList,
-  DeleteExpenseDialog,
-  ExpenseEditModal,
-} from "@/components/expenses";
+import { PeriodExpenseList, DeleteExpenseDialog } from "@/components/expenses";
+
+const ExpenseEditModal = dynamic(() =>
+  import("@/components/expenses/ExpenseEditModal").then(
+    (m) => m.ExpenseEditModal,
+  ),
+);
 import { SettlementPreview, PeriodNavigator } from "@/components/settlements";
 import { FAB } from "@/components/ui/FAB";
 import { Plus } from "lucide-react";
@@ -131,6 +134,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
             year={displayYear}
             month={displayMonth}
             compact
+            memberColors={memberColors}
           />
         </div>
       </div>
