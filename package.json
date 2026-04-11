@@ -59,7 +59,7 @@
     "@edge-runtime/vm": "^5.0.0",
     "@netlify/plugin-nextjs": "^5.15.9",
     "@tailwindcss/postcss": "^4.1.17",
-    "@types/node": "^24.10.4",
+    "@types/node": "^25.6.0",
     "@types/react": "^19.2.6",
     "@types/react-dom": "^19.2.3",
     "@vitest/coverage-v8": "^4.0.16",
