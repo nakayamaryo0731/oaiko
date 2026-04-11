@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { GoogleAdSense } from "@/components/GoogleAdSense";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,7 +76,6 @@ export default function RootLayout({
     <html lang="ja">
       <head>
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-        <GoogleAdSense />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
