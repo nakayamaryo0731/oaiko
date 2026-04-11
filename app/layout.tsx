@@ -22,13 +22,14 @@ export const metadata: Metadata = {
   verification: {
     google: "WlzApyG_0w14M7XXCTaIrsShDFdFqfuK72W_w15m8kY",
   },
-  title: "Pairbo - 2人のための共有家計簿",
+  title:
+    "Pairbo - 同棲カップル・夫婦向け共有家計簿｜アプリ不要で割り勘・傾斜折半",
   description:
-    "割り勘・傾斜折半ができる共有家計簿。アプリ不要、URLだけですぐ始められます。",
+    "同棲カップル・夫婦の生活費分担を簡単に。割り勘・傾斜折半・収入比に応じた負担配分に対応。アプリインストール不要、ブラウザだけで使える共有家計簿。URLを送るだけで今日から始められます。",
   openGraph: {
-    title: "Pairbo - 2人のための共有家計簿",
+    title: "Pairbo - 同棲カップル・夫婦向け共有家計簿",
     description:
-      "割り勘・傾斜折半ができる共有家計簿。アプリ不要、URLだけですぐ始められます。",
+      "生活費の割り勘・傾斜折半がブラウザだけで完結。アプリ不要、URLを送るだけですぐ始められる共有家計簿。",
     url: "https://pairbo.app",
     siteName: "Pairbo",
     locale: "ja_JP",
@@ -44,9 +45,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pairbo - 2人のための共有家計簿",
+    title: "Pairbo - 同棲カップル・夫婦向け共有家計簿",
     description:
-      "割り勘・傾斜折半ができる共有家計簿。アプリ不要、URLだけですぐ始められます。",
+      "生活費の割り勘・傾斜折半がブラウザだけで完結。アプリ不要の共有家計簿。",
     images: ["/og-image.png"],
   },
   appleWebApp: {
@@ -85,7 +86,7 @@ export default function RootLayout({
               name: "Pairbo",
               url: "https://pairbo.app",
               description:
-                "割り勘・傾斜折半ができる共有家計簿。アプリ不要、URLだけですぐ始められます。",
+                "同棲カップル・夫婦の生活費分担を簡単に。割り勘・傾斜折半・収入比に応じた負担配分に対応。アプリインストール不要、ブラウザだけで使える共有家計簿。",
               applicationCategory: "FinanceApplication",
               operatingSystem: "All",
               browserRequirements: "Requires JavaScript",
@@ -100,13 +101,13 @@ export default function RootLayout({
                 },
                 {
                   "@type": "Offer",
-                  price: "300",
+                  price: "100",
                   priceCurrency: "JPY",
                   name: "Premium（月払い）",
                 },
                 {
                   "@type": "Offer",
-                  price: "2400",
+                  price: "1000",
                   priceCurrency: "JPY",
                   name: "Premium（年払い）",
                 },
@@ -139,12 +140,20 @@ export default function RootLayout({
                   name: "アプリのインストールは必要ですか？",
                   acceptedAnswer: {
                     "@type": "Answer",
-                    text: "不要です。ブラウザからアクセスするだけで使えます。ホーム画面に追加すればネイティブアプリのように使えます（PWA対応）。",
+                    text: "不要です。ブラウザからアクセスするだけで使えます。スマホのホーム画面に追加すれば、アプリのように使うこともできます。",
                   },
                 },
                 {
                   "@type": "Question",
-                  name: "共有口座が必要ですか？",
+                  name: "同棲の生活費はどうやって分担できますか？",
+                  acceptedAnswer: {
+                    "@type": "Answer",
+                    text: "均等割り・割合指定（傾斜折半）・金額指定・全額負担の4つの方法から選べます。収入差があるカップルでも、ふたりに合った負担バランスを設定できます。",
+                  },
+                },
+                {
+                  "@type": "Question",
+                  name: "共有口座やクレジットカードは必要ですか？",
                   acceptedAnswer: {
                     "@type": "Answer",
                     text: "いいえ。お財布は別々のままでOKです。それぞれが支払った支出を記録し、月末に差額を精算する仕組みです。",
@@ -152,18 +161,10 @@ export default function RootLayout({
                 },
                 {
                   "@type": "Question",
-                  name: "2人以上でも使えますか？",
+                  name: "パートナーにどうやって共有しますか？",
                   acceptedAnswer: {
                     "@type": "Answer",
-                    text: "はい。シェアハウスなど複数人のグループにも対応しています。",
-                  },
-                },
-                {
-                  "@type": "Question",
-                  name: "いつでも解約できますか？",
-                  acceptedAnswer: {
-                    "@type": "Answer",
-                    text: "はい、いつでも解約できます。解約後も期間終了まではPremiumプランをご利用いただけます。",
+                    text: "招待URLを送るだけです。相手はアプリのインストールもアカウント作成も不要で、ブラウザからすぐに参加できます。",
                   },
                 },
                 {
