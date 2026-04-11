@@ -35,14 +35,14 @@ export function TabNavigation({
             role="tab"
             aria-selected={activeTab === tab.id}
             onClick={() => onChange(tab.id)}
-            className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors ${
+            aria-label={tab.label}
+            className={`flex-1 flex items-center justify-center transition-colors ${
               activeTab === tab.id
                 ? "text-blue-600 border-t-2 border-blue-500 -mt-px"
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-400 hover:text-slate-600"
             }`}
           >
-            <span className="[&>svg]:h-5 [&>svg]:w-5">{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span className="[&>svg]:h-6 [&>svg]:w-6">{tab.icon}</span>
           </button>
         ))}
       </div>
