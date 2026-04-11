@@ -4,13 +4,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/pricing",
   },
-  title: "料金プラン | Pairbo - 2人のための共有家計簿",
+  title: "料金プラン | Pairbo - 同棲カップル向け共有家計簿",
   description:
-    "Pairboの料金プラン。基本機能は無料、Premiumプラン（月額100円/年額1,000円）で傾斜折半・詳細分析が利用可能。",
+    "Pairboの料金プラン。同棲の生活費管理に必要な基本機能はすべて無料。Premiumプラン（月額100円）で傾斜折半・詳細分析が利用可能。",
   openGraph: {
-    title: "料金プラン | Pairbo",
+    title: "料金プラン | Pairbo - 同棲カップル向け共有家計簿",
     description:
-      "基本機能は無料。Premiumプランで傾斜折半・詳細分析が利用可能。",
+      "基本機能は無料。月額100円のPremiumプランで傾斜折半・詳細分析が利用可能。",
   },
 };
 
