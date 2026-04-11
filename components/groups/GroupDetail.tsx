@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
@@ -67,19 +67,22 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
   const [editingExpenseId, setEditingExpenseId] =
     useState<Id<"expenses"> | null>(null);
 
-  const handleEdit = (expenseId: Id<"expenses">) => {
+  const handleEdit = useCallback((expenseId: Id<"expenses">) => {
     setEditingExpenseId(expenseId);
-  };
+  }, []);
 
-  const handleDuplicate = (expenseId: Id<"expenses">) => {
-    router.push(`/groups/${group._id}/expenses/new?from=${expenseId}`);
-  };
+  const handleDuplicate = useCallback(
+    (expenseId: Id<"expenses">) => {
+      router.push(`/groups/${group._id}/expenses/new?from=${expenseId}`);
+    },
+    [router, group._id],
+  );
 
-  const handleDelete = (expense: ExpenseToDelete) => {
+  const handleDelete = useCallback((expense: ExpenseToDelete) => {
     setExpenseToDelete(expense);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!expenseToDelete) return;
 
     setIsDeleting(true);
@@ -91,7 +94,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
     } finally {
       setIsDeleting(false);
     }
-  };
+  }, [expenseToDelete, removeExpense]);
 
   return (
     <div className="flex flex-col">
