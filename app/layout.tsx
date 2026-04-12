@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     google: "WlzApyG_0w14M7XXCTaIrsShDFdFqfuK72W_w15m8kY",
   },
   title:
-    "Pairbo - 同棲カップル・夫婦向け共有家計簿｜アプリ不要で割り勘・傾斜折半",
+    "Pairbo - 同棲・二人暮らしの共有家計簿アプリ｜カップル・夫婦の共同財布を無料で",
   description:
-    "同棲カップル・夫婦の生活費分担を簡単に。割り勘・傾斜折半・収入比に応じた負担配分に対応。アプリインストール不要、ブラウザだけで使える共有家計簿。URLを送るだけで今日から始められます。",
+    "同棲カップル・夫婦・二人暮らしの生活費分担を簡単に。割り勘・傾斜折半・収入比に応じた負担配分に対応。共同財布がなくてもお財布別のまま使える無料の共有家計簿アプリ。ブラウザで完結、URLを送るだけで今日から始められます。",
   openGraph: {
-    title: "Pairbo - 同棲カップル・夫婦向け共有家計簿",
+    title: "Pairbo - 同棲・二人暮らしの共有家計簿アプリ",
     description:
-      "生活費の割り勘・傾斜折半がブラウザだけで完結。アプリ不要、URLを送るだけですぐ始められる共有家計簿。",
+      "カップル・夫婦の生活費分担がブラウザだけで完結。共同財布不要、無料で使える共有家計簿アプリ。",
     url: "https://pairbo.app",
     siteName: "Pairbo",
     locale: "ja_JP",
@@ -45,9 +45,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pairbo - 同棲カップル・夫婦向け共有家計簿",
+    title: "Pairbo - 同棲・二人暮らしの共有家計簿アプリ",
     description:
-      "生活費の割り勘・傾斜折半がブラウザだけで完結。アプリ不要の共有家計簿。",
+      "カップル・夫婦の生活費分担がブラウザだけで完結。共同財布不要、無料で使える共有家計簿アプリ。",
     images: ["/og-image.png"],
   },
   appleWebApp: {
@@ -86,7 +86,7 @@ export default function RootLayout({
               name: "Pairbo",
               url: "https://pairbo.app",
               description:
-                "同棲カップル・夫婦の生活費分担を簡単に。割り勘・傾斜折半・収入比に応じた負担配分に対応。アプリインストール不要、ブラウザだけで使える共有家計簿。",
+                "同棲カップル・夫婦・二人暮らしの生活費分担を簡単に。割り勘・傾斜折半・収入比に応じた負担配分に対応。共同財布がなくてもお財布別のまま使える無料の共有家計簿アプリ。",
               applicationCategory: "FinanceApplication",
               operatingSystem: "All",
               browserRequirements: "Requires JavaScript",

@@ -256,7 +256,7 @@ function HeroSection() {
         {/* テキスト */}
         <div className="text-center md:text-left md:w-1/2">
           <p className="inline-block text-xs font-medium text-blue-600 bg-blue-50 rounded-full px-3 py-1 mb-6">
-            同棲カップル・夫婦のための共有家計簿
+            同棲・二人暮らしのための無料共有家計簿アプリ
           </p>
 
           <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-4 leading-tight">
@@ -266,10 +266,10 @@ function HeroSection() {
           </h1>
 
           <p className="text-base text-slate-600 mb-1">
-            お財布は別々のまま、割り勘も傾斜折半もかんたんに。
+            共同財布がなくても、割り勘も傾斜折半もかんたんに。
           </p>
           <p className="text-sm text-slate-500 mb-8">
-            アプリインストール不要 · ブラウザで完結 · URLで招待
+            無料で使える · ブラウザで完結 · URLで招待
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start mb-10 md:mb-0">
@@ -646,7 +646,9 @@ function FooterSection() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-center sm:text-left">
             <p className="font-bold text-white mb-1">Pairbo</p>
-            <p className="text-sm">お財布別カップル・夫婦のための共有家計簿</p>
+            <p className="text-sm">
+              同棲・二人暮らしのカップル・夫婦向け共有家計簿アプリ
+            </p>
           </div>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <Link
