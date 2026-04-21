@@ -53,7 +53,6 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
     month: displayMonth,
     goToPreviousMonth,
     goToNextMonth,
-    canGoNextMonth: canGoNext,
     period,
   } = usePeriodNavigation({ closingDay: group.closingDay });
 
@@ -107,7 +106,6 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           endDate={period!.endDate}
           onPrevious={goToPreviousMonth}
           onNext={goToNextMonth}
-          canGoNext={canGoNext}
         />
       </div>
 

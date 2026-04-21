@@ -410,7 +410,6 @@ export function ExpenseForm({
           type="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
-          max={getTodayString()}
           required
           className="shrink-0 py-3 px-3 bg-slate-50 rounded-xl border-none text-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-200 w-32"
         />

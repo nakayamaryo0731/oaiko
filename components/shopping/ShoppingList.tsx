@@ -23,7 +23,6 @@ export function ShoppingList({ groupId }: ShoppingListProps) {
     month: historyMonth,
     goToPreviousMonth,
     goToNextMonth,
-    canGoNextMonth,
   } = usePeriodNavigation();
 
   const pending = useQuery(api.shoppingList.list, { groupId });
@@ -84,7 +83,6 @@ export function ShoppingList({ groupId }: ShoppingListProps) {
                   variant="ghost"
                   size="icon"
                   onClick={goToNextMonth}
-                  disabled={!canGoNextMonth}
                   aria-label="翌月"
                 >
                   <ChevronRight className="h-5 w-5" />

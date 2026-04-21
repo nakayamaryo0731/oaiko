@@ -10,7 +10,6 @@ type PeriodNavigatorProps = {
   endDate: string;
   onPrevious: () => void;
   onNext: () => void;
-  canGoNext: boolean;
 };
 
 export function PeriodNavigator({
@@ -20,7 +19,6 @@ export function PeriodNavigator({
   endDate,
   onPrevious,
   onNext,
-  canGoNext,
 }: PeriodNavigatorProps) {
   return (
     <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2">
@@ -43,8 +41,7 @@ export function PeriodNavigator({
 
       <button
         onClick={onNext}
-        disabled={!canGoNext}
-        className="p-2 hover:bg-slate-200 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+        className="p-2 hover:bg-slate-200 rounded-full transition-colors"
         aria-label="次の月へ"
       >
         <ChevronRight className="h-5 w-5" />

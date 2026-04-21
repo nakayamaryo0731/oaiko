@@ -279,7 +279,6 @@ middleware.ts                  # Clerk認証 + ロケール検出・リダイレ
   "amountRange": "金額は{min}円から{max}円の範囲で入力してください",
   "categoryRequired": "カテゴリを選択してください",
   "invalidDate": "日付の形式が正しくありません",
-  "futureDate": "未来の日付は指定できません",
   "titleMaxLength": "タイトルは{max}文字以内で入力してください",
   "memoMaxLength": "メモは{max}文字以内で入力してください",
   "ratioSumMismatch": "割合の合計は100%である必要があります",

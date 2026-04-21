@@ -225,33 +225,6 @@ describe("expenses", () => {
       ).rejects.toThrow("金額は1円から1億円の範囲で入力してください");
     });
 
-    test("未来日の場合はエラー", async () => {
-      const t = convexTest(schema, modules);
-
-      const groupId = await t
-        .withIdentity(userAIdentity)
-        .mutation(api.groups.create, {
-          name: "テストグループ",
-        });
-
-      const detail = await t
-        .withIdentity(userAIdentity)
-        .query(api.groups.getDetail, { groupId });
-
-      const categoryId = detail.categories[0]._id;
-      const payerId = detail.members[0].userId;
-
-      await expect(
-        t.withIdentity(userAIdentity).mutation(api.expenses.create, {
-          groupId,
-          amount: 1000,
-          categoryId,
-          paidBy: payerId,
-          date: "2099-12-31",
-        }),
-      ).rejects.toThrow("未来の日付は指定できません");
-    });
-
     test("メモが500文字を超える場合はエラー", async () => {
       const t = convexTest(schema, modules);
 

@@ -71,14 +71,10 @@ type UsePeriodNavigationReturn = {
   goToPreviousMonth: () => void;
   /** 次月へ移動 */
   goToNextMonth: () => void;
-  /** 次月へ移動可能か */
-  canGoNextMonth: boolean;
   /** 前年へ移動 */
   goToPreviousYear: () => void;
   /** 次年へ移動 */
   goToNextYear: () => void;
-  /** 次年へ移動可能か */
-  canGoNextYear: boolean;
   /** 期間情報（closingDayが指定されている場合のみ） */
   period: { startDate: string; endDate: string } | null;
   /** 今期の年月（closingDayが指定されている場合は精算期間ベース） */
@@ -92,17 +88,17 @@ type UsePeriodNavigationReturn = {
  *
  * @example
  * // シンプルな月ナビゲーション（買い物リスト履歴など）
- * const { year, month, goToPreviousMonth, goToNextMonth, canGoNextMonth } =
+ * const { year, month, goToPreviousMonth, goToNextMonth } =
  *   usePeriodNavigation();
  *
  * @example
  * // 精算期間ベースのナビゲーション
- * const { year, month, period, goToPreviousMonth, goToNextMonth, canGoNextMonth } =
+ * const { year, month, period, goToPreviousMonth, goToNextMonth } =
  *   usePeriodNavigation({ closingDay: 25 });
  *
  * @example
  * // 年次ナビゲーション
- * const { year, goToPreviousYear, goToNextYear, canGoNextYear } =
+ * const { year, goToPreviousYear, goToNextYear } =
  *   usePeriodNavigation({ closingDay: 25 });
  */
 export function usePeriodNavigation(
@@ -126,11 +122,6 @@ export function usePeriodNavigation(
     () => initialMonth ?? currentPeriod.month,
   );
 
-  // 月次ナビゲーション
-  const canGoNextMonth =
-    year < currentPeriod.year ||
-    (year === currentPeriod.year && month < currentPeriod.month);
-
   const goToPreviousMonth = useCallback(() => {
     if (month === 1) {
       setYear((y) => y - 1);
@@ -141,26 +132,21 @@ export function usePeriodNavigation(
   }, [month]);
 
   const goToNextMonth = useCallback(() => {
-    if (!canGoNextMonth) return;
     if (month === 12) {
       setYear((y) => y + 1);
       setMonth(1);
     } else {
       setMonth((m) => m + 1);
     }
-  }, [month, canGoNextMonth]);
-
-  // 年次ナビゲーション
-  const canGoNextYear = year < currentPeriod.year;
+  }, [month]);
 
   const goToPreviousYear = useCallback(() => {
     setYear((y) => y - 1);
   }, []);
 
   const goToNextYear = useCallback(() => {
-    if (!canGoNextYear) return;
     setYear((y) => y + 1);
-  }, [canGoNextYear]);
+  }, []);
 
   // 期間情報（締め日がある場合のみ計算）
   const period = useMemo(() => {
@@ -179,10 +165,8 @@ export function usePeriodNavigation(
     month,
     goToPreviousMonth,
     goToNextMonth,
-    canGoNextMonth,
     goToPreviousYear,
     goToNextYear,
-    canGoNextYear,
     period,
     currentPeriod,
     resetToCurrentPeriod,
