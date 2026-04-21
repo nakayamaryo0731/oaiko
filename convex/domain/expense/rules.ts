@@ -36,16 +36,11 @@ export function validateAmount(amount: number): void {
 /**
  * 日付のバリデーション
  *
- * @throws {ExpenseValidationError} 日付形式が不正または未来日の場合
+ * @throws {ExpenseValidationError} 日付形式が不正な場合
  */
 export function validateDate(date: string): void {
   if (!EXPENSE_RULES.DATE_FORMAT_REGEX.test(date)) {
     throw new ExpenseValidationError("日付の形式が正しくありません");
-  }
-
-  const today = new Date().toISOString().split("T")[0];
-  if (date > today) {
-    throw new ExpenseValidationError("未来の日付は指定できません");
   }
 }
 

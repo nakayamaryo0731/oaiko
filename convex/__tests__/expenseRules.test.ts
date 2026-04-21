@@ -49,20 +49,15 @@ describe("expense/rules", () => {
   });
 
   describe("validateDate", () => {
-    beforeEach(() => {
-      // 固定日時を設定（2024-12-30）
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date("2024-12-30T12:00:00Z"));
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
     test("有効な日付は通過する", () => {
       expect(() => validateDate("2024-12-30")).not.toThrow();
       expect(() => validateDate("2024-01-01")).not.toThrow();
       expect(() => validateDate("2023-12-31")).not.toThrow();
+    });
+
+    test("未来日も通過する", () => {
+      expect(() => validateDate("2099-01-01")).not.toThrow();
+      expect(() => validateDate("2099-12-31")).not.toThrow();
     });
 
     test("不正な形式はエラー", () => {
@@ -71,13 +66,6 @@ describe("expense/rules", () => {
         "日付の形式が正しくありません",
       );
       expect(() => validateDate("invalid")).toThrow(ExpenseValidationError);
-    });
-
-    test("未来日はエラー", () => {
-      expect(() => validateDate("2024-12-31")).toThrow(ExpenseValidationError);
-      expect(() => validateDate("2025-01-01")).toThrow(
-        "未来の日付は指定できません",
-      );
     });
   });
 

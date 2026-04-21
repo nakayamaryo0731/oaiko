@@ -65,7 +65,6 @@ export function AnalyticsContent({
     month: activeMonth,
     goToPreviousMonth,
     goToNextMonth,
-    canGoNextMonth,
     period,
     currentPeriod,
   } = usePeriodNavigation({ closingDay });
@@ -74,14 +73,11 @@ export function AnalyticsContent({
     number | null
   >(null);
   const activeYearForYearly = displayYearForYearly ?? currentPeriod.year;
-  const canGoNextYearForYearly = activeYearForYearly < currentPeriod.year;
 
   const goToPreviousYearForYearly = () =>
     setDisplayYearForYearly(activeYearForYearly - 1);
-  const goToNextYearForYearly = () => {
-    if (canGoNextYearForYearly)
-      setDisplayYearForYearly(activeYearForYearly + 1);
-  };
+  const goToNextYearForYearly = () =>
+    setDisplayYearForYearly(activeYearForYearly + 1);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -263,8 +259,7 @@ export function AnalyticsContent({
             </div>
             <button
               onClick={goToNextMonth}
-              disabled={!canGoNextMonth}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
               aria-label="次の月へ"
             >
               <ChevronRight className="h-5 w-5" />
@@ -288,8 +283,7 @@ export function AnalyticsContent({
             </div>
             <button
               onClick={goToNextYearForYearly}
-              disabled={!canGoNextYearForYearly}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
               aria-label="次の年へ"
             >
               <ChevronRight className="h-5 w-5" />
