@@ -404,7 +404,10 @@ export const listByPeriod = authQuery({
     // 期間内の支出を取得（日付降順にソート）
     const expenses = (
       await getExpensesByPeriod(ctx, args.groupId, period)
-    ).sort((a, b) => b.date.localeCompare(a.date));
+    ).sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) || b._creationTime - a._creationTime,
+    );
 
     const enrichedExpenses = await enrichExpenseList(ctx, expenses);
 
@@ -476,7 +479,10 @@ export const listByCategory = authQuery({
     // カテゴリでフィルタ
     const categoryExpenses = filteredExpenses
       .filter((e) => e.categoryId === args.categoryId)
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort(
+        (a, b) =>
+          b.date.localeCompare(a.date) || b._creationTime - a._creationTime,
+      );
 
     const enrichedExpenses = await enrichExpenseList(ctx, categoryExpenses);
 
@@ -579,7 +585,10 @@ export const listByTag = authQuery({
     }
 
     // 日付降順でソート
-    tagExpenses = tagExpenses.sort((a, b) => b.date.localeCompare(a.date));
+    tagExpenses = tagExpenses.sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) || b._creationTime - a._creationTime,
+    );
 
     const enrichedExpenses = await enrichExpenseList(ctx, tagExpenses);
 
@@ -619,7 +628,10 @@ export const listByCategoryAllTime = authQuery({
 
     const categoryExpenses = allExpenses
       .filter((e) => e.categoryId === args.categoryId)
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort(
+        (a, b) =>
+          b.date.localeCompare(a.date) || b._creationTime - a._creationTime,
+      );
 
     const enrichedExpenses = await enrichExpenseList(ctx, categoryExpenses);
 
@@ -692,7 +704,10 @@ export const listByTagAllTime = authQuery({
     }
 
     // 日付降順でソート
-    tagExpenses = tagExpenses.sort((a, b) => b.date.localeCompare(a.date));
+    tagExpenses = tagExpenses.sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) || b._creationTime - a._creationTime,
+    );
 
     const enrichedExpenses = await enrichExpenseList(ctx, tagExpenses);
 
