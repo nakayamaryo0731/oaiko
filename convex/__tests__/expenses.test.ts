@@ -377,6 +377,51 @@ describe("expenses", () => {
     });
   });
 
+  describe("listByPeriod", () => {
+    test("同じ日付の支出は作成日時降順で並ぶ", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(userAIdentity)
+        .mutation(api.groups.create, {
+          name: "テストグループ",
+        });
+
+      const detail = await t
+        .withIdentity(userAIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      const categoryId = detail.categories[0]._id;
+      const payerId = detail.members[0].userId;
+
+      await t.withIdentity(userAIdentity).mutation(api.expenses.create, {
+        groupId,
+        amount: 1000,
+        categoryId,
+        paidBy: payerId,
+        date: "2025-01-15",
+        title: "1件目",
+      });
+
+      await t.withIdentity(userAIdentity).mutation(api.expenses.create, {
+        groupId,
+        amount: 2000,
+        categoryId,
+        paidBy: payerId,
+        date: "2025-01-15",
+        title: "2件目",
+      });
+
+      const result = await t
+        .withIdentity(userAIdentity)
+        .query(api.expenses.listByPeriod, { groupId, year: 2025, month: 1 });
+
+      expect(result.expenses).toHaveLength(2);
+      expect(result.expenses[0].title).toBe("2件目");
+      expect(result.expenses[1].title).toBe("1件目");
+    });
+  });
+
   describe("getById", () => {
     test("支出詳細を取得できる", async () => {
       const t = convexTest(schema, modules);
