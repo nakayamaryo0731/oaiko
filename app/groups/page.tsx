@@ -87,12 +87,6 @@ function GroupsContent() {
     );
   }
 
-  // 未ログインユーザーはサインインページへ
-  if (!isAuthenticated) {
-    router.replace("/sign-in");
-    return null;
-  }
-
   // ローディング中または自動遷移中（?list=true の場合は自動遷移しない）
   const isRedirecting =
     !showList &&

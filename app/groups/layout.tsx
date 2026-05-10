@@ -1,6 +1,6 @@
 "use client";
 
-import { useConvexAuth } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -9,16 +9,16 @@ export default function GroupsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (isLoaded && !isSignedIn) {
       router.replace("/sign-in");
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isLoaded, isSignedIn, router]);
 
-  if (isLoading || !isAuthenticated) {
+  if (!isLoaded || !isSignedIn) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex items-center gap-2">
