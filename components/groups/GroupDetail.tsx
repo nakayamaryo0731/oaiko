@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useCallback } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -14,6 +13,11 @@ const ExpenseEditModal = dynamic(() =>
     (m) => m.ExpenseEditModal,
   ),
 );
+const ExpenseCreateModal = dynamic(() =>
+  import("@/components/expenses/ExpenseCreateModal").then(
+    (m) => m.ExpenseCreateModal,
+  ),
+);
 import { SettlementPreview, PeriodNavigator } from "@/components/settlements";
 import { FAB } from "@/components/ui/FAB";
 import { Plus } from "lucide-react";
@@ -21,8 +25,16 @@ import { buildMemberColorMap } from "@/lib/userColors";
 
 type Member = {
   userId: Id<"users">;
+  displayName: string;
+  isMe: boolean;
   color?: string;
   joinedAt: number;
+};
+
+type Category = {
+  _id: Id<"categories">;
+  name: string;
+  icon: string;
 };
 
 type GroupDetailProps = {
@@ -33,7 +45,12 @@ type GroupDetailProps = {
     closingDay: number;
   };
   members: Member[];
+  categories: Category[];
 };
+
+type CreateState =
+  | { mode: "new" }
+  | { mode: "duplicate"; fromExpenseId: Id<"expenses"> };
 
 type ExpenseToDelete = {
   _id: Id<"expenses">;
@@ -43,8 +60,7 @@ type ExpenseToDelete = {
   categoryName: string;
 };
 
-export function GroupDetail({ group, members }: GroupDetailProps) {
-  const router = useRouter();
+export function GroupDetail({ group, members, categories }: GroupDetailProps) {
   const removeExpense = useMutation(api.expenses.remove);
 
   // 期間ナビゲーション
@@ -66,16 +82,19 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
   const [editingExpenseId, setEditingExpenseId] =
     useState<Id<"expenses"> | null>(null);
 
+  const [creating, setCreating] = useState<CreateState | null>(null);
+
   const handleEdit = useCallback((expenseId: Id<"expenses">) => {
     setEditingExpenseId(expenseId);
   }, []);
 
-  const handleDuplicate = useCallback(
-    (expenseId: Id<"expenses">) => {
-      router.push(`/groups/${group._id}/expenses/new?from=${expenseId}`);
-    },
-    [router, group._id],
-  );
+  const handleNew = useCallback(() => {
+    setCreating({ mode: "new" });
+  }, []);
+
+  const handleDuplicate = useCallback((expenseId: Id<"expenses">) => {
+    setCreating({ mode: "duplicate", fromExpenseId: expenseId });
+  }, []);
 
   const handleDelete = useCallback((expense: ExpenseToDelete) => {
     setExpenseToDelete(expense);
@@ -125,11 +144,7 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
       {/* 精算カード + FAB（タブナビの上に固定） */}
       <div className="fixed bottom-14 left-0 right-0 z-10 bg-slate-50 pb-[env(safe-area-inset-bottom)]">
         <div className="max-w-lg mx-auto px-4 py-2 relative">
-          <FAB
-            href={`/groups/${group._id}/expenses/new`}
-            icon={<Plus />}
-            label="支出を記録"
-          />
+          <FAB onClick={handleNew} icon={<Plus />} label="支出を記録" />
           <SettlementPreview
             groupId={group._id}
             year={displayYear}
@@ -162,6 +177,24 @@ export function GroupDetail({ group, members }: GroupDetailProps) {
           expenseId={editingExpenseId}
           groupId={group._id}
           onClose={() => setEditingExpenseId(null)}
+        />
+      )}
+
+      {/* 支出登録モーダル */}
+      {creating && (
+        <ExpenseCreateModal
+          groupId={group._id}
+          categories={categories}
+          members={members.map((m) => ({
+            userId: m.userId,
+            displayName: m.displayName,
+            isMe: m.isMe,
+          }))}
+          fromExpenseId={
+            creating.mode === "duplicate" ? creating.fromExpenseId : undefined
+          }
+          memberColors={memberColors}
+          onClose={() => setCreating(null)}
         />
       )}
     </div>

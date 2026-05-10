@@ -109,7 +109,11 @@ export default function GroupDetailPage({ params }: PageProps) {
       <main>
         <div className="max-w-lg mx-auto">
           {activeTab === "expenses" && (
-            <GroupDetail group={detail.group} members={detail.members} />
+            <GroupDetail
+              group={detail.group}
+              members={detail.members}
+              categories={detail.categories}
+            />
           )}
           {activeTab === "analytics" && (
             <AnalyticsContent
