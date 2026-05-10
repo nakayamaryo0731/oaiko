@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { useQuery, useConvexAuth } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -10,22 +11,23 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth();
+  const { isLoaded, isSignedIn } = useAuth();
+  const { isAuthenticated } = useConvexAuth();
   const me = useQuery(api.users.getMe, isAuthenticated ? {} : "skip");
   const router = useRouter();
 
   useEffect(() => {
-    if (authLoading) return;
-    if (!isAuthenticated) {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
       router.replace("/sign-in");
       return;
     }
     if (me && !me.isAdmin) {
       router.replace("/");
     }
-  }, [authLoading, isAuthenticated, me, router]);
+  }, [isLoaded, isSignedIn, me, router]);
 
-  if (authLoading || !me) {
+  if (!isLoaded || !isSignedIn || !me) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <p className="text-slate-400">Loading...</p>

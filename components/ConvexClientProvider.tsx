@@ -5,6 +5,7 @@ import { ClerkProvider, useAuth, useSession } from "@clerk/nextjs";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 import { jaJP } from "@clerk/localizations";
+import * as Sentry from "@sentry/nextjs";
 
 const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
@@ -29,11 +30,18 @@ function SessionKeepAlive() {
     const refreshSession = async () => {
       try {
         await session.touch();
-      } catch {
+      } catch (touchErr) {
         try {
           await getToken({ skipCache: true });
-        } catch {
-          // 両方失敗した場合はClerkの自動サインアウトに任せる
+        } catch (tokenErr) {
+          // 両方失敗 = ユーザーは強制サインアウトされる。発生頻度を観測する
+          Sentry.captureMessage("auth session refresh failed", {
+            level: "warning",
+            extra: {
+              touchError: String(touchErr),
+              tokenError: String(tokenErr),
+            },
+          });
         }
       }
     };
