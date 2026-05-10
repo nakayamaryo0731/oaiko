@@ -128,6 +128,7 @@ export function ExpenseCreateModal({
               isPremium={isPremium}
               memberColors={memberColors}
               onClose={onClose}
+              autoFocusAmount
             />
           )}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
@@ -55,6 +55,7 @@ type ExpenseFormProps = {
   linkedShoppingItems?: { _id: Id<"shoppingItems">; name: string }[];
   memberColors?: Record<string, string>;
   onClose?: () => void;
+  autoFocusAmount?: boolean;
 };
 
 /**
@@ -74,6 +75,7 @@ export function ExpenseForm({
   linkedShoppingItems,
   memberColors,
   onClose,
+  autoFocusAmount = false,
 }: ExpenseFormProps) {
   const router = useRouter();
   const createExpense = useMutation(api.expenses.create);
@@ -81,6 +83,14 @@ export function ExpenseForm({
 
   const isEditMode = mode === "edit" && initialData;
   const hasInitialData = !!initialData;
+
+  const amountInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocusAmount) {
+      amountInputRef.current?.focus();
+    }
+  }, [autoFocusAmount]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -382,6 +392,7 @@ export function ExpenseForm({
         <div className="inline-flex items-baseline gap-1">
           <span className="text-3xl text-slate-400">¥</span>
           <input
+            ref={amountInputRef}
             type="number"
             inputMode="numeric"
             pattern="[0-9]*"
