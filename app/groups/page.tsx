@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { GroupList } from "@/components/groups";
 import { GroupListSkeleton } from "@/components/ui/skeleton";
 import { AppHeader } from "@/components/ui/AppHeader";
+import { NotificationBell } from "@/components/notifications";
 import { trackEvent } from "@/lib/analytics";
 
 function GroupsContent() {
@@ -103,7 +104,14 @@ function GroupsContent() {
   ) {
     return (
       <div className="flex min-h-screen flex-col">
-        <AppHeader rightElement={<UserButton />} />
+        <AppHeader
+          rightElement={
+            <div className="flex items-center gap-1">
+              <NotificationBell />
+              <UserButton />
+            </div>
+          }
+        />
         <main className="flex-1 p-4">
           <div className="max-w-lg mx-auto">
             <GroupListSkeleton />

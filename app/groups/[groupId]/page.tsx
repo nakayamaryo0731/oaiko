@@ -24,6 +24,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { TabNavigation } from "@/components/ui/TabNavigation";
 import { ClipboardList, BarChart3, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { NotificationBell } from "@/components/notifications";
 import { buildMemberColorMap } from "@/lib/userColors";
 
 type PageProps = {
@@ -66,8 +67,11 @@ export default function GroupDetailPage({ params }: PageProps) {
   }, [activeTab, groupId]);
 
   const rightElement = (
-    <div className="w-11 h-11 flex items-center justify-center">
-      <UserButton />
+    <div className="flex items-center gap-1">
+      <NotificationBell />
+      <div className="w-11 h-11 flex items-center justify-center">
+        <UserButton />
+      </div>
     </div>
   );
 
