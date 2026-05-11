@@ -98,6 +98,8 @@ const authMutationMiddleware = {
         clerkId: identity.subject,
         displayName: identity.name ?? identity.email ?? "名無し",
         avatarUrl: identity.pictureUrl,
+        // 過去のリリースは新規ユーザーには未読扱いしない
+        lastSeenReleaseAt: now,
         createdAt: now,
         updatedAt: now,
       });

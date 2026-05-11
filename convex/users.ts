@@ -62,7 +62,22 @@ export const getMe = authQuery({
       avatarUrl: ctx.user.avatarUrl,
       defaultGroupId: ctx.user.defaultGroupId,
       isAdmin: ctx.user.isAdmin === true,
+      lastSeenReleaseAt: ctx.user.lastSeenReleaseAt,
     };
+  },
+});
+
+/**
+ * リリース通知を既読にする
+ */
+export const markReleasesRead = authMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    await ctx.db.patch(ctx.user._id, {
+      lastSeenReleaseAt: now,
+      updatedAt: now,
+    });
   },
 });
 

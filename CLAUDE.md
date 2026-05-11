@@ -47,6 +47,12 @@
   - 動作確認に必要なデータがあれば `convex/seed.ts` と `convex/lib/seedData.ts` に追加
   - 設計ドキュメント: `docs/design-seed-data.md`
   - 実行: `npx convex run seed:seedTestData`
+- **リリースノートの更新**: ユーザー向けの機能追加・変更時は `lib/releases.ts` にエントリを追加する
+  - 対象: UI変更、新機能、ユーザーが気付くべき改善
+  - 対象外: バグ修正（軽微）、リファクタリング、内部ツール、CI/CDのみの変更
+  - 判断に迷うなら追加する側に倒す
+  - 設計ドキュメント: `docs/design-release-notifications.md`
+  - PR本文の Release Notes チェックリストも合わせて更新する
 - 例: Vercel CLI複雑な認証回避 → Deploy Hook（シンプル）
 
 ### UX指針
