@@ -64,8 +64,10 @@ export default defineSchema({
     usedAt: v.optional(v.number()),
     usedBy: v.optional(v.id("users")),
     createdAt: v.number(),
-  }).index("by_token", ["token"]),
-  // 用途: トークンから招待情報取得
+  })
+    .index("by_token", ["token"])
+    .index("by_group", ["groupId"]),
+  // 用途: トークンから招待情報取得 / グループ削除時の一括クリーンアップ
 
   // ========================================
   // カテゴリ

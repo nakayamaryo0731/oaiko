@@ -445,36 +445,13 @@ export const listByCategory = authQuery({
       throw new ConvexError("カテゴリが見つかりません");
     }
 
-    // 全支出を取得
-    const allExpenses = await ctx.db
-      .query("expenses")
-      .withIndex("by_group_and_date", (q) => q.eq("groupId", args.groupId))
-      .collect();
+    const { period, periodLabel } = resolveYearOrMonth(group.closingDay, args);
 
-    // 期間でフィルタ
-    let filteredExpenses;
-    let periodLabel: string;
-
-    if (args.month !== undefined) {
-      // 月次: 精算期間ベース
-      const period = getSettlementPeriod(
-        group.closingDay,
-        args.year,
-        args.month,
-      );
-      filteredExpenses = allExpenses.filter(
-        (e) => e.date >= period.startDate && e.date <= period.endDate,
-      );
-      periodLabel = `${args.year}年${args.month}月`;
-    } else {
-      // 年次: 1/1〜12/31
-      const startDate = `${args.year}-01-01`;
-      const endDate = `${args.year}-12-31`;
-      filteredExpenses = allExpenses.filter(
-        (e) => e.date >= startDate && e.date <= endDate,
-      );
-      periodLabel = `${args.year}年`;
-    }
+    const filteredExpenses = await getExpensesByPeriod(
+      ctx,
+      args.groupId,
+      period,
+    );
 
     // カテゴリでフィルタ
     const categoryExpenses = filteredExpenses
@@ -520,48 +497,21 @@ export const listByTag = authQuery({
       "グループが見つかりません",
     );
 
-    // 全支出を取得
-    const allExpenses = await ctx.db
-      .query("expenses")
-      .withIndex("by_group_and_date", (q) => q.eq("groupId", args.groupId))
-      .collect();
+    const { period, periodLabel } = resolveYearOrMonth(group.closingDay, args);
 
-    // 期間でフィルタ
-    let filteredExpenses;
-    let periodLabel: string;
-
-    if (args.month !== undefined) {
-      // 月次: 精算期間ベース
-      const period = getSettlementPeriod(
-        group.closingDay,
-        args.year,
-        args.month,
-      );
-      filteredExpenses = allExpenses.filter(
-        (e) => e.date >= period.startDate && e.date <= period.endDate,
-      );
-      periodLabel = `${args.year}年${args.month}月`;
-    } else {
-      // 年次: 1/1〜12/31
-      const startDate = `${args.year}-01-01`;
-      const endDate = `${args.year}-12-31`;
-      filteredExpenses = allExpenses.filter(
-        (e) => e.date >= startDate && e.date <= endDate,
-      );
-      periodLabel = `${args.year}年`;
-    }
+    const filteredExpenses = await getExpensesByPeriod(
+      ctx,
+      args.groupId,
+      period,
+    );
 
     let tagExpenses;
     let tagInfo: { _id: string; name: string; color: string } | null = null;
 
     if (args.tagId === "untagged") {
-      // タグなし支出
-      const expenseIds = filteredExpenses.map((e) => e._id);
-      const allExpenseTags = await ctx.db.query("expenseTags").collect();
-      const taggedExpenseIds = new Set(
-        allExpenseTags
-          .filter((et) => expenseIds.includes(et.expenseId))
-          .map((et) => et.expenseId),
+      const taggedExpenseIds = await collectTaggedExpenseIds(
+        ctx,
+        filteredExpenses.map((e) => e._id),
       );
       tagExpenses = filteredExpenses.filter(
         (e) => !taggedExpenseIds.has(e._id),
@@ -676,13 +626,9 @@ export const listByTagAllTime = authQuery({
     let tagInfo: { _id: string; name: string; color: string } | null = null;
 
     if (args.tagId === "untagged") {
-      // タグなし支出
-      const expenseIds = allExpenses.map((e) => e._id);
-      const allExpenseTags = await ctx.db.query("expenseTags").collect();
-      const taggedExpenseIds = new Set(
-        allExpenseTags
-          .filter((et) => expenseIds.includes(et.expenseId))
-          .map((et) => et.expenseId),
+      const taggedExpenseIds = await collectTaggedExpenseIds(
+        ctx,
+        allExpenses.map((e) => e._id),
       );
       tagExpenses = allExpenses.filter((e) => !taggedExpenseIds.has(e._id));
     } else {
@@ -1048,3 +994,54 @@ export const updateTags = authMutation({
     });
   },
 });
+
+// ========================================
+// ヘルパー
+// ========================================
+
+/**
+ * 年単位 / 月単位の引数から期間とラベルを導出する。
+ * - month あり → 締め日基準の精算期間
+ * - month なし → 1/1〜12/31
+ */
+function resolveYearOrMonth(
+  closingDay: number,
+  args: { year: number; month?: number },
+): { period: { startDate: string; endDate: string }; periodLabel: string } {
+  if (args.month !== undefined) {
+    return {
+      period: getSettlementPeriod(closingDay, args.year, args.month),
+      periodLabel: `${args.year}年${args.month}月`,
+    };
+  }
+  return {
+    period: {
+      startDate: `${args.year}-01-01`,
+      endDate: `${args.year}-12-31`,
+    },
+    periodLabel: `${args.year}年`,
+  };
+}
+
+/**
+ * 与えられた expenseIds のうち、何らかのタグが付与されているものの集合を返す。
+ * expenseTags テーブル全体を走査せず、expenseId ごとの index lookup で済ませる。
+ */
+async function collectTaggedExpenseIds(
+  ctx: { db: import("./_generated/server").DatabaseReader },
+  expenseIds: Id<"expenses">[],
+): Promise<Set<Id<"expenses">>> {
+  const tagsByExpense = await Promise.all(
+    expenseIds.map((id) =>
+      ctx.db
+        .query("expenseTags")
+        .withIndex("by_expense", (q) => q.eq("expenseId", id))
+        .first(),
+    ),
+  );
+  const result = new Set<Id<"expenses">>();
+  expenseIds.forEach((id, i) => {
+    if (tagsByExpense[i] !== null) result.add(id);
+  });
+  return result;
+}

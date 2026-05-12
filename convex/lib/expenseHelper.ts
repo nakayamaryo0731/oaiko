@@ -22,14 +22,15 @@ export async function getExpensesByPeriod(
   groupId: Id<"groups">,
   period: SettlementPeriod,
 ): Promise<Doc<"expenses">[]> {
-  const allExpenses = await ctx.db
+  return await ctx.db
     .query("expenses")
-    .withIndex("by_group_and_date", (q) => q.eq("groupId", groupId))
+    .withIndex("by_group_and_date", (q) =>
+      q
+        .eq("groupId", groupId)
+        .gte("date", period.startDate)
+        .lte("date", period.endDate),
+    )
     .collect();
-
-  return allExpenses.filter(
-    (e) => e.date >= period.startDate && e.date <= period.endDate,
-  );
 }
 
 import {
