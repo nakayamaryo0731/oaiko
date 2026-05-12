@@ -22,6 +22,10 @@ const PAGE_SIZE = 20;
 
 type PlanFilter = "all" | "free" | "premium";
 
+// TanStack Table の ColumnMeta を拡張し、列ごとの揃え設定を型安全に保持する
+// （公式の augmentation パターン: https://tanstack.com/table/v8/docs/api/core/column-def#meta）
+// TS が元 interface と完全一致する型パラメータ名を要求するため TData/TValue を残す必要があり、
+// その結果 ESLint が unused-vars を報告するので、その1行だけ抑止する
 declare module "@tanstack/react-table" {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
