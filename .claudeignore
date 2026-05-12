@@ -1,0 +1,19 @@
+# バイナリ・画像
+public/icons/
+public/screenshots/
+public/*.png
+public/*.ico
+public/*.svg
+
+# ビルド成果物
+.next/
+node_modules/
+
+# サービスワーカー（生成ファイル）
+public/sw.js
+
+# Zenn記事（別リポジトリ）
+my-zenn-articles/
+
+# ロックファイル（大容量）
+pnpm-lock.yaml
