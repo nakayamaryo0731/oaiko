@@ -164,6 +164,42 @@ describe("users", () => {
     });
   });
 
+  describe("completePwaOnboarding", () => {
+    test("PWAオンボーディング完了日時がセットされる", async () => {
+      const t = convexTest(schema, modules);
+
+      await t.withIdentity(testIdentity).mutation(api.users.ensureUser, {});
+
+      const before = Date.now();
+      await t
+        .withIdentity(testIdentity)
+        .mutation(api.users.completePwaOnboarding, {});
+      const after = Date.now();
+
+      const me = await t.withIdentity(testIdentity).query(api.users.getMe, {});
+      expect(me.pwaOnboardingCompletedAt).toBeDefined();
+      expect(me.pwaOnboardingCompletedAt!).toBeGreaterThanOrEqual(before);
+      expect(me.pwaOnboardingCompletedAt!).toBeLessThanOrEqual(after);
+    });
+
+    test("初回のgetMeではpwaOnboardingCompletedAtはundefined", async () => {
+      const t = convexTest(schema, modules);
+
+      await t.withIdentity(testIdentity).mutation(api.users.ensureUser, {});
+      const me = await t.withIdentity(testIdentity).query(api.users.getMe, {});
+
+      expect(me.pwaOnboardingCompletedAt).toBeUndefined();
+    });
+
+    test("認証なしではエラーになる", async () => {
+      const t = convexTest(schema, modules);
+
+      await expect(
+        t.mutation(api.users.completePwaOnboarding, {}),
+      ).rejects.toThrow();
+    });
+  });
+
   describe("setDefaultGroup", () => {
     test("デフォルトグループを設定できる", async () => {
       const t = convexTest(schema, modules);
