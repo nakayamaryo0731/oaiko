@@ -29,7 +29,6 @@ import {
   FALLBACK,
 } from "./lib/enrichment";
 import { getSettlementPeriod } from "./domain/settlement";
-import { Logger } from "./lib/logger";
 
 // アクセストークン更新の余裕時間（5分前なら refresh）
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
