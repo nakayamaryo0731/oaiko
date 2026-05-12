@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import type { ReactNode } from "react";
+import { OpenOnOtherDeviceButton } from "@/components/pwa/OpenOnOtherDeviceButton";
 
 type PageHeaderProps = {
   /** 戻り先のURL */
@@ -45,7 +46,10 @@ export function PageHeader({
             <h1 className="text-lg font-semibold">{title}</h1>
           )}
         </div>
-        <div className="z-10">{rightElement ?? <div className="w-6" />}</div>
+        <div className="z-10 flex items-center gap-1">
+          <OpenOnOtherDeviceButton />
+          {rightElement ?? <div className="w-6" />}
+        </div>
       </div>
     </header>
   );

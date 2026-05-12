@@ -28,8 +28,10 @@ import {
   Star,
   Shield,
   Check,
+  HelpCircle,
 } from "lucide-react";
 import { InquiryDialog } from "@/components/inquiries/InquiryDialog";
+import { UsageGuideDialog } from "@/components/pwa/UsageGuideDialog";
 import { useInlineEdit } from "@/hooks/useInlineEdit";
 import { InlineEditText, InlineEditDisplay } from "@/components/ui/InlineEdit";
 import { APP_VERSION } from "@/lib/version";
@@ -404,6 +406,18 @@ export function GroupSettings({
           </div>
           <ChevronRight className="h-5 w-5 text-slate-400" />
         </Link>
+        <UsageGuideDialog className="flex items-center gap-3 px-3 py-2.5 w-full text-left hover:bg-slate-50 transition-colors">
+          <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+            <HelpCircle className="h-4 w-4 text-slate-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-slate-800">アプリの使い方</p>
+            <p className="text-[11px] text-slate-500">
+              スマホとPCでの使い分けガイド
+            </p>
+          </div>
+          <ChevronRight className="h-5 w-5 text-slate-400" />
+        </UsageGuideDialog>
         <InquiryDialog>
           <button className="flex items-center gap-3 px-3 py-2.5 w-full text-left hover:bg-slate-50 transition-colors">
             <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
