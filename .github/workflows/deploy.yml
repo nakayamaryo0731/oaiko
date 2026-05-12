@@ -15,6 +15,9 @@ concurrency:
   group: deploy-${{ github.event.inputs.ref || github.ref }}
   cancel-in-progress: false
 
+permissions:
+  contents: write # production ブランチへの push 用
+
 jobs:
   deploy:
     name: Deploy
@@ -45,11 +48,14 @@ jobs:
           CONVEX_DEPLOY_KEY: ${{ steps.target.outputs.env == 'production' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY_STAGING }}
         run: pnpm dlx convex deploy --yes
 
-      - name: Trigger Netlify Deploy
-        env:
-          # prod は既存の NETLIFY_DEPLOY_HOOK を流用、staging だけ新規追加
-          HOOK: ${{ steps.target.outputs.env == 'production' && secrets.NETLIFY_DEPLOY_HOOK || secrets.NETLIFY_DEPLOY_HOOK_STAGING }}
-        run: curl -fsS -X POST "$HOOK"
+      - name: Promote to production branch (Netlify auto-builds it)
+        # production branch を tag commit に force-with-lease で進める。
+        # Netlify prod site の Production branch = "production" なので、
+        # この push を契機に Netlify が auto-build → 本番反映される。
+        # staging の場合は何もしない（Netlify が main の auto-build を回す）。
+        if: steps.target.outputs.env == 'production'
+        run: |
+          git push origin HEAD:refs/heads/production --force-with-lease
 
       - name: Summary
         run: |
