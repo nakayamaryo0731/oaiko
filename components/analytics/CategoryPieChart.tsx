@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { Id } from "@/convex/_generated/dataModel";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
@@ -29,11 +30,20 @@ type CategoryPieChartProps = {
   onCategoryClick?: (categoryId: Id<"categories">) => void;
 };
 
-export function CategoryPieChart({
+export const CategoryPieChart = memo(function CategoryPieChart({
   data,
   totalAmount,
   onCategoryClick,
 }: CategoryPieChartProps) {
+  const chartData = useMemo(
+    () =>
+      data.map((item, index) => ({
+        ...item,
+        fill: CHART_COLORS[index % CHART_COLORS.length],
+      })),
+    [data],
+  );
+
   if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
@@ -41,11 +51,6 @@ export function CategoryPieChart({
       </div>
     );
   }
-
-  const chartData = data.map((item, index) => ({
-    ...item,
-    fill: CHART_COLORS[index % CHART_COLORS.length],
-  }));
 
   return (
     <div className="flex flex-col gap-4">
@@ -119,4 +124,4 @@ export function CategoryPieChart({
       </div>
     </div>
   );
-}
+});

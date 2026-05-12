@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { Id } from "@/convex/_generated/dataModel";
 import { getTagColorHex, getTagColorClasses } from "@/lib/tagColors";
@@ -20,41 +21,41 @@ type TagBreakdownChartProps = {
   onTagClick?: (tagId: Id<"tags"> | "untagged") => void;
 };
 
-export function TagBreakdownChart({
+export const TagBreakdownChart = memo(function TagBreakdownChart({
   data,
   totalAmount,
   untaggedAmount,
   onTagClick,
 }: TagBreakdownChartProps) {
+  const chartData = useMemo(() => {
+    const items: {
+      name: string;
+      amount: number;
+      fill: string;
+      tagId: Id<"tags"> | "untagged";
+    }[] = data.map((item) => ({
+      name: `#${item.tagName}`,
+      amount: item.amount,
+      fill: getTagColorHex(item.tagColor),
+      tagId: item.tagId,
+    }));
+    if (untaggedAmount > 0) {
+      items.push({
+        name: "タグなし",
+        amount: untaggedAmount,
+        fill: "#94a3b8", // slate-400
+        tagId: "untagged",
+      });
+    }
+    return items;
+  }, [data, untaggedAmount]);
+
   if (totalAmount === 0) {
     return (
       <div className="bg-white rounded-xl p-6 text-center text-slate-500">
         この期間のデータがありません
       </div>
     );
-  }
-
-  // チャートデータを構築
-  const chartData: {
-    name: string;
-    amount: number;
-    fill: string;
-    tagId: Id<"tags"> | "untagged";
-  }[] = data.map((item) => ({
-    name: `#${item.tagName}`,
-    amount: item.amount,
-    fill: getTagColorHex(item.tagColor),
-    tagId: item.tagId,
-  }));
-
-  // タグなし支出を追加
-  if (untaggedAmount > 0) {
-    chartData.push({
-      name: "タグなし",
-      amount: untaggedAmount,
-      fill: "#94a3b8", // slate-400
-      tagId: "untagged",
-    });
   }
 
   return (
@@ -157,4 +158,4 @@ export function TagBreakdownChart({
       </div>
     </div>
   );
-}
+});
