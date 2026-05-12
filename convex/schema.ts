@@ -225,4 +225,16 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
   // 用途: Google Sheets エクスポート用のOAuthトークン保存
+
+  // ========================================
+  // Google OAuth state（CSRF + アカウント取り違え防止）
+  // ========================================
+  googleOAuthStates: defineTable({
+    state: v.string(),
+    userId: v.id("users"),
+    expiresAt: v.number(),
+  })
+    .index("by_state", ["state"])
+    .index("by_user", ["userId"]),
+  // 用途: OAuth callback の state を userId と紐付け、connect で検証
 });

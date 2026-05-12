@@ -6,9 +6,12 @@
  */
 
 import { ConvexError } from "convex/values";
+import { Logger } from "./logger";
 
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GOOGLE_REVOKE_ENDPOINT = "https://oauth2.googleapis.com/revoke";
+
+const logger = new Logger();
 
 export type GoogleTokenResponse = {
   access_token: string;
@@ -72,10 +75,12 @@ export async function exchangeCodeForTokens(
 
   if (!res.ok) {
     const errorText = await res.text();
-    console.error("Google OAuth code 交換失敗", {
-      status: res.status,
-      body: errorText,
-    });
+    logger.error(
+      "GOOGLE",
+      "oauth_code_exchange_failed",
+      { status: res.status, body: errorText },
+      "Google OAuth code 交換失敗",
+    );
     throw new ConvexError(`OAuth認可に失敗しました (${res.status})`);
   }
 
@@ -108,11 +113,12 @@ export async function refreshAccessToken(
   if (!res.ok) {
     const errorCode = await parseErrorCode(res.clone());
     const errorText = await res.text();
-    console.error("Google OAuth refresh 失敗", {
-      status: res.status,
-      errorCode,
-      body: errorText,
-    });
+    logger.error(
+      "GOOGLE",
+      "oauth_refresh_failed",
+      { status: res.status, errorCode, body: errorText },
+      "Google OAuth refresh 失敗",
+    );
     if (errorCode === "invalid_grant") {
       throw new GoogleTokenInvalidError();
     }
@@ -139,13 +145,20 @@ export async function revokeToken(token: string): Promise<void> {
     });
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("Google token revoke 失敗", {
-        status: res.status,
-        body: errorText,
-      });
+      logger.warn(
+        "GOOGLE",
+        "oauth_revoke_failed",
+        { status: res.status, body: errorText },
+        "Google token revoke 失敗",
+      );
     }
   } catch (e) {
-    console.error("Google token revoke 例外", e);
+    logger.warn(
+      "GOOGLE",
+      "oauth_revoke_exception",
+      { error: e instanceof Error ? e.message : String(e) },
+      "Google token revoke 例外",
+    );
   }
 }
 

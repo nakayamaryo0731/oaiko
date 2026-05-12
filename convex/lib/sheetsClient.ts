@@ -5,6 +5,9 @@
  */
 
 import { ConvexError } from "convex/values";
+import { Logger } from "./logger";
+
+const logger = new Logger();
 
 type CreatedSpreadsheet = {
   spreadsheetId: string;
@@ -46,10 +49,12 @@ export async function createSpreadsheetWithSheets(args: {
 
   if (!createRes.ok) {
     const errorText = await createRes.text();
-    console.error("Sheets API スプレッドシート作成失敗", {
-      status: createRes.status,
-      body: errorText,
-    });
+    logger.error(
+      "GOOGLE",
+      "sheets_create_failed",
+      { status: createRes.status, body: errorText },
+      "Sheets API スプレッドシート作成失敗",
+    );
     throw new ConvexError(
       `スプレッドシート作成に失敗しました (${createRes.status})`,
     );
@@ -80,10 +85,12 @@ export async function createSpreadsheetWithSheets(args: {
 
   if (!writeRes.ok) {
     const errorText = await writeRes.text();
-    console.error("Sheets API 書き込み失敗", {
-      status: writeRes.status,
-      body: errorText,
-    });
+    logger.error(
+      "GOOGLE",
+      "sheets_write_failed",
+      { status: writeRes.status, body: errorText },
+      "Sheets API 書き込み失敗",
+    );
     throw new ConvexError(`データ書き込みに失敗しました (${writeRes.status})`);
   }
 

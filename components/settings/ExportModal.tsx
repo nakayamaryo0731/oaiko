@@ -5,7 +5,7 @@ import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { X, Download, ExternalLink, LogIn, Unplug, Check } from "lucide-react";
-import { createOAuthState, openGoogleOAuthPopup } from "@/lib/googleSheets";
+import { openGoogleOAuthPopup } from "@/lib/googleSheets";
 
 type Period =
   | { type: "all" }
@@ -21,10 +21,23 @@ type ExportModalProps = {
 };
 
 const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
+const DEFAULT_YEARS = [CURRENT_YEAR, CURRENT_YEAR - 1, CURRENT_YEAR - 2];
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
 
 const SHEETS_URL_PREFIX = "https://docs.google.com/spreadsheets/";
+
+/**
+ * デフォルト年セレクトに initialPeriod.year を含むよう動的構築。
+ * 分析タブで未来年や 3 年以上前にナビゲートした状態でモーダルを開いても
+ * select の選択肢が一致するようにする。
+ */
+function buildYears(initial?: Period): number[] {
+  const extra =
+    initial && "year" in initial && !DEFAULT_YEARS.includes(initial.year)
+      ? [initial.year]
+      : [];
+  return [...new Set([...extra, ...DEFAULT_YEARS])].sort((a, b) => b - a);
+}
 
 export function ExportModal({
   groupId,
@@ -41,6 +54,7 @@ export function ExportModal({
   const [period, setPeriod] = useState<Period>(
     initialPeriod ?? { type: "all" },
   );
+  const years = buildYears(initialPeriod);
   const [connecting, setConnecting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -52,8 +66,7 @@ export function ExportModal({
     setError(null);
     setConnecting(true);
     try {
-      const state = createOAuthState();
-      const { url } = await buildAuthUrl({ state });
+      const { url, state } = await buildAuthUrl({});
       const result = await openGoogleOAuthPopup(url, state);
       if (!result.ok) {
         setError(
@@ -65,7 +78,7 @@ export function ExportModal({
         );
         return;
       }
-      await connect({ code: result.code });
+      await connect({ code: result.code, state: result.state });
       setJustConnected(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "連携に失敗しました");
@@ -191,7 +204,7 @@ export function ExportModal({
                       }
                       className="text-sm border border-slate-300 rounded px-2 py-1"
                     >
-                      {YEARS.map((y) => (
+                      {years.map((y) => (
                         <option key={y} value={y}>
                           {y}年
                         </option>
@@ -225,7 +238,7 @@ export function ExportModal({
                         }
                         className="text-sm border border-slate-300 rounded px-2 py-1"
                       >
-                        {YEARS.map((y) => (
+                        {years.map((y) => (
                           <option key={y} value={y}>
                             {y}年
                           </option>

@@ -12,11 +12,10 @@ export type OAuthResult = OAuthSuccess | OAuthFailure;
 const POPUP_WIDTH = 520;
 const POPUP_HEIGHT = 640;
 
-function generateState(): string {
-  const arr = new Uint8Array(16);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
-}
+// popup.closed 検出から settle までの猶予。
+// postMessage と window.close() がほぼ同時に起きるブラウザがあるため、
+// 即座に settle("popup_closed") するとメッセージを取り逃がすことがある。
+const POPUP_CLOSE_GRACE_MS = 400;
 
 /**
  * ポップアップを開いて Google OAuth 認可フローを実行
@@ -44,11 +43,13 @@ export function openGoogleOAuthPopup(
     }
 
     let settled = false;
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
     const settle = (result: OAuthResult) => {
       if (settled) return;
       settled = true;
       window.removeEventListener("message", handleMessage);
       clearInterval(closedPoll);
+      if (closeTimer) clearTimeout(closeTimer);
       resolve(result);
     };
 
@@ -72,18 +73,13 @@ export function openGoogleOAuthPopup(
 
     window.addEventListener("message", handleMessage);
 
-    // ポップアップが閉じられた場合の検知
+    // ポップアップが閉じられた場合の検知（メッセージ到着の猶予を設ける）
     const closedPoll = setInterval(() => {
-      if (popup.closed) {
-        settle({ ok: false, error: "popup_closed" });
-      }
-    }, 500);
+      if (!popup.closed || closeTimer) return;
+      closeTimer = setTimeout(
+        () => settle({ ok: false, error: "popup_closed" }),
+        POPUP_CLOSE_GRACE_MS,
+      );
+    }, 300);
   });
-}
-
-/**
- * 新しい OAuth state を生成して返す（呼び出し側で保持）
- */
-export function createOAuthState(): string {
-  return generateState();
 }

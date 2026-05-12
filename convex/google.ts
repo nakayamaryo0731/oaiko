@@ -29,9 +29,19 @@ import {
   FALLBACK,
 } from "./lib/enrichment";
 import { getSettlementPeriod } from "./domain/settlement";
+import { Logger } from "./lib/logger";
 
 // アクセストークン更新の余裕時間（5分前なら refresh）
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
+// OAuth state の有効期間（10分）
+const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
+
+function generateState(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 // ========================================
 // Public Query: Google 連携状態取得
@@ -62,13 +72,19 @@ export const getConnection = authQuery({
 // ========================================
 
 export const buildAuthUrl = action({
-  args: { state: v.string() },
-  handler: async (ctx, args): Promise<{ url: string }> => {
+  args: {},
+  handler: async (ctx): Promise<{ url: string; state: string }> => {
     const user = await ctx.runQuery(internal.google.getCurrentUser);
     if (!user) {
       throw new ConvexError("認証が必要です");
     }
-    return { url: buildAuthorizationUrl(args.state) };
+    const state = generateState();
+    await ctx.runMutation(internal.google.saveOAuthState, {
+      userId: user._id,
+      state,
+      expiresAt: Date.now() + OAUTH_STATE_TTL_MS,
+    });
+    return { url: buildAuthorizationUrl(state), state };
   },
 });
 
@@ -77,11 +93,21 @@ export const buildAuthUrl = action({
 // ========================================
 
 export const connect = action({
-  args: { code: v.string() },
+  args: { code: v.string(), state: v.string() },
   handler: async (ctx, args): Promise<{ success: true }> => {
     const user = await ctx.runQuery(internal.google.getCurrentUser);
     if (!user) {
       throw new ConvexError("認証が必要です");
+    }
+
+    const consumed = await ctx.runMutation(internal.google.consumeOAuthState, {
+      state: args.state,
+      userId: user._id,
+    });
+    if (!consumed) {
+      throw new ConvexError(
+        "OAuth state が無効です。もう一度連携をやり直してください。",
+      );
     }
 
     const tokenResponse = await exchangeCodeForTokens(args.code);
@@ -294,6 +320,48 @@ export const deleteTokenByUser = internalMutation({
     if (token) {
       await ctx.db.delete(token._id);
     }
+  },
+});
+
+export const saveOAuthState = internalMutation({
+  args: {
+    userId: v.id("users"),
+    state: v.string(),
+    expiresAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // 同一ユーザーの古い state を掃除（連打や中断のたびに増えるのを防ぐ）
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("googleOAuthStates")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+    for (const s of existing) {
+      if (s.expiresAt < now) {
+        await ctx.db.delete(s._id);
+      }
+    }
+    await ctx.db.insert("googleOAuthStates", {
+      state: args.state,
+      userId: args.userId,
+      expiresAt: args.expiresAt,
+    });
+  },
+});
+
+export const consumeOAuthState = internalMutation({
+  args: { state: v.string(), userId: v.id("users") },
+  handler: async (ctx, args): Promise<boolean> => {
+    const record = await ctx.db
+      .query("googleOAuthStates")
+      .withIndex("by_state", (q) => q.eq("state", args.state))
+      .unique();
+    if (!record) return false;
+    // 必ず削除（成否にかかわらず再利用させない）
+    await ctx.db.delete(record._id);
+    if (record.userId !== args.userId) return false;
+    if (record.expiresAt < Date.now()) return false;
+    return true;
   },
 });
 
