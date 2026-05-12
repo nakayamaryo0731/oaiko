@@ -29,6 +29,7 @@ import {
   FALLBACK,
 } from "./lib/enrichment";
 import { getSettlementPeriod } from "./domain/settlement";
+import { Logger } from "./lib/logger";
 
 // アクセストークン更新の余裕時間（5分前なら refresh）
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
@@ -99,11 +100,15 @@ export const connect = action({
       throw new ConvexError("認証が必要です");
     }
 
+    const logger = new Logger(user._id);
+
     const consumed = await ctx.runMutation(internal.google.consumeOAuthState, {
       state: args.state,
       userId: user._id,
     });
     if (!consumed) {
+      // 攻撃検知シグナル: state が存在しない / 期限切れ / 別ユーザーの state
+      logger.warn("GOOGLE", "oauth_state_invalid");
       throw new ConvexError(
         "OAuth state が無効です。もう一度連携をやり直してください。",
       );
@@ -125,6 +130,8 @@ export const connect = action({
       expiresAt: now + tokenResponse.expires_in * 1000,
       scope: tokenResponse.scope,
     });
+
+    logger.audit("GOOGLE", "connected", { scope: tokenResponse.scope });
 
     return { success: true };
   },
@@ -152,6 +159,7 @@ export const disconnect = action({
       await ctx.runMutation(internal.google.deleteTokenByUser, {
         userId: user._id,
       });
+      new Logger(user._id).audit("GOOGLE", "disconnected");
     }
 
     return { success: true };
@@ -201,6 +209,12 @@ export const exportGroup = action({
       tabs: [{ title: "支出", rows: expenseRows }],
     });
 
+    new Logger(data.userId).audit("GOOGLE", "exported", {
+      groupId: args.groupId,
+      period: args.period,
+      spreadsheetId: result.spreadsheetId,
+    });
+
     return result;
   },
 });
@@ -237,6 +251,7 @@ async function ensureAccessToken(
   } catch (e) {
     if (e instanceof GoogleTokenInvalidError) {
       // Google 側で revoke されていた → DBから削除して再連携を促す
+      new Logger(userId).warn("GOOGLE", "token_revoked_by_google");
       await ctx.runMutation(internal.google.deleteTokenByUser, { userId });
       throw new ConvexError(
         "Googleの連携が無効になりました。再度連携を行ってください。",
