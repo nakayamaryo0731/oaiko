@@ -14,9 +14,11 @@ import { trackEvent } from "@/lib/analytics";
 const APP_URL = "https://pairbo.app";
 
 export function OpenOnOtherDeviceButton() {
-  const { category } = useDeviceType();
+  const { category, isHydrated } = useDeviceType();
   const [open, setOpen] = useState(false);
 
+  // ハイドレーション前はSSRと同じく非描画にして、スマホ側でのフラッシュを防ぐ
+  if (!isHydrated) return null;
   if (category !== "desktop") return null;
 
   return (

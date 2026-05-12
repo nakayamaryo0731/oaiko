@@ -37,6 +37,11 @@ const getServerSnapshot = (): DeviceSnapshot => SERVER_SNAPSHOT;
 
 const subscribe = () => () => {};
 
-export function useDeviceType(): DeviceSnapshot {
-  return useSyncExternalStore(subscribe, getClientSnapshot, getServerSnapshot);
+export function useDeviceType(): DeviceSnapshot & { isHydrated: boolean } {
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
+  return { ...snapshot, isHydrated: snapshot !== SERVER_SNAPSHOT };
 }

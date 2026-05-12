@@ -31,20 +31,31 @@ export function PwaOnboardingTour() {
     return () => clearTimeout(timer);
   }, [me, isStandalone, hasShown]);
 
-  const handleOpenChange = async (next: boolean) => {
+  const markCompleted = (reason: "skipped" | "completed") => {
+    trackEvent(
+      reason === "skipped"
+        ? "onboarding_tour_skipped"
+        : "onboarding_tour_completed",
+    );
+    // Radix の onOpenChange は同期コールバックなので fire-and-forget。
+    // 失敗してもこのセッション内では hasShown で再表示を抑止する。
+    completePwaOnboarding().catch((error) => {
+      console.error("Failed to mark PWA onboarding complete:", error);
+    });
+  };
+
+  const handleOpenChange = (next: boolean) => {
     if (!next && open) {
       setOpen(false);
-      trackEvent("onboarding_tour_skipped");
-      await completePwaOnboarding();
+      markCompleted("skipped");
     } else {
       setOpen(next);
     }
   };
 
-  const handleComplete = async () => {
+  const handleComplete = () => {
     setOpen(false);
-    trackEvent("onboarding_tour_completed");
-    await completePwaOnboarding();
+    markCompleted("completed");
   };
 
   return (
