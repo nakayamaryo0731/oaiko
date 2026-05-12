@@ -53,7 +53,7 @@
   - 判断に迷うなら追加する側に倒す
   - 設計ドキュメント: `docs/design-release-notifications.md`
   - PR本文の Release Notes チェックリストも合わせて更新する
-- 例: Vercel CLI複雑な認証回避 → Deploy Hook（シンプル）
+- 例: Netlify CLI複雑な認証回避 → Build Hook（シンプル）
 
 ### UX指針
 
@@ -90,7 +90,7 @@
 Frontend: Next.js (App Router)
 Backend: Convex (DB + API + リアルタイム同期)
 Auth: Clerk or Convex Auth（未決定）
-Deploy: Vercel + Convex
+Deploy: Netlify + Convex
 ```
 
 ### 選定理由
@@ -118,32 +118,63 @@ pnpm dev
 
 ### デプロイ
 
-**重要: デプロイはPRマージで行う**
+**フロー: main = staging、tag + dispatch = production**
 
 **絶対禁止: mainブランチへの直接push**
 
 - ユーザーが明示的に許可した場合を除き、mainへの直接pushは禁止
 - 必ずfeatureブランチを作成してPRを経由すること
 
+#### staging へのデプロイ（自動）
+
 1. featureブランチを作成して作業
 2. **PR作成前に必ずローカルでチェックを実行**（下記参照）
-3. PRを作成 → CI（lint, format, typecheck, build）が自動実行
+3. PRを作成 → CI（lint, format, typecheck, build, test）が自動実行
 4. CIパス確認後、mainにマージ
-5. マージ後、Deployワークフローが自動実行（Convex → Vercel）
-6. **CI/CDが正常終了したことを必ず確認する**
+5. マージで Deploy ワークフロー自動実行:
+   - GitHub Actions: Convex Development deployment へ deploy
+   - Netlify: staging site (`pairbostaging.netlify.app`) を auto-build
+6. staging URL で動作確認
+
+#### production へのデプロイ（手動）
+
+staging で問題ないことを確認した後:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+その後 GitHub Actions UI:
+
+1. **Actions** → **Deploy** → **Run workflow**
+2. **ref** に `v1.0.1` を指定
+3. **Run workflow** クリック
+
+Workflow が:
+
+- Convex Production deployment へ deploy
+- `production` ブランチを tag commit へ force-with-lease push → Netlify pairbo.app が auto-build
+
+#### 確認コマンド
 
 ```bash
 # ワークフロー実行状況確認
 gh run list --limit 3
-
-# 特定のワークフロー監視
 gh run watch <run-id>
+
+# production ブランチ HEAD の確認
+git log -1 origin/production
 ```
 
 ### CI/CD構成
 
-- **CI** (PR時): lint, format, typecheck, build を並列実行
-- **Deploy** (main push時): Convex → Vercel を順次実行
+- **CI** (PR時): lint, format, typecheck, build, test を並列実行
+- **Deploy** (main push 時 / workflow_dispatch 時):
+  - main push → staging（Convex Dev + Netlify staging）
+  - dispatch → production（Convex Prod + Netlify production branch push）
+
+詳細は `docs/design-staging-environment.md`。
 
 ### PR作成前のローカルチェック（必須）
 

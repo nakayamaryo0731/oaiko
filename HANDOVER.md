@@ -14,7 +14,7 @@
 - MVP機能仕様策定
 - プロジェクト初期セットアップ
 - Convexアカウント連携・開発環境セットアップ
-- デプロイフロー確立（Vercel + Convex）
+- デプロイフロー確立（Netlify + Convex、staging/production 分離）
 - GitHub Actions CI/CD構築
 - pnpmへ移行
 - ドメインモデル設計
@@ -83,7 +83,7 @@ Styling: Tailwind CSS 4
 Language: TypeScript 5
 Auth: Clerk
 PWA: Serwist
-Deploy: Vercel + Convex
+Deploy: Netlify + Convex
 ```
 
 ---
@@ -235,12 +235,14 @@ Deploy: Vercel + Convex
 
 ## デプロイ情報
 
-| 環境           | URL                                       |
-| -------------- | ----------------------------------------- |
-| 本番（Vercel） | https://pairbo.app                        |
-| Convex本番     | https://hip-moose-165.convex.cloud        |
-| GitHub         | https://github.com/nakayamaryo0731/pairbo |
-| Stripe         | https://dashboard.stripe.com              |
+| 環境               | URL                                       |
+| ------------------ | ----------------------------------------- |
+| 本番（Netlify）    | https://pairbo.app                        |
+| Staging（Netlify） | https://pairbostaging.netlify.app         |
+| Convex 本番        | https://hip-moose-165.convex.cloud        |
+| Convex Staging     | https://proper-guanaco-454.convex.cloud   |
+| GitHub             | https://github.com/nakayamaryo0731/pairbo |
+| Stripe             | https://dashboard.stripe.com              |
 
 ### Stripe環境変数（Convexに設定済み）
 
