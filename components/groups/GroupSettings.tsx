@@ -22,6 +22,7 @@ import {
   Tags,
   Home,
   ChevronRight,
+  ChevronDown,
   CreditCard,
   MessageCircle,
   Star,
@@ -63,6 +64,28 @@ type GroupSettingsProps = {
   memberColors?: Record<string, string>;
 };
 
+function SettingRow({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5">
+      <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-slate-500">{label}</p>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function GroupSettings({
   group,
   members,
@@ -82,6 +105,7 @@ export function GroupSettings({
   );
 
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [membersOpen, setMembersOpen] = useState(false);
 
   const isDefaultGroup = me?.defaultGroupId === group._id;
 
@@ -91,7 +115,6 @@ export function GroupSettings({
 
   const myMember = members.find((m) => m.isMe);
 
-  // グループ名の編集
   const groupNameEdit = useInlineEdit({
     initialValue: group.name,
     onSave: async (name) => {
@@ -100,7 +123,6 @@ export function GroupSettings({
     validate: (name) => name.trim() !== "",
   });
 
-  // 締め日の編集
   const closingDayEdit = useInlineEdit({
     initialValue: group.closingDay,
     onSave: async (closingDay) => {
@@ -109,7 +131,6 @@ export function GroupSettings({
     validate: (day) => day >= 1 && day <= 28,
   });
 
-  // 表示名の編集
   const displayNameEdit = useInlineEdit({
     initialValue: myMember?.displayName ?? "",
     onSave: async (displayName) => {
@@ -119,48 +140,80 @@ export function GroupSettings({
   });
 
   return (
-    <div className="space-y-6">
-      {/* グループ名 */}
-      <section className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-            <Home className="h-5 w-5 text-slate-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-slate-500">グループ名</p>
-            {groupNameEdit.isEditing ? (
-              <div className="mt-1">
-                <InlineEditText
-                  value={groupNameEdit.value}
-                  onChange={groupNameEdit.setValue}
-                  maxLength={50}
-                  onSave={groupNameEdit.save}
-                  onCancel={groupNameEdit.cancelEditing}
-                  isSaving={groupNameEdit.isSaving}
-                />
-              </div>
-            ) : (
-              <InlineEditDisplay
-                editable={myRole === "owner"}
-                onEdit={groupNameEdit.startEditing}
-              >
-                <p className="font-medium text-slate-800">{group.name}</p>
-              </InlineEditDisplay>
-            )}
-          </div>
-        </div>
-      </section>
+    <div className="space-y-3">
+      {/* グループ設定: 名前 + 締め日 + デフォルト */}
+      <section className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
+        <SettingRow
+          icon={<Home className="h-4 w-4 text-slate-600" />}
+          label="グループ名"
+        >
+          {groupNameEdit.isEditing ? (
+            <div className="mt-0.5">
+              <InlineEditText
+                value={groupNameEdit.value}
+                onChange={groupNameEdit.setValue}
+                maxLength={50}
+                onSave={groupNameEdit.save}
+                onCancel={groupNameEdit.cancelEditing}
+                isSaving={groupNameEdit.isSaving}
+              />
+            </div>
+          ) : (
+            <InlineEditDisplay
+              editable={myRole === "owner"}
+              onEdit={groupNameEdit.startEditing}
+            >
+              <p className="font-medium text-slate-800 truncate">
+                {group.name}
+              </p>
+            </InlineEditDisplay>
+          )}
+        </SettingRow>
 
-      {/* デフォルトグループ */}
-      <section className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-            <Star className="h-5 w-5 text-slate-600" />
+        <SettingRow
+          icon={<Calendar className="h-4 w-4 text-slate-600" />}
+          label="締め日"
+        >
+          {closingDayEdit.isEditing ? (
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="text-sm text-slate-600">毎月</span>
+              <select
+                value={closingDayEdit.value}
+                onChange={(e) => {
+                  closingDayEdit.saveWithValue(Number(e.target.value));
+                }}
+                className="px-2 py-1 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                autoFocus
+                disabled={closingDayEdit.isSaving}
+              >
+                {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                  <option key={day} value={day}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+              <span className="text-sm text-slate-600">日</span>
+            </div>
+          ) : (
+            <InlineEditDisplay
+              editable={myRole === "owner"}
+              onEdit={closingDayEdit.startEditing}
+            >
+              <p className="font-medium text-slate-800">
+                毎月 {group.closingDay} 日
+              </p>
+            </InlineEditDisplay>
+          )}
+        </SettingRow>
+
+        <div className="flex items-center gap-3 px-3 py-2.5">
+          <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+            <Star className="h-4 w-4 text-slate-600" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm text-slate-500">デフォルトグループ</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              ログイン時に自動でこのグループを開きます
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-slate-500">デフォルトグループ</p>
+            <p className="text-[11px] text-slate-400">
+              ログイン時に自動でこのグループを開く
             </p>
           </div>
           <Switch
@@ -171,162 +224,138 @@ export function GroupSettings({
         </div>
       </section>
 
-      {/* 締め日 */}
-      <section className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-            <Calendar className="h-5 w-5 text-slate-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm text-slate-500">締め日</p>
-            {closingDayEdit.isEditing ? (
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-slate-600">毎月</span>
-                <select
-                  value={closingDayEdit.value}
-                  onChange={(e) => {
-                    closingDayEdit.saveWithValue(Number(e.target.value));
-                  }}
-                  className="px-2 py-1 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                  disabled={closingDayEdit.isSaving}
-                >
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                    <option key={day} value={day}>
-                      {day}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-sm text-slate-600">日</span>
-              </div>
-            ) : (
-              <InlineEditDisplay
-                editable={myRole === "owner"}
-                onEdit={closingDayEdit.startEditing}
-              >
-                <p className="font-medium text-slate-800">
-                  毎月 {group.closingDay} 日
-                </p>
-              </InlineEditDisplay>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* メンバー */}
+      {/* メンバー（折りたたみ） */}
       <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-slate-100">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-                <Users className="h-5 w-5 text-slate-600" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">メンバー</p>
-                <p className="font-medium text-slate-800">{members.length}人</p>
-              </div>
+        <div className="flex items-center justify-between pr-3">
+          <button
+            type="button"
+            onClick={() => setMembersOpen((v) => !v)}
+            aria-expanded={membersOpen}
+            className="flex items-center gap-3 flex-1 px-3 py-2.5 text-left"
+          >
+            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+              <Users className="h-4 w-4 text-slate-600" />
             </div>
-            {myRole === "owner" && (
+            <div className="flex-1">
+              <p className="text-xs text-slate-500">メンバー</p>
+              <p className="font-medium text-slate-800">{members.length}人</p>
+            </div>
+            <ChevronDown
+              className={`h-5 w-5 text-slate-400 transition-transform ${
+                membersOpen ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+          {myRole === "owner" && (
+            <div className="ml-2">
               <InviteDialog groupId={group._id} groupName={group.name} />
-            )}
-          </div>
-        </div>
-        <div className="divide-y divide-slate-100">
-          {members.map((member) => (
-            <div key={member._id} className="px-4 py-3 flex items-center gap-3">
-              {member.isMe ? (
-                <Popover
-                  open={colorPickerOpen}
-                  onOpenChange={setColorPickerOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <button
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white ring-offset-2 hover:ring-2 hover:ring-slate-300 transition-shadow"
-                      style={{
-                        backgroundColor:
-                          memberColors?.[member.userId] ?? "#cbd5e1",
-                      }}
-                    >
-                      {member.displayName.charAt(0)}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-auto">
-                    <p className="text-xs text-slate-500 mb-2">カラーを選択</p>
-                    <div className="grid grid-cols-5 gap-2">
-                      {MEMBER_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                          style={{ backgroundColor: color }}
-                          onClick={() => {
-                            updateMemberColor({
-                              groupId: group._id,
-                              color,
-                            });
-                            setColorPickerOpen(false);
-                          }}
-                        >
-                          {memberColors?.[member.userId] === color && (
-                            <Check className="h-4 w-4 text-white" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              ) : (
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                  style={{
-                    backgroundColor: memberColors?.[member.userId] ?? "#cbd5e1",
-                  }}
-                >
-                  {member.displayName.charAt(0)}
-                </div>
-              )}
-              <div className="flex-1">
-                {member.isMe && displayNameEdit.isEditing ? (
-                  <InlineEditText
-                    value={displayNameEdit.value}
-                    onChange={displayNameEdit.setValue}
-                    maxLength={20}
-                    onSave={displayNameEdit.save}
-                    onCancel={displayNameEdit.cancelEditing}
-                    isSaving={displayNameEdit.isSaving}
-                  />
-                ) : (
-                  <InlineEditDisplay
-                    editable={member.isMe}
-                    onEdit={displayNameEdit.startEditing}
-                  >
-                    <p className="text-sm font-medium text-slate-800">
-                      {member.displayName}
-                      {member.isMe && (
-                        <span className="ml-1 text-xs text-slate-500">
-                          (自分)
-                        </span>
-                      )}
-                    </p>
-                  </InlineEditDisplay>
-                )}
-                <p className="text-xs text-slate-500">
-                  {member.role === "owner" ? "オーナー" : "メンバー"}
-                </p>
-              </div>
             </div>
-          ))}
+          )}
         </div>
+        {membersOpen && (
+          <div className="divide-y divide-slate-100 border-t border-slate-100">
+            {members.map((member) => (
+              <div
+                key={member._id}
+                className="px-3 py-2 flex items-center gap-3"
+              >
+                {member.isMe ? (
+                  <Popover
+                    open={colorPickerOpen}
+                    onOpenChange={setColorPickerOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <button
+                        className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white ring-offset-2 hover:ring-2 hover:ring-slate-300 transition-shadow"
+                        style={{
+                          backgroundColor:
+                            memberColors?.[member.userId] ?? "#cbd5e1",
+                        }}
+                      >
+                        {member.displayName.charAt(0)}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto">
+                      <p className="text-xs text-slate-500 mb-2">
+                        カラーを選択
+                      </p>
+                      <div className="grid grid-cols-5 gap-2">
+                        {MEMBER_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                            style={{ backgroundColor: color }}
+                            onClick={() => {
+                              updateMemberColor({
+                                groupId: group._id,
+                                color,
+                              });
+                              setColorPickerOpen(false);
+                            }}
+                          >
+                            {memberColors?.[member.userId] === color && (
+                              <Check className="h-4 w-4 text-white" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                    style={{
+                      backgroundColor:
+                        memberColors?.[member.userId] ?? "#cbd5e1",
+                    }}
+                  >
+                    {member.displayName.charAt(0)}
+                  </div>
+                )}
+                <div className="flex-1">
+                  {member.isMe && displayNameEdit.isEditing ? (
+                    <InlineEditText
+                      value={displayNameEdit.value}
+                      onChange={displayNameEdit.setValue}
+                      maxLength={20}
+                      onSave={displayNameEdit.save}
+                      onCancel={displayNameEdit.cancelEditing}
+                      isSaving={displayNameEdit.isSaving}
+                    />
+                  ) : (
+                    <InlineEditDisplay
+                      editable={member.isMe}
+                      onEdit={displayNameEdit.startEditing}
+                    >
+                      <p className="text-sm font-medium text-slate-800">
+                        {member.displayName}
+                        {member.isMe && (
+                          <span className="ml-1 text-xs text-slate-500">
+                            (自分)
+                          </span>
+                        )}
+                      </p>
+                    </InlineEditDisplay>
+                  )}
+                  <p className="text-[11px] text-slate-500">
+                    {member.role === "owner" ? "オーナー" : "メンバー"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* カテゴリ */}
-      <section className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Tag className="h-5 w-5 text-slate-600" />
+      {/* 分類: カテゴリ + タグ */}
+      <section className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+              <Tag className="h-4 w-4 text-slate-600" />
             </div>
-            <div>
-              <p className="text-sm text-slate-500">カテゴリ</p>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-500">カテゴリ</p>
               <p className="font-medium text-slate-800">
                 {categories.length}個
               </p>
@@ -334,17 +363,13 @@ export function GroupSettings({
           </div>
           <CategoryManager groupId={group._id} categories={categories} />
         </div>
-      </section>
-
-      {/* タグ */}
-      <section className="bg-white border border-slate-200 rounded-lg p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <Tags className="h-5 w-5 text-slate-600" />
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+              <Tags className="h-4 w-4 text-slate-600" />
             </div>
-            <div>
-              <p className="text-sm text-slate-500">タグ</p>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-500">タグ</p>
               {subscription?.plan === "premium" ? (
                 <p className="font-medium text-slate-800">Premiumで利用可能</p>
               ) : (
@@ -361,33 +386,33 @@ export function GroupSettings({
         </div>
       </section>
 
-      {/* プラン管理 */}
-      <section className="bg-white border border-slate-200 rounded-lg">
+      {/* アカウント: プラン + お問い合わせ */}
+      <section className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100 overflow-hidden">
         <Link
           href="/pricing"
-          className="flex items-center gap-3 p-4 hover:bg-slate-50 transition-colors"
+          className="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50 transition-colors"
         >
-          <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-            <CreditCard className="h-5 w-5 text-slate-600" />
+          <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+            <CreditCard className="h-4 w-4 text-slate-600" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <p className="font-medium text-slate-800">プラン・お支払い</p>
-            <p className="text-sm text-slate-500">Premiumプランの確認・変更</p>
+            <p className="text-[11px] text-slate-500">
+              Premiumプランの確認・変更
+            </p>
           </div>
           <ChevronRight className="h-5 w-5 text-slate-400" />
         </Link>
-      </section>
-
-      {/* お問い合わせ */}
-      <section className="bg-white border border-slate-200 rounded-lg">
         <InquiryDialog>
-          <button className="flex items-center gap-3 p-4 w-full text-left hover:bg-slate-50 transition-colors">
-            <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center">
-              <MessageCircle className="h-5 w-5 text-slate-600" />
+          <button className="flex items-center gap-3 px-3 py-2.5 w-full text-left hover:bg-slate-50 transition-colors">
+            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+              <MessageCircle className="h-4 w-4 text-slate-600" />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <p className="font-medium text-slate-800">お問い合わせ</p>
-              <p className="text-sm text-slate-500">機能要望・不具合報告など</p>
+              <p className="text-[11px] text-slate-500">
+                機能要望・不具合報告など
+              </p>
             </div>
             <ChevronRight className="h-5 w-5 text-slate-400" />
           </button>
@@ -396,14 +421,14 @@ export function GroupSettings({
 
       {/* 管理者モード */}
       {me?.isAdmin && subscription && (
-        <section className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <section className="bg-amber-50 border border-amber-200 rounded-lg p-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-              <Shield className="h-5 w-5 text-amber-600" />
+            <div className="w-9 h-9 bg-amber-100 rounded-lg flex items-center justify-center shrink-0">
+              <Shield className="h-4 w-4 text-amber-600" />
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-amber-800">管理者モード</p>
-              <p className="text-xs text-amber-600 mt-0.5">
+              <p className="text-[11px] text-amber-600">
                 {subscription.plan === "premium" ? "Premium" : "Free"} プラン
               </p>
             </div>
@@ -418,7 +443,7 @@ export function GroupSettings({
           </div>
           <Link
             href="/admin"
-            className="mt-3 block text-center text-sm font-medium text-amber-700 hover:text-amber-900 border border-amber-300 rounded-lg py-2 hover:bg-amber-100 transition-colors"
+            className="mt-2 block text-center text-sm font-medium text-amber-700 hover:text-amber-900 border border-amber-300 rounded-lg py-1.5 hover:bg-amber-100 transition-colors"
           >
             管理者ダッシュボード →
           </Link>
@@ -426,8 +451,8 @@ export function GroupSettings({
       )}
 
       {/* 法的情報 */}
-      <section className="pt-4">
-        <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
+      <section className="pt-2">
+        <div className="flex flex-wrap justify-center gap-4 text-xs text-slate-500">
           <Link href="/privacy" className="hover:text-slate-700">
             プライバシーポリシー
           </Link>
