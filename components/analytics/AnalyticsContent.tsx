@@ -317,10 +317,7 @@ export function AnalyticsContent({
                 </div>
               </div>
             </div>
-            <ExportButton
-              groupId={gid}
-              initialPeriod={{ type: "all" }}
-            />
+            <ExportButton groupId={gid} initialPeriod={{ type: "all" }} />
           </div>
         )}
 
