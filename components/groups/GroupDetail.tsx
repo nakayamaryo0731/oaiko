@@ -22,6 +22,7 @@ import { SettlementPreview, PeriodNavigator } from "@/components/settlements";
 import { FAB } from "@/components/ui/FAB";
 import { Plus } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
+import { getErrorMessage } from "@/lib/errors";
 
 type Member = {
   userId: Id<"users">;
@@ -78,6 +79,7 @@ export function GroupDetail({ group, members, categories }: GroupDetailProps) {
   const [expenseToDelete, setExpenseToDelete] =
     useState<ExpenseToDelete | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [editingExpenseId, setEditingExpenseId] =
     useState<Id<"expenses"> | null>(null);
@@ -104,11 +106,12 @@ export function GroupDetail({ group, members, categories }: GroupDetailProps) {
     if (!expenseToDelete) return;
 
     setIsDeleting(true);
+    setDeleteError(null);
     try {
       await removeExpense({ expenseId: expenseToDelete._id });
       setExpenseToDelete(null);
-    } catch {
-      // エラーはConvexが自動的にUIに反映
+    } catch (e) {
+      setDeleteError(getErrorMessage(e, "支出の削除に失敗しました"));
     } finally {
       setIsDeleting(false);
     }
@@ -159,7 +162,12 @@ export function GroupDetail({ group, members, categories }: GroupDetailProps) {
       {expenseToDelete && (
         <DeleteExpenseDialog
           open={!!expenseToDelete}
-          onOpenChange={(open) => !open && setExpenseToDelete(null)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setExpenseToDelete(null);
+              setDeleteError(null);
+            }
+          }}
           expense={{
             categoryIcon: expenseToDelete.categoryIcon,
             categoryName: expenseToDelete.categoryName,
@@ -168,6 +176,7 @@ export function GroupDetail({ group, members, categories }: GroupDetailProps) {
           }}
           onConfirm={handleConfirmDelete}
           isDeleting={isDeleting}
+          error={deleteError}
         />
       )}
 

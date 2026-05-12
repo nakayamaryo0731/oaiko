@@ -7,6 +7,7 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { X, Download, ExternalLink, LogIn, Unplug, Check } from "lucide-react";
 import { openGoogleOAuthPopup } from "@/lib/googleSheets";
 import { useEscapeKey } from "@/hooks";
+import { getErrorMessage } from "@/lib/errors";
 
 type Period =
   | { type: "all" }
@@ -82,7 +83,7 @@ export function ExportModal({
       await connect({ code: result.code, state: result.state });
       setJustConnected(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "連携に失敗しました");
+      setError(getErrorMessage(e, "連携に失敗しました"));
     } finally {
       setConnecting(false);
     }
@@ -100,7 +101,7 @@ export function ExportModal({
         setError("不正なスプレッドシートURLが返されました");
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "エクスポートに失敗しました");
+      setError(getErrorMessage(e, "エクスポートに失敗しました"));
     } finally {
       setExporting(false);
     }

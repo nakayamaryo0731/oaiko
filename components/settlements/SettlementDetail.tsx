@@ -6,8 +6,10 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { PaymentCard } from "./PaymentCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { RotateCcw, CircleCheck, Clock } from "lucide-react";
 import { formatDateSlash, formatPeriodLabel } from "@/lib/formatters";
+import { getErrorMessage } from "@/lib/errors";
 
 type SettlementDetailProps = {
   settlementId: Id<"settlements">;
@@ -21,6 +23,7 @@ export function SettlementDetail({
   const settlement = useQuery(api.settlements.getById, { settlementId });
   const reopenMutation = useMutation(api.settlements.reopen);
   const [isReopening, setIsReopening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (settlement === undefined) {
     return <SettlementDetailSkeleton />;
@@ -38,10 +41,11 @@ export function SettlementDetail({
     }
 
     setIsReopening(true);
+    setError(null);
     try {
       await reopenMutation({ settlementId });
-    } catch {
-      // エラーはConvexが自動的にUIに反映
+    } catch (e) {
+      setError(getErrorMessage(e, "精算の再オープンに失敗しました"));
     } finally {
       setIsReopening(false);
     }
@@ -49,6 +53,7 @@ export function SettlementDetail({
 
   return (
     <div className="space-y-6">
+      <ErrorAlert message={error} />
       {/* ヘッダー情報 */}
       <div className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">

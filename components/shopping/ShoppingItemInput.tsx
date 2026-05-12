@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
+import { getErrorMessage } from "@/lib/errors";
 
 type ShoppingItemInputProps = {
   groupId: Id<"groups">;
@@ -34,7 +35,7 @@ export function ShoppingItemInput({ groupId }: ShoppingItemInputProps) {
       setName("");
       inputRef.current?.focus();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "追加に失敗しました");
+      setError(getErrorMessage(err, "追加に失敗しました"));
     } finally {
       setIsLoading(false);
     }
