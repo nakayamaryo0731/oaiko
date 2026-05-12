@@ -15,15 +15,10 @@ type Period =
 
 type ExportButtonProps = {
   groupId: Id<"groups">;
-  groupName: string;
   initialPeriod?: Period;
 };
 
-export function ExportButton({
-  groupId,
-  groupName,
-  initialPeriod,
-}: ExportButtonProps) {
+export function ExportButton({ groupId, initialPeriod }: ExportButtonProps) {
   const { isAuthenticated } = useConvexAuth();
   const subscription = useQuery(
     api.subscriptions.getMySubscription,
@@ -66,7 +61,6 @@ export function ExportButton({
       {open && (
         <ExportModal
           groupId={groupId}
-          groupName={groupName}
           isConnected={isConnected}
           initialPeriod={initialPeriod}
           onClose={() => setOpen(false)}

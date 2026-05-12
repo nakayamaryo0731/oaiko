@@ -122,7 +122,6 @@ export default function GroupDetailPage({ params }: PageProps) {
           {activeTab === "analytics" && (
             <AnalyticsContent
               groupId={groupId}
-              groupName={detail.group.name}
               closingDay={detail.group.closingDay}
             />
           )}

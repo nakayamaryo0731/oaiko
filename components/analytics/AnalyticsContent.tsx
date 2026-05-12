@@ -40,13 +40,11 @@ type ViewType = "month" | "year" | "all";
 
 type AnalyticsContentProps = {
   groupId: string;
-  groupName: string;
   closingDay?: number;
 };
 
 export function AnalyticsContent({
   groupId,
-  groupName,
   closingDay,
 }: AnalyticsContentProps) {
   const { isAuthenticated } = useConvexAuth();
@@ -271,7 +269,6 @@ export function AnalyticsContent({
             </div>
             <ExportButton
               groupId={gid}
-              groupName={groupName}
               initialPeriod={{
                 type: "settlement",
                 year: activeYear,
@@ -306,7 +303,6 @@ export function AnalyticsContent({
             </div>
             <ExportButton
               groupId={gid}
-              groupName={groupName}
               initialPeriod={{ type: "year", year: activeYearForYearly }}
             />
           </div>
@@ -323,7 +319,6 @@ export function AnalyticsContent({
             </div>
             <ExportButton
               groupId={gid}
-              groupName={groupName}
               initialPeriod={{ type: "all" }}
             />
           </div>

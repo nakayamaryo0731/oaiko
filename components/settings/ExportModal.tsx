@@ -14,7 +14,6 @@ type Period =
 
 type ExportModalProps = {
   groupId: Id<"groups">;
-  groupName: string;
   isConnected: boolean;
   initialPeriod?: Period;
   onClose: () => void;
@@ -41,7 +40,6 @@ function buildYears(initial?: Period): number[] {
 
 export function ExportModal({
   groupId,
-  groupName,
   isConnected,
   initialPeriod,
   onClose,
