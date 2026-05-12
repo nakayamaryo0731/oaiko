@@ -3,6 +3,7 @@ import { authMutation, authQuery } from "./lib/auth";
 import { requireGroupMember, requireGroupOwner } from "./lib/authorization";
 import { PRESET_CATEGORIES } from "./lib/presetCategories";
 import { getOrThrow } from "./lib/dataHelpers";
+import { createUserMap } from "./lib/enrichment";
 import {
   validateGroupInput,
   validateClosingDay,
@@ -136,23 +137,25 @@ export const getDetail = authQuery({
       .withIndex("by_group_and_user", (q) => q.eq("groupId", args.groupId))
       .collect();
 
-    const members = await Promise.all(
-      memberships.map(async (membership) => {
-        const user = await ctx.db.get(membership.userId);
-        if (!user) return null;
-
-        return {
-          _id: membership._id,
-          userId: user._id,
-          displayName: user.displayName,
-          avatarUrl: user.avatarUrl,
-          role: membership.role,
-          color: membership.color,
-          joinedAt: membership.joinedAt,
-          isMe: user._id === ctx.user._id,
-        };
-      }),
+    const userMap = await createUserMap(
+      ctx,
+      memberships.map((m) => m.userId),
     );
+
+    const members = memberships.map((membership) => {
+      const user = userMap.get(membership.userId);
+      if (!user) return null;
+      return {
+        _id: membership._id,
+        userId: user._id,
+        displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        role: membership.role,
+        color: membership.color,
+        joinedAt: membership.joinedAt,
+        isMe: user._id === ctx.user._id,
+      };
+    });
 
     const categories = await ctx.db
       .query("categories")
@@ -382,7 +385,7 @@ export const remove = authMutation({
     // 7. 招待を削除
     const invitations = await ctx.db
       .query("groupInvitations")
-      .filter((q) => q.eq(q.field("groupId"), args.groupId))
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
       .collect();
     await Promise.all(
       invitations.map((invitation) => ctx.db.delete(invitation._id)),
