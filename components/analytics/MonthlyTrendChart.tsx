@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -22,7 +23,15 @@ type MonthlyTrendChartProps = {
   data: TrendData[];
 };
 
-export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
+export const MonthlyTrendChart = memo(function MonthlyTrendChart({
+  data,
+}: MonthlyTrendChartProps) {
+  const yAxisMax = useMemo(() => {
+    if (data.length === 0) return 10000;
+    const max = Math.max(...data.map((d) => d.amount));
+    return max > 0 ? Math.ceil(max / 10000) * 10000 : 10000;
+  }, [data]);
+
   if (data.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
@@ -30,9 +39,6 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
       </div>
     );
   }
-
-  const maxAmount = Math.max(...data.map((d) => d.amount));
-  const yAxisMax = maxAmount > 0 ? Math.ceil(maxAmount / 10000) * 10000 : 10000;
 
   return (
     <div className="h-48">
@@ -76,4 +82,4 @@ export function MonthlyTrendChart({ data }: MonthlyTrendChartProps) {
       </ResponsiveContainer>
     </div>
   );
-}
+});
