@@ -68,6 +68,20 @@ http.route({
       });
     }
 
+    // 冪等性チェック: 同じ event.id が既に処理済みなら 200 で抜ける
+    // （Stripe は配信失敗時に同じ event.id でリトライしてくる）
+    const alreadyProcessed = await ctx.runQuery(
+      internal.subscriptions.isEventProcessed,
+      { eventId: event.id },
+    );
+    if (alreadyProcessed) {
+      logger.info("SUBSCRIPTION", "webhook_duplicate_event", {
+        eventId: event.id,
+        eventType: event.type,
+      });
+      return new Response("Already processed", { status: 200 });
+    }
+
     // イベント処理
     try {
       switch (event.type) {
@@ -102,11 +116,19 @@ http.route({
       }
     } catch (err) {
       logger.error("SUBSCRIPTION", "webhook_processing_failed", {
+        eventId: event.id,
         eventType: event.type,
         error: err instanceof Error ? err.message : String(err),
       });
+      // 失敗時はマークせず 500 を返す → Stripe にリトライしてもらう
       return new Response("Webhook processing failed", { status: 500 });
     }
+
+    // 処理成功後にのみ event.id をマーク。これより前で失敗した場合は再配信を受ける。
+    await ctx.runMutation(internal.subscriptions.markEventProcessed, {
+      eventId: event.id,
+      eventType: event.type,
+    });
 
     return new Response("OK", { status: 200 });
   }),
