@@ -6,7 +6,12 @@ type SkeletonProps = {
 
 export function Skeleton({ className }: SkeletonProps) {
   return (
-    <div className={cn("bg-slate-100 rounded-lg animate-pulse", className)} />
+    <div
+      role="status"
+      aria-busy="true"
+      aria-label="読み込み中"
+      className={cn("bg-slate-100 rounded-lg animate-pulse", className)}
+    />
   );
 }
 

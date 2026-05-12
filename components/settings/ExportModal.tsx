@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { X, Download, ExternalLink, LogIn, Unplug, Check } from "lucide-react";
 import { openGoogleOAuthPopup } from "@/lib/googleSheets";
+import { useEscapeKey } from "@/hooks";
 
 type Period =
   | { type: "all" }
@@ -59,6 +60,8 @@ export function ExportModal({
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [justConnected, setJustConnected] = useState(false);
+
+  useEscapeKey(onClose);
 
   const handleConnect = async () => {
     setError(null);
