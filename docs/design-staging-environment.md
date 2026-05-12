@@ -5,17 +5,20 @@ Pairbo に **staging 環境** を導入する。これまで「ローカル開�
 ## 採用するフロー
 
 ```
-feature/* ──merge──→ main ──auto deploy──→ staging
-                       ↓
-                   git tag v1.0.1
-                       ↓
-              gh actions UI で workflow_dispatch
-                       ↓
-                    production
+feature/* ──merge──→ main ──Netlify auto-build (staging)──→ staging site
+                      │     GitHub Actions: Convex Dev deploy
+                      │
+                      ▼ tag v1.0.1
+              gh actions UI で workflow_dispatch (ref=v1.0.1)
+                      │
+                      ├─ GitHub Actions: Convex prod deploy
+                      └─ GitHub Actions: production ブランチを tag commit に force-with-lease push
+                           └─ Netlify auto-build (production branch) → prod site
 ```
 
-- **main = staging**（push されたら自動 deploy）
-- **production は明示的な手動 dispatch のみ**（タグを ref に指定して GitHub Actions UI から実行）
+- **main = staging**（push されたら staging に auto-deploy）
+- **production ブランチ = prod に出てる最新コミット**（workflow が tag commit へ更新）
+- **production への push が prod auto-build を起動**（Netlify Build Hook 不要）
 - `staging` ブランチは作らない（main がその役割を兼ねる）
 - タグフォーマット: **`v<MAJOR>.<MINOR>.<PATCH>`**（例: `v1.0.1`）
 
@@ -61,10 +64,10 @@ graph LR
 
 `Deploy` workflow は `event_name` で target を決める:
 
-| トリガー            | target env | ref                       | Convex               | Netlify                                  |
-| ------------------- | ---------- | ------------------------- | -------------------- | ---------------------------------------- |
-| `push` to `main`    | staging    | `github.sha`（main HEAD） | workflow から deploy | **Netlify 側で auto-build**（hook 不要） |
-| `workflow_dispatch` | production | `inputs.ref`（タグ名）    | workflow から deploy | workflow から hook 起動                  |
+| トリガー            | target env | ref                       | Convex               | Netlify                                                |
+| ------------------- | ---------- | ------------------------- | -------------------- | ------------------------------------------------------ |
+| `push` to `main`    | staging    | `github.sha`（main HEAD） | workflow から deploy | **Netlify が main を auto-build**（staging site）      |
+| `workflow_dispatch` | production | `inputs.ref`（タグ名）    | workflow から deploy | **workflow が production branch を push → auto-build** |
 
 Convex は target に応じて secret を切り替える:
 
@@ -72,12 +75,17 @@ Convex は target に応じて secret を切り替える:
 CONVEX_DEPLOY_KEY: ${{ target == 'production' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY_STAGING }}
 ```
 
-Netlify は production の時だけ hook 起動:
+production deploy のときだけ production branch を tag commit に進める:
 
 ```yaml
 - if: env == 'production'
-  run: curl -fsS -X POST "${{ secrets.NETLIFY_DEPLOY_HOOK }}"
+  run: git push origin HEAD:refs/heads/production --force-with-lease
 ```
+
+Netlify 側で:
+
+- staging site: Production branch = `main`、auto-build ON
+- prod site (pairbo.app): Production branch = `production`、auto-build ON
 
 ## マニュアル セットアップ手順（あなたが実施）
 
@@ -130,14 +138,14 @@ pnpm exec convex env set CLERK_ISSUER_URL "<Clerk dev instance issuer>" --previe
 
 リポジトリの Settings → Secrets and variables → Actions で **追加だけ** 行う（既存はそのまま）:
 
-| Secret                               | 用途                                           |
-| ------------------------------------ | ---------------------------------------------- |
-| `CONVEX_DEPLOY_KEY` （既存）         | prod 用、変更なし                              |
-| `NETLIFY_DEPLOY_HOOK` （既存）       | prod 用、変更なし                              |
-| `CONVEX_DEPLOY_KEY_STAGING` （新規） | Convex Development deployment 用キー           |
-| ~~`NETLIFY_DEPLOY_HOOK_STAGING`~~    | 不要（staging は Netlify auto-build に任せる） |
+| Secret                               | 用途                                     |
+| ------------------------------------ | ---------------------------------------- |
+| `CONVEX_DEPLOY_KEY` （既存）         | prod 用、変更なし                        |
+| `CONVEX_DEPLOY_KEY_STAGING` （新規） | Convex Development deployment 用キー     |
+| ~~`NETLIFY_DEPLOY_HOOK`~~            | 不要（auto-build に統一、Hook 使わない） |
+| ~~`NETLIFY_DEPLOY_HOOK_STAGING`~~    | 不要（同上）                             |
 
-既存 secret を rotate しなくて済むので prod に影響なし。
+既存 secret を rotate しなくて済む。不要になった secret は残しても害なし。
 
 ### 5. ワークフロー PR をマージ
 
