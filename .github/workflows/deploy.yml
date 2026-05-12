@@ -41,12 +41,14 @@ jobs:
 
       - name: Deploy Convex
         env:
-          CONVEX_DEPLOY_KEY: ${{ steps.target.outputs.env == 'production' && secrets.CONVEX_DEPLOY_KEY_PROD || secrets.CONVEX_DEPLOY_KEY_STAGING }}
+          # prod は既存の CONVEX_DEPLOY_KEY を流用、staging だけ新規追加
+          CONVEX_DEPLOY_KEY: ${{ steps.target.outputs.env == 'production' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY_STAGING }}
         run: pnpm dlx convex deploy --yes
 
       - name: Trigger Netlify Deploy
         env:
-          HOOK: ${{ steps.target.outputs.env == 'production' && secrets.NETLIFY_DEPLOY_HOOK_PROD || secrets.NETLIFY_DEPLOY_HOOK_STAGING }}
+          # prod は既存の NETLIFY_DEPLOY_HOOK を流用、staging だけ新規追加
+          HOOK: ${{ steps.target.outputs.env == 'production' && secrets.NETLIFY_DEPLOY_HOOK || secrets.NETLIFY_DEPLOY_HOOK_STAGING }}
         run: curl -fsS -X POST "$HOOK"
 
       - name: Summary

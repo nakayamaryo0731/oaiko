@@ -69,7 +69,7 @@ graph LR
 Convex / Netlify secret を target に応じて切り替える:
 
 ```yaml
-CONVEX_DEPLOY_KEY: ${{ target == 'production' && secrets.CONVEX_DEPLOY_KEY_PROD || secrets.CONVEX_DEPLOY_KEY_STAGING }}
+CONVEX_DEPLOY_KEY: ${{ target == 'production' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY_STAGING }}
 ```
 
 ## マニュアル セットアップ手順（あなたが実施）
@@ -121,17 +121,16 @@ pnpm exec convex env set CLERK_ISSUER_URL "<Clerk dev instance issuer>" --previe
 
 ### 4. GitHub Secrets 整備
 
-リポジトリの Settings → Secrets and variables → Actions で:
+リポジトリの Settings → Secrets and variables → Actions で **追加だけ** 行う（既存はそのまま）:
 
-**既存のリネーム**:
+| Secret                                 | 用途                                              |
+| -------------------------------------- | ------------------------------------------------- |
+| `CONVEX_DEPLOY_KEY` （既存）           | prod 用、変更なし                                 |
+| `NETLIFY_DEPLOY_HOOK` （既存）         | prod 用、変更なし                                 |
+| `CONVEX_DEPLOY_KEY_STAGING` （新規）   | Step 1 で発行した Development deployment 用キー   |
+| `NETLIFY_DEPLOY_HOOK_STAGING` （新規） | Step 2 で作成した staging サイトの Build Hook URL |
 
-- `CONVEX_DEPLOY_KEY` → `CONVEX_DEPLOY_KEY_PROD`
-- `NETLIFY_DEPLOY_HOOK` → `NETLIFY_DEPLOY_HOOK_PROD`
-
-**新規追加**:
-
-- `CONVEX_DEPLOY_KEY_STAGING`: Step 1 で発行した Preview Deploy Key
-- `NETLIFY_DEPLOY_HOOK_STAGING`: Step 2 で作成した staging サイトの Build Hook URL
+既存 secret を rotate しなくて済むので prod に影響なし。
 
 ### 5. ワークフロー PR をマージ
 
