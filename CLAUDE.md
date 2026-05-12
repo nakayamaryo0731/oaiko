@@ -138,23 +138,21 @@ pnpm dev
 
 #### production へのデプロイ（手動）
 
-staging で問題ないことを確認した後:
-
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
-
-その後 GitHub Actions UI:
+staging で問題ないことを確認した後、**GitHub Actions UI から手動 dispatch**:
 
 1. **Actions** → **Deploy** → **Run workflow**
-2. **ref** に `v1.0.1` を指定
+2. **version** に `v1.0.1` 形式で入力（`vX.Y.Z`）
 3. **Run workflow** クリック
 
-Workflow が:
+Workflow が自動で:
 
+- 入力 version の形式チェック (`vX.Y.Z`)
+- main HEAD に tag を作成して push（既存なら skip）
+- `lib/version.ts` を入力 version で上書きして release commit
 - Convex Production deployment へ deploy
-- `production` ブランチを tag commit へ force-with-lease push → Netlify pairbo.app が auto-build
+- `production` ブランチに force-with-lease push → Netlify pairbo.app が auto-build
+
+UI 上のバージョン表示はグループ設定タブ最下部。staging では常に `v0.0.0`、production では release で焼き込まれた tag が出る。
 
 #### 確認コマンド
 
@@ -170,9 +168,8 @@ git log -1 origin/production
 ### CI/CD構成
 
 - **CI** (PR時): lint, format, typecheck, build, test を並列実行
-- **Deploy** (main push 時 / workflow_dispatch 時):
-  - main push → staging（Convex Dev + Netlify staging）
-  - dispatch → production（Convex Prod + Netlify production branch push）
+- **Deploy Staging** (`.github/workflows/deploy-staging.yml`): main push で起動、Convex Dev に deploy（Netlify staging は別途 auto-build）
+- **Deploy Production** (`.github/workflows/deploy-production.yml`): workflow_dispatch（version 入力）で起動、tag 作成 + version stamp + Convex Prod deploy + production branch push
 
 詳細は `docs/design-staging-environment.md`。
 

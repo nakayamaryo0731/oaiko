@@ -32,6 +32,7 @@ import {
 import { InquiryDialog } from "@/components/inquiries/InquiryDialog";
 import { useInlineEdit } from "@/hooks/useInlineEdit";
 import { InlineEditText, InlineEditDisplay } from "@/components/ui/InlineEdit";
+import { APP_VERSION } from "@/lib/version";
 
 type Category = {
   _id: Id<"categories">;
@@ -463,6 +464,9 @@ export function GroupSettings({
             特定商取引法に基づく表記
           </Link>
         </div>
+        <p className="mt-2 text-center text-[11px] text-slate-400">
+          {APP_VERSION}
+        </p>
       </section>
     </div>
   );
