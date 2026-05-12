@@ -40,8 +40,10 @@ yarn-error.log*
 # netlify
 .netlify
 
-# claude code (commandsは共有、settingsは除外)
+# claude code (commandsは共有、settings・ランタイム生成物は除外)
 .claude/settings.*
+.claude/scheduled_tasks.lock
+.claude/*.lock
 
 # serena
 .serena/

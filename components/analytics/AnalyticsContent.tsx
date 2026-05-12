@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 import { ChartSkeleton } from "@/components/analytics/ChartSkeleton";
 import { formatPeriod } from "@/lib/formatters";
 import { trackEvent } from "@/lib/analytics";
+import { ExportButton } from "@/components/settings";
 
 const CategoryPieChart = dynamic(
   () =>
@@ -241,63 +242,82 @@ export function AnalyticsContent({
 
         {/* 期間ナビゲーター */}
         {viewType === "month" && (
-          <div className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
-            <button
-              onClick={goToPreviousMonth}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-              aria-label="前の月へ"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <div className="text-center">
-              <div className="font-medium text-slate-800">
-                {activeYear}年{activeMonth}月分
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center justify-between bg-slate-50 rounded-lg p-3">
+              <button
+                onClick={goToPreviousMonth}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                aria-label="前の月へ"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <div className="text-center">
+                <div className="font-medium text-slate-800">
+                  {activeYear}年{activeMonth}月分
+                </div>
+                <div className="text-sm text-slate-500">
+                  {period && formatPeriod(period.startDate, period.endDate)}
+                </div>
               </div>
-              <div className="text-sm text-slate-500">
-                {period && formatPeriod(period.startDate, period.endDate)}
-              </div>
+              <button
+                onClick={goToNextMonth}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                aria-label="次の月へ"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
             </div>
-            <button
-              onClick={goToNextMonth}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-              aria-label="次の月へ"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
+            <ExportButton
+              groupId={gid}
+              initialPeriod={{
+                type: "settlement",
+                year: activeYear,
+                month: activeMonth,
+              }}
+            />
           </div>
         )}
         {viewType === "year" && (
-          <div className="flex items-center justify-between bg-slate-50 rounded-lg p-3">
-            <button
-              onClick={goToPreviousYearForYearly}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-              aria-label="前の年へ"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <div className="text-center">
-              <div className="font-medium text-slate-800">
-                {activeYearForYearly}年
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center justify-between bg-slate-50 rounded-lg p-3">
+              <button
+                onClick={goToPreviousYearForYearly}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                aria-label="前の年へ"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <div className="text-center">
+                <div className="font-medium text-slate-800">
+                  {activeYearForYearly}年
+                </div>
+                <div className="text-sm text-slate-500">1月〜12月</div>
               </div>
-              <div className="text-sm text-slate-500">1月〜12月</div>
+              <button
+                onClick={goToNextYearForYearly}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors"
+                aria-label="次の年へ"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
             </div>
-            <button
-              onClick={goToNextYearForYearly}
-              className="p-2 hover:bg-slate-200 rounded-full transition-colors"
-              aria-label="次の年へ"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
+            <ExportButton
+              groupId={gid}
+              initialPeriod={{ type: "year", year: activeYearForYearly }}
+            />
           </div>
         )}
         {viewType === "all" && (
-          <div className="flex items-center justify-center bg-slate-50 rounded-lg p-3">
-            <div className="text-center">
-              <div className="font-medium text-slate-800">全期間</div>
-              <div className="text-sm text-slate-500">
-                {allTimeCategory?.periodLabel ?? "データなし"}
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center justify-center bg-slate-50 rounded-lg p-3">
+              <div className="text-center">
+                <div className="font-medium text-slate-800">全期間</div>
+                <div className="text-sm text-slate-500">
+                  {allTimeCategory?.periodLabel ?? "データなし"}
+                </div>
               </div>
             </div>
+            <ExportButton groupId={gid} initialPeriod={{ type: "all" }} />
           </div>
         )}
 

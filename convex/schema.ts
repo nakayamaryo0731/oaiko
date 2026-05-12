@@ -211,4 +211,30 @@ export default defineSchema({
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
   // 用途: ユーザーからの問い合わせ管理
+
+  // ========================================
+  // Google Sheets 連携トークン
+  // ========================================
+  googleSheetsTokens: defineTable({
+    userId: v.id("users"),
+    accessToken: v.string(),
+    refreshToken: v.string(),
+    expiresAt: v.number(),
+    scope: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+  // 用途: Google Sheets エクスポート用のOAuthトークン保存
+
+  // ========================================
+  // Google OAuth state（CSRF + アカウント取り違え防止）
+  // ========================================
+  googleOAuthStates: defineTable({
+    state: v.string(),
+    userId: v.id("users"),
+    expiresAt: v.number(),
+  })
+    .index("by_state", ["state"])
+    .index("by_user", ["userId"]),
+  // 用途: OAuth callback の state を userId と紐付け、connect で検証
 });
