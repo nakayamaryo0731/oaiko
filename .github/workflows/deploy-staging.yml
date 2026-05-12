@@ -1,0 +1,28 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to staging
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/setup
+
+      - name: Deploy Convex (staging)
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY_STAGING }}
+        run: pnpm dlx convex deploy --yes
+
+      # Netlify staging site は main 押下を検知して自動ビルドする
+      # (Netlify pairbostaging の Production branch = main)
+
+      - name: Summary
+        run: echo "🚀 Deployed main@${{ github.sha }} to staging"

@@ -168,9 +168,8 @@ git log -1 origin/production
 ### CI/CD構成
 
 - **CI** (PR時): lint, format, typecheck, build, test を並列実行
-- **Deploy** (main push 時 / workflow_dispatch 時):
-  - main push → staging（Convex Dev + Netlify staging）
-  - dispatch → production（Convex Prod + Netlify production branch push）
+- **Deploy Staging** (`.github/workflows/deploy-staging.yml`): main push で起動、Convex Dev に deploy（Netlify staging は別途 auto-build）
+- **Deploy Production** (`.github/workflows/deploy-production.yml`): workflow_dispatch（version 入力）で起動、tag 作成 + version stamp + Convex Prod deploy + production branch push
 
 詳細は `docs/design-staging-environment.md`。
 
