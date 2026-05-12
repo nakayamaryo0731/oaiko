@@ -63,6 +63,7 @@ export const getMe = authQuery({
       defaultGroupId: ctx.user.defaultGroupId,
       isAdmin: ctx.user.isAdmin === true,
       lastSeenReleaseAt: ctx.user.lastSeenReleaseAt,
+      pwaOnboardingCompletedAt: ctx.user.pwaOnboardingCompletedAt,
     };
   },
 });
@@ -77,6 +78,24 @@ export const markReleasesRead = authMutation({
     await ctx.db.patch(ctx.user._id, {
       lastSeenReleaseAt: now,
       updatedAt: now,
+    });
+  },
+});
+
+/**
+ * PWA オンボーディングツアー完了
+ */
+export const completePwaOnboarding = authMutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    await ctx.db.patch(ctx.user._id, {
+      pwaOnboardingCompletedAt: now,
+      updatedAt: now,
+    });
+
+    ctx.logger.info("USER", "pwa_onboarding_completed", {
+      userId: ctx.user._id,
     });
   },
 });

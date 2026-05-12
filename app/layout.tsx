@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { PwaInstallPromptProvider } from "@/components/pwa/PwaInstallPromptProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -185,7 +186,9 @@ export default function RootLayout({
       >
         <GoogleAnalytics />
         <ConvexClientProvider>
-          <div className="pb-14">{children}</div>
+          <PwaInstallPromptProvider>
+            <div className="pb-14">{children}</div>
+          </PwaInstallPromptProvider>
         </ConvexClientProvider>
       </body>
     </html>

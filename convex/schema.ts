@@ -21,6 +21,7 @@ export default defineSchema({
     isAdmin: v.optional(v.boolean()),
     planOverride: v.optional(v.union(v.literal("free"), v.literal("premium"))),
     lastSeenReleaseAt: v.optional(v.number()),
+    pwaOnboardingCompletedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerk_id", ["clerkId"]),
