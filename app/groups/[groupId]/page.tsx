@@ -25,6 +25,7 @@ import { TabNavigation } from "@/components/ui/TabNavigation";
 import { ClipboardList, BarChart3, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { NotificationBell } from "@/components/notifications";
+import { PwaOnboardingTour } from "@/components/pwa/PwaOnboardingTour";
 import { buildMemberColorMap } from "@/lib/userColors";
 
 type PageProps = {
@@ -142,6 +143,7 @@ export default function GroupDetailPage({ params }: PageProps) {
         activeTab={activeTab}
         onChange={(id) => setActiveTab(id as TabId)}
       />
+      <PwaOnboardingTour />
     </div>
   );
 }
