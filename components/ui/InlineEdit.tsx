@@ -73,10 +73,14 @@ export function InlineEditDisplay({
       <button
         type="button"
         onClick={onEdit}
+        aria-label="編集"
         className="flex items-center gap-1.5 cursor-pointer hover:opacity-70 transition-opacity"
       >
         {children}
-        <Pencil className="h-3 w-3 text-slate-400 shrink-0" />
+        <Pencil
+          aria-hidden="true"
+          className="h-3 w-3 text-slate-400 shrink-0"
+        />
       </button>
     );
   }

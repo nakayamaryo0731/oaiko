@@ -9,6 +9,7 @@ import { DeleteExpenseDialog } from "./DeleteExpenseDialog";
 import { X, Trash2 } from "lucide-react";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
 import { buildMemberColorMap } from "@/lib/userColors";
+import { useEscapeKey } from "@/hooks";
 
 type ExpenseEditModalProps = {
   expenseId: Id<"expenses">;
@@ -38,6 +39,9 @@ export function ExpenseEditModal({
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // 内側の削除ダイアログ表示中は Esc を内側に任せる
+  useEscapeKey(onClose, !showDeleteDialog);
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);

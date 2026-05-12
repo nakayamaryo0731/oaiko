@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ExpenseForm } from "./ExpenseForm";
 import { X } from "lucide-react";
+import { useEscapeKey } from "@/hooks";
 
 type Category = {
   _id: Id<"categories">;
@@ -51,6 +52,8 @@ export function ExpenseCreateModal({
 
   const isPremium = subscription?.plan === "premium";
   const isWaitingForSource = !!fromExpenseId && sourceExpense === undefined;
+
+  useEscapeKey(onClose);
 
   const initialData =
     sourceExpense && sourceExpense.category && sourceExpense.payer
