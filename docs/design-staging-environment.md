@@ -61,15 +61,22 @@ graph LR
 
 `Deploy` workflow は `event_name` で target を決める:
 
-| トリガー            | target env | ref                       |
-| ------------------- | ---------- | ------------------------- |
-| `push` to `main`    | staging    | `github.sha`（main HEAD） |
-| `workflow_dispatch` | production | `inputs.ref`（タグ名）    |
+| トリガー            | target env | ref                       | Convex               | Netlify                                  |
+| ------------------- | ---------- | ------------------------- | -------------------- | ---------------------------------------- |
+| `push` to `main`    | staging    | `github.sha`（main HEAD） | workflow から deploy | **Netlify 側で auto-build**（hook 不要） |
+| `workflow_dispatch` | production | `inputs.ref`（タグ名）    | workflow から deploy | workflow から hook 起動                  |
 
-Convex / Netlify secret を target に応じて切り替える:
+Convex は target に応じて secret を切り替える:
 
 ```yaml
 CONVEX_DEPLOY_KEY: ${{ target == 'production' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY_STAGING }}
+```
+
+Netlify は production の時だけ hook 起動:
+
+```yaml
+- if: env == 'production'
+  run: curl -fsS -X POST "${{ secrets.NETLIFY_DEPLOY_HOOK }}"
 ```
 
 ## マニュアル セットアップ手順（あなたが実施）
@@ -123,12 +130,12 @@ pnpm exec convex env set CLERK_ISSUER_URL "<Clerk dev instance issuer>" --previe
 
 リポジトリの Settings → Secrets and variables → Actions で **追加だけ** 行う（既存はそのまま）:
 
-| Secret                                 | 用途                                              |
-| -------------------------------------- | ------------------------------------------------- |
-| `CONVEX_DEPLOY_KEY` （既存）           | prod 用、変更なし                                 |
-| `NETLIFY_DEPLOY_HOOK` （既存）         | prod 用、変更なし                                 |
-| `CONVEX_DEPLOY_KEY_STAGING` （新規）   | Step 1 で発行した Development deployment 用キー   |
-| `NETLIFY_DEPLOY_HOOK_STAGING` （新規） | Step 2 で作成した staging サイトの Build Hook URL |
+| Secret                               | 用途                                           |
+| ------------------------------------ | ---------------------------------------------- |
+| `CONVEX_DEPLOY_KEY` （既存）         | prod 用、変更なし                              |
+| `NETLIFY_DEPLOY_HOOK` （既存）       | prod 用、変更なし                              |
+| `CONVEX_DEPLOY_KEY_STAGING` （新規） | Convex Development deployment 用キー           |
+| ~~`NETLIFY_DEPLOY_HOOK_STAGING`~~    | 不要（staging は Netlify auto-build に任せる） |
 
 既存 secret を rotate しなくて済むので prod に影響なし。
 
