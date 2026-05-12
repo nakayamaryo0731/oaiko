@@ -165,6 +165,47 @@ describe("subscriptions mutations", () => {
     });
   });
 
+  describe("Stripe webhook idempotency", () => {
+    test("isEventProcessed: 未記録なら false", async () => {
+      const t = convexTest(schema, modules);
+      const result = await t.query(internal.subscriptions.isEventProcessed, {
+        eventId: "evt_test_unseen",
+      });
+      expect(result).toBe(false);
+    });
+
+    test("markEventProcessed → isEventProcessed: true を返す", async () => {
+      const t = convexTest(schema, modules);
+      await t.mutation(internal.subscriptions.markEventProcessed, {
+        eventId: "evt_test_1",
+        eventType: "checkout.session.completed",
+      });
+      const result = await t.query(internal.subscriptions.isEventProcessed, {
+        eventId: "evt_test_1",
+      });
+      expect(result).toBe(true);
+    });
+
+    test("markEventProcessed: 同じ event.id を二度マークしても重複しない", async () => {
+      const t = convexTest(schema, modules);
+      await t.mutation(internal.subscriptions.markEventProcessed, {
+        eventId: "evt_test_dup",
+        eventType: "customer.subscription.updated",
+      });
+      await t.mutation(internal.subscriptions.markEventProcessed, {
+        eventId: "evt_test_dup",
+        eventType: "customer.subscription.updated",
+      });
+      const records = await t.run(async (ctx) => {
+        return await ctx.db
+          .query("processedStripeEvents")
+          .withIndex("by_event_id", (q) => q.eq("eventId", "evt_test_dup"))
+          .collect();
+      });
+      expect(records).toHaveLength(1);
+    });
+  });
+
   describe("deleteSubscription", () => {
     test("削除: plan → free, status → canceled に変更（論理削除）", async () => {
       const t = convexTest(schema, modules);

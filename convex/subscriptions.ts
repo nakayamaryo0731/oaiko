@@ -248,6 +248,40 @@ export const getSubscriptionByStripeCustomerId = internalQuery({
 // 内部ミューテーション（Webhook用）
 // ========================================
 
+/**
+ * Stripe webhook の冪等性チェック。event.id が既に処理済みなら true を返す。
+ * 戻り値が true の場合、呼び出し元は処理をスキップして 200 を返す。
+ */
+export const isEventProcessed = internalQuery({
+  args: { eventId: v.string() },
+  handler: async (ctx, args): Promise<boolean> => {
+    const record = await ctx.db
+      .query("processedStripeEvents")
+      .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
+      .unique();
+    return record !== null;
+  },
+});
+
+/**
+ * webhook 処理成功後に呼ぶ。同 event.id を二度マークしようとした場合は何もしない。
+ */
+export const markEventProcessed = internalMutation({
+  args: { eventId: v.string(), eventType: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("processedStripeEvents")
+      .withIndex("by_event_id", (q) => q.eq("eventId", args.eventId))
+      .unique();
+    if (existing) return;
+    await ctx.db.insert("processedStripeEvents", {
+      eventId: args.eventId,
+      eventType: args.eventType,
+      processedAt: Date.now(),
+    });
+  },
+});
+
 export const upsertSubscription = internalMutation({
   args: {
     userId: v.id("users"),

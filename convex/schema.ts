@@ -213,6 +213,16 @@ export default defineSchema({
   // 用途: ユーザーからの問い合わせ管理
 
   // ========================================
+  // Stripe Webhook 冪等性
+  // ========================================
+  processedStripeEvents: defineTable({
+    eventId: v.string(),
+    eventType: v.string(),
+    processedAt: v.number(),
+  }).index("by_event_id", ["eventId"]),
+  // 用途: Stripe からの重複 webhook を識別して二重処理を防ぐ
+
+  // ========================================
   // Google Sheets 連携トークン
   // ========================================
   googleSheetsTokens: defineTable({
