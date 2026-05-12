@@ -140,14 +140,14 @@ pnpm dev
 
 staging で問題ないことを確認した後、**GitHub Actions UI から手動 dispatch**:
 
-1. **Actions** → **Deploy** → **Run workflow**
+1. **Actions** → **Deploy Production** → **Run workflow**
 2. **version** に `v1.0.1` 形式で入力（`vX.Y.Z`）
 3. **Run workflow** クリック
 
 Workflow が自動で:
 
 - 入力 version の形式チェック (`vX.Y.Z`)
-- main HEAD に tag を作成して push（既存なら skip）
+- main HEAD に tag を作成して push（**既存 version なら fail**、誤再実行防止）
 - `lib/version.ts` を入力 version で上書きして release commit
 - Convex Production deployment へ deploy
 - `production` ブランチに force-with-lease push → Netlify pairbo.app が auto-build
