@@ -140,7 +140,7 @@ export function GroupSettings({
   });
 
   return (
-    <div className="space-y-3">
+    <div className="p-4 space-y-3">
       {/* グループ設定: 名前 + 締め日 + デフォルト */}
       <section className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
         <SettingRow
