@@ -8,39 +8,44 @@ Pairbo に **staging 環境** を導入する。これまで「ローカル開�
 feature/* ──merge──→ main ──Netlify auto-build (staging)──→ staging site
                       │     GitHub Actions: Convex Dev deploy
                       │
-                      ▼ tag v1.0.1
-              gh actions UI で workflow_dispatch (ref=v1.0.1)
+                      ▼
+              gh actions UI で Deploy Production を dispatch
+              （input: version = vX.Y.Z）
                       │
-                      ├─ GitHub Actions: Convex prod deploy
-                      └─ GitHub Actions: production ブランチを tag commit に force-with-lease push
+                      ├─ tag を作成して push（既存なら fail）
+                      ├─ lib/version.ts を version で書き換え → release commit
+                      ├─ Convex Prod に deploy
+                      └─ production branch に force-with-lease push
                            └─ Netlify auto-build (production branch) → prod site
 ```
 
 - **main = staging**（push されたら staging に auto-deploy）
-- **production ブランチ = prod に出てる最新コミット**（workflow が tag commit へ更新）
+- **production ブランチ = prod に出てる最新コミット**（workflow が release commit を push する先）
 - **production への push が prod auto-build を起動**（Netlify Build Hook 不要）
 - `staging` ブランチは作らない（main がその役割を兼ねる）
-- タグフォーマット: **`v<MAJOR>.<MINOR>.<PATCH>`**（例: `v1.0.1`）
+- **タグフォーマット: `v<MAJOR>.<MINOR>.<PATCH>`**（例: `v1.0.1`）
+- **同一 version の重複 dispatch は fail**（誤再実行を防止）
 
 # Purpose
 
 - **本番前に外部連携を試せる場を作る**: レシート OCR (OpenAI API) / Stripe / Sheets 等は本番に直接出すと事故リスクが高い
-- **リリースを明示的なアクションに**: 「main に merge したら本番」だとうっかりリリースが起きやすい。タグ + dispatch で承認の意思を明確化
-- **タグでリリース履歴を残す**: ロールバック時に「どのコミットが何月何日に本番だったか」を tag で追跡可
+- **リリースを明示的なアクションに**: 「main に merge したら本番」だとうっかりリリースが起きやすい。dispatch + version 入力で承認の意思を明確化
+- **タグでリリース履歴を残す**: 「どのコミットが何月何日に本番だったか」を tag で追跡可
 
 # What to Do
 
 ## 機能要件
 
-- `main` への push → staging Convex / Netlify へ自動デプロイ
-- `workflow_dispatch`（タグ ref を入力）→ production Convex / Netlify へデプロイ
+- `main` への push → staging Convex + Netlify staging に自動デプロイ
+- `workflow_dispatch`（version 入力）→ tag 作成 + production branch 更新を経て pairbo.app にデプロイ
+- 同一 version の重複 dispatch は fail（既に同名 tag が存在する場合）
 - 失敗時は通常通り GitHub Actions の通知 / ログで把握
 
 ## 非機能要件
 
-- **コスト**: 追加月額コストを最小化（Convex Preview Deployment は Starter プラン無料枠を活用）
-- **Stripe Webhook**: staging では受信しない（本番のみ）。staging で課金状態の自動更新は走らない（手動で `planOverride` を使う）
-- **カスタムドメイン**: staging には不要、Netlify 標準 URL（例: `pairbo-staging.netlify.app`）で OK
+- **コスト**: 追加月額コストなし（Convex Development deployment を staging として流用、Netlify staging サイトは無料枠内）
+- **Stripe Webhook**: staging では受信しない（本番のみ）。staging で課金状態の自動更新は走らない（必要時は `planOverride` を手動セット）
+- **カスタムドメイン**: staging には不要、Netlify 標準 URL (`https://pairbostaging.netlify.app`)
 
 # How to Do It
 
@@ -48,187 +53,180 @@ feature/* ──merge──→ main ──Netlify auto-build (staging)──→ 
 
 ```mermaid
 graph LR
-  PR[feature PR] -->|merge| Main[main branch]
-  Main -->|push| Workflow1[Deploy workflow<br/>auto trigger]
-  Workflow1 --> ConvexS[Convex Preview Deployment<br/>'staging']
-  Workflow1 --> NetlifyS[Netlify staging site]
+  PR[feature PR] -->|merge to main| Main[main branch]
+  Main -->|push| WS[Deploy Staging workflow]
+  WS --> ConvexS[Convex Dev<br/>proper-guanaco-454]
+  Main -.->|auto-build| NetlifyS[Netlify staging<br/>pairbostaging.netlify.app]
 
-  Main -->|tag v1.0.1| Tag[Git tag]
-  Tag -.->|manual| Dispatch[workflow_dispatch with ref]
-  Dispatch --> Workflow2[Deploy workflow<br/>manual trigger]
-  Workflow2 --> ConvexP[Convex Production<br/>hip-moose-165]
-  Workflow2 --> NetlifyP[Netlify prod site<br/>pairbo.app]
+  Main -.->|dispatch with version| WP[Deploy Production workflow]
+  WP --> Tag[Create tag vX.Y.Z]
+  WP --> Stamp[Stamp lib/version.ts]
+  WP --> ConvexP[Convex Prod<br/>hip-moose-165]
+  WP --> ProdBranch[Push production branch]
+  ProdBranch -.->|auto-build| NetlifyP[Netlify prod<br/>pairbo.app]
 ```
 
-## デプロイ判定ロジック
+## 2つのワークフロー
 
-`Deploy` workflow は `event_name` で target を決める:
+| ワークフロー                              | trigger                                | 行うこと                                                                                                                        |
+| ----------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/workflows/deploy-staging.yml`    | `push: branches: [main]`               | Convex Development deployment へ deploy（Netlify staging は別経路で main を auto-build）                                        |
+| `.github/workflows/deploy-production.yml` | `workflow_dispatch` (input: `version`) | tag 作成 → `lib/version.ts` 書き換え → release commit → Convex Production deploy → `production` branch に force-with-lease push |
 
-| トリガー            | target env | ref                       | Convex               | Netlify                                                |
-| ------------------- | ---------- | ------------------------- | -------------------- | ------------------------------------------------------ |
-| `push` to `main`    | staging    | `github.sha`（main HEAD） | workflow から deploy | **Netlify が main を auto-build**（staging site）      |
-| `workflow_dispatch` | production | `inputs.ref`（タグ名）    | workflow から deploy | **workflow が production branch を push → auto-build** |
+`deploy-production.yml` は `contents: write` permission が必要（tag push と production branch push のため）。`deploy-staging.yml` は読み取りのみ。
 
-Convex は target に応じて secret を切り替える:
+## Netlify サイト構成
 
-```yaml
-CONVEX_DEPLOY_KEY: ${{ target == 'production' && secrets.CONVEX_DEPLOY_KEY || secrets.CONVEX_DEPLOY_KEY_STAGING }}
-```
+| サイト      | URL                                 | Production branch | Auto-build |
+| ----------- | ----------------------------------- | ----------------- | ---------- |
+| **prod**    | `https://pairbo.app`                | `production`      | ON         |
+| **staging** | `https://pairbostaging.netlify.app` | `main`            | ON         |
 
-production deploy のときだけ production branch を tag commit に進める:
+prod の Production branch が `main` ではなく `production` になっているので、main push では prod は auto-build されない（staging だけ）。release dispatch 時に workflow が `production` branch を更新することで prod auto-build がトリガーされる。
 
-```yaml
-- if: env == 'production'
-  run: git push origin HEAD:refs/heads/production --force-with-lease
-```
+## バージョン表示
 
-Netlify 側で:
+`lib/version.ts` が export する `APP_VERSION` 定数を設定タブ最下部に表示。
 
-- staging site: Production branch = `main`、auto-build ON
-- prod site (pairbo.app): Production branch = `production`、auto-build ON
+- main HEAD では `"v0.0.0"`（staging で常に表示される値）
+- `deploy-production.yml` がデプロイ時に `"vX.Y.Z"` で書き換え → release commit → production branch → Netlify ビルドで bundle に焼き込まれる
 
-## マニュアル セットアップ手順（あなたが実施）
+# セットアップ完了済み（参考）
 
-### 1. Convex Preview Deploy Key 発行
+以下は導入時に行った手作業の記録。再構築時のリファレンスとして残す。
 
-- [Convex Dashboard](https://dashboard.convex.dev/) → Pairbo プロジェクト → Settings → Deploy Keys
-- `Generate Preview Deploy Key` を作成
-- 名前は `staging` 等わかりやすく
-- 生成されたキーを控える（後で GitHub secret に入れる）
+## 1. Convex Development deployment 用 Deploy Key
 
-→ 既存の production deploy key (`hip-moose-165` 用) は別物として残す
+- Convex Dashboard → Pairbo project の Development deployment → Settings → Deploy Keys
+- 「+ Create Deploy Key」で新規発行（名前は `pairbo-staging` 等）
+- 値は **GitHub Secret `CONVEX_DEPLOY_KEY_STAGING`** に格納
 
-### 2. Netlify staging サイト作成
+Development deployment は既存のローカル開発で使っていたものをそのまま staging として流用。env vars (`CLERK_ISSUER_URL`, `GOOGLE_OAUTH_*`, `STRIPE_*` 等) は既に設定済みだったので追加作業なし。
 
-- Netlify Dashboard → "Add new site" → "Import an existing project"
-- 既存の Pairbo リポジトリを選択
-- **Production branch を `main` 以外** に設定（例: `__never_used__`）— main push で自動ビルドさせず、後述の Deploy Hook 経由でのみビルドさせるため
-- Build command: `pnpm build`
-- Publish directory: `.next`
-- Plugin: `@netlify/plugin-nextjs`（既存と同じ）
-- Site settings → Build & deploy → Deploy notifications → Build hook を作成、URL を控える
+## 2. Netlify staging サイト作成
 
-#### Netlify staging 用環境変数
+- Netlify Dashboard → Add new project → Import (GitHub `nakayamaryo0731/pairbo`)
+- Build command: `pnpm build` / Publish directory: `.next`
+- Production branch: **`main`** にしてそのまま auto-build を活用
+- Site name: `pairbostaging`
 
-Site settings → Environment variables で以下を設定:
+Environment variables（site settings から設定）:
 
-| 変数                                                            | 値                                           |
-| --------------------------------------------------------------- | -------------------------------------------- |
-| `NEXT_PUBLIC_CONVEX_URL`                                        | staging Convex deployment の URL             |
-| `NEXT_PUBLIC_CONVEX_SITE_URL`                                   | staging Convex の HTTP actions URL           |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`                             | Clerk dev instance の `pk_test_...`          |
-| `CLERK_SECRET_KEY`                                              | Clerk dev instance の `sk_test_...`          |
-| `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `_SIGN_UP_URL`, `_AFTER_*_URL` | prod と同じ                                  |
-| Stripe 系                                                       | 設定不要（staging では課金フロー検証しない） |
-| Sentry 系                                                       | 不要（staging からはエラー送らない方針）     |
+| Key                                   | Value                                                    |
+| ------------------------------------- | -------------------------------------------------------- |
+| `NEXT_PUBLIC_CONVEX_URL`              | `https://proper-guanaco-454.convex.cloud`                |
+| `NEXT_PUBLIC_CONVEX_SITE_URL`         | `https://proper-guanaco-454.convex.site`                 |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`   | Clerk dev instance の `pk_test_...`                      |
+| `CLERK_SECRET_KEY`                    | Clerk dev instance の `sk_test_...`（Secret として登録） |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL`       | `/sign-in`                                               |
+| `NEXT_PUBLIC_CLERK_SIGN_UP_URL`       | `/sign-up`                                               |
+| `NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL` | `/`                                                      |
+| `NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL` | `/`                                                      |
 
-### 3. Convex staging 環境変数
+Stripe / Sentry 系は未設定（必要になったら追加）。
 
-`pnpm exec convex env` を `staging` deployment 向けに実行して、本番と同じ env vars を設定:
+## 3. `production` ブランチ作成 + Netlify prod 設定変更
+
+- GitHub に main HEAD ベースで `production` branch を新規作成
+- pairbo.app Netlify site の Production branch を `main` → `production` に変更
+
+これで pairbo.app は main push で auto-build されなくなり、`production` branch push 時のみ auto-build されるようになる。
+
+## 4. GitHub Secrets
+
+| Secret                            | 用途                                     |
+| --------------------------------- | ---------------------------------------- |
+| `CONVEX_DEPLOY_KEY`               | Convex prod 用（既存）                   |
+| `CONVEX_DEPLOY_KEY_STAGING`       | Convex Development deployment 用（新規） |
+| ~~`NETLIFY_DEPLOY_HOOK`~~         | 未使用（残置、削除可）                   |
+| ~~`NETLIFY_DEPLOY_HOOK_STAGING`~~ | 未使用（残置、削除可）                   |
+
+Hook 経由 deploy をやめて auto-build に統一したため、Hook secret は不要になった。残置のままでも害なし。
+
+# 日常運用
+
+## staging への deploy
+
+1. feature ブランチで作業 → PR
+2. CI green → main へ merge
+3. main push で Deploy Staging workflow が起動
+4. 同時に Netlify staging が main を auto-build
+5. `https://pairbostaging.netlify.app` で動作確認、設定タブ最下部に `v0.0.0` 表示
+
+## production への deploy
+
+1. staging で動作確認済みであることを確認
+2. GitHub → Actions → **Deploy Production** → Run workflow
+3. version に `v1.0.1` 等を入力（`vX.Y.Z`、既存 tag と重複しない値）
+4. Run workflow
+5. Workflow が自動で:
+   - 形式バリデーション
+   - tag 作成 + push（既存なら fail）
+   - `lib/version.ts` 書き換え → release commit
+   - Convex Prod deploy
+   - `production` branch を release commit に force-with-lease push
+6. Netlify pairbo.app が production branch 更新を検知 → auto-build
+7. `https://pairbo.app` で設定タブ最下部に新 version 表示を確認
+
+## 確認コマンド
 
 ```bash
-pnpm exec convex env set CLERK_ISSUER_URL "<Clerk dev instance issuer>" --preview-name staging
-# 他、Stripe 関連は staging では不要
-# Google OAuth 関連は OCR / Sheets 機能を staging で試したいなら設定
+# 直近のワークフロー実行状況
+gh run list --limit 5
+
+# 現在 prod に出ているコミットを確認
+git log -1 origin/production
+
+# 既存タグの一覧
+git tag --list 'v*' --sort=-v:refname
 ```
-
-または Convex Dashboard の staging deployment → Settings → Environment Variables で UI から設定。
-
-### 4. GitHub Secrets 整備
-
-リポジトリの Settings → Secrets and variables → Actions で **追加だけ** 行う（既存はそのまま）:
-
-| Secret                               | 用途                                     |
-| ------------------------------------ | ---------------------------------------- |
-| `CONVEX_DEPLOY_KEY` （既存）         | prod 用、変更なし                        |
-| `CONVEX_DEPLOY_KEY_STAGING` （新規） | Convex Development deployment 用キー     |
-| ~~`NETLIFY_DEPLOY_HOOK`~~            | 不要（auto-build に統一、Hook 使わない） |
-| ~~`NETLIFY_DEPLOY_HOOK_STAGING`~~    | 不要（同上）                             |
-
-既存 secret を rotate しなくて済む。不要になった secret は残しても害なし。
-
-### 5. ワークフロー PR をマージ
-
-上記 1〜4 が完了したら、この設計と対応する Deploy workflow 変更 PR をマージ。
-マージすると `main` への push が staging への自動 deploy を起動する。
-
-### 6. 初回動作確認
-
-- ローカルで `git push origin main` 系の動きをエミュレートする小さな変更（README 更新等）を main へマージ
-- GitHub Actions → Deploy workflow が staging deploy を実行
-- Netlify staging site にアクセスして変更が反映されていることを確認
-
-### 7. 初回 production deploy
-
-- main で git tag v0.X.0（適切なバージョン） を作成
-- `git push origin v0.X.0`
-- GitHub Actions → Deploy workflow → "Run workflow" → ref に `v0.X.0` を指定して実行
-- Convex prod + Netlify prod に反映されることを確認
-
-## 開発フローの変更点
-
-| 旧                                          | 新                                                          |
-| ------------------------------------------- | ----------------------------------------------------------- |
-| main マージ → 即本番デプロイ                | main マージ → staging デプロイ、本番は明示的タグ + dispatch |
-| HANDOVER.md の "PR マージで本番反映" の記述 | 「main = staging、tag dispatch = 本番」に更新               |
-| CLAUDE.md の deploy フロー記述              | 同上                                                        |
 
 # What We Won't Do
 
-- **Convex 課金プラン アップグレード**: Preview Deployment 無料枠で staging を運用
-- **Stripe Webhook の staging 側受信**: staging で課金フロー検証は当面しない。必要になったらその時点で Stripe test mode webhook を staging Convex URL に向ける
-- **staging カスタムドメイン**: `pairbo-staging.netlify.app` 等の標準 URL で運用
+- **Convex 課金プラン アップグレード**: Development deployment を流用、追加コスト 0
+- **Stripe Webhook の staging 側受信**: staging で課金フロー検証は当面しない。必要になったら Stripe test mode webhook を staging Convex URL (`https://proper-guanaco-454.convex.site/stripe/webhook`) に向ける
+- **staging カスタムドメイン**: `pairbostaging.netlify.app` 標準 URL で運用
 - **Clerk staging instance 新規作成**: Clerk dev instance を staging でも流用
 - **staging ブランチ作成**: main をそのまま staging として扱う
-- **タグ push 自動 prod deploy**: タグを push しただけでは本番に行かない（GitHub Actions UI からの dispatch が必須）
-- **rollback workflow**: 旧タグを指定して再 dispatch するだけで rollback 相当が可能なので専用ワークフローは作らない
+- **タグ push 自動 prod deploy**: タグを push しただけでは本番に行かない（必ず GitHub Actions UI からの dispatch が必要）
+- **真のロールバック機能**: workflow は常に main HEAD を起点に release を作るため、過去 tag を dispatch しても "main HEAD のコードを過去 version ラベルで出す" だけになる。**ロールバックが必要な場合は main を revert する PR を merge してから新しい version を dispatch する**
 
-# Concerns
+# Concerns / 既知の制約
 
-## 検証が必要な事項
+## 1. ロールバックが dispatch だけでは出来ない
 
-### 1. Convex Preview Deploy Key と persistent staging 名
+上述の通り、workflow は main HEAD を起点に release commit を作る設計。古い tag を dispatch しても過去コードへの巻き戻しにはならない（しかも同名 tag が既存だと fail する）。
 
-- **想定**: Preview Deploy Key で `convex deploy --yes` を実行すると、CI 環境変数に基づいた preview deployment が作成される
-- **不確実性**: 持続的に同じ "staging" 名で deployment を更新するか、毎回 ephemeral になるかは Convex の挙動に依存
-- **対処**: 初回 deploy 後に Convex Dashboard で deployment が作られていることを確認。毎回新規になる場合は `--preview-create staging` 等のフラグ追加を検討
+**運用回避**: 緊急ロールバックは:
 
-### 2. Netlify ビルドの ENV 切替
+1. main を problematic commit より前に `git revert` する PR を merge
+2. 新 version (`v1.0.2` 等) を dispatch して fresh release
 
-- **想定**: 別 Netlify サイトとして staging を作るので env vars は完全分離
-- **不確実性**: 同一の `next.config.ts` を使うので env 由来の挙動差異が想定通り出るか
-- **対処**: 初回 deploy 後、staging site から Convex staging に繋がっていること、Clerk dev で sign in できることを確認
-
-### 3. Convex schema 差分の運用
+## 2. Convex schema 差分
 
 - staging で schema 変更 → main マージ → staging に反映
-- production は古い schema のまま動いている
+- production は古い schema のまま
 - → 次の prod deploy 時に schema migration が走る
-- **不確実性**: schema 変更を含む PR が複数積み重なると、prod deploy 時に複合的なマイグレーションになる
-- **対処**: schema 変更を含む PR の後は早めに tag を打って prod に反映する運用にする
 
-## 設計上の悩み
+複数の schema 変更 PR が積み重なってからまとめて prod に出すと、複合的なマイグレーションになるリスクあり。schema 変更を含む PR の後は早めに dispatch する運用が望ましい。
 
-### 4. staging データのシード
+## 3. staging データ
 
-- staging Convex は空 → 認可・データ周りの検証ができない
-- **対処**: 既存の `pnpm exec convex run seed:seedTestData --preview-name staging` で staging にもシード可能。手順に追加
+staging Convex (= Development deployment) はローカル開発で蓄積したデータが入っている可能性がある。クリーンな状態で検証したい場合は `pnpm exec convex run seed:clearTestData` で初期化、`pnpm exec convex run seed:seedTestData` で再シード。
 
-### 5. Stripe webhook が staging に届かない件の運用補完
+## 4. Stripe webhook が staging に届かない
 
-- staging で Premium 動作を試したい場合、`planOverride` を Convex Dashboard で手動 set する（既存の admin 機能経由でも可）
-- 制約として明文化する
+staging で Premium 動作を試したい場合、Convex Dashboard で対象ユーザーの `planOverride` を手動でセットする（or admin 機能経由）。
 
-### 6. 「うっかり main マージで staging が壊れる」のリスク許容
+## 5. main 直 push で staging が壊れた場合
 
-- staging を共有環境として使う以上、PR レビュー中の壊れたコードが staging を壊す可能性
-- **対処**: solo dev なので許容。staging が壊れたら main を revert すれば自動で復旧
+main = staging を共有しているため、壊れた変更を main にマージすると staging も壊れる。**対処**: main を revert すれば staging も自動復旧（solo dev では現実的に許容）。
 
 # Reference Materials/Information
 
-- [Convex Preview Deployments](https://docs.convex.dev/production/hosting/preview-deployments)
 - [Convex Deploy Keys](https://docs.convex.dev/production/hosting#deploy-keys)
-- [Netlify Build Hooks](https://docs.netlify.com/configure-builds/build-hooks/)
+- [Netlify Build & Deploy settings](https://docs.netlify.com/configure-builds/overview/)
 - [GitHub Actions workflow_dispatch](https://docs.github.com/en/actions/using-workflows/manually-running-a-workflow)
-- 既存ワークフロー: `.github/workflows/deploy.yml`（この PR で変更）
-- [HANDOVER.md](../HANDOVER.md): 既存デプロイフローの記述
+- 関連ワークフロー: `.github/workflows/deploy-staging.yml` / `deploy-production.yml`
+- [CLAUDE.md](../CLAUDE.md): デプロイフロー記述
+- [HANDOVER.md](../HANDOVER.md): デプロイ情報 URL
