@@ -411,7 +411,7 @@ export function GroupSettings({
             <HelpCircle className="h-4 w-4 text-slate-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-slate-800">アプリの使い方</p>
+            <p className="font-medium text-slate-800">2つの使い方</p>
             <p className="text-[11px] text-slate-500">
               スマホとPCでの使い分けガイド
             </p>
