@@ -10,6 +10,7 @@ import { ShoppingItem } from "./ShoppingItem";
 import { ShoppingHistory } from "./ShoppingHistory";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { History, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 
 type ShoppingListProps = {
@@ -33,8 +34,10 @@ export function ShoppingList({ groupId }: ShoppingListProps) {
 
   if (pending === undefined) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-slate-500">読み込み中...</div>
+      <div className="p-4 max-w-lg mx-auto space-y-2">
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
       </div>
     );
   }
@@ -90,8 +93,10 @@ export function ShoppingList({ groupId }: ShoppingListProps) {
               </div>
 
               {purchased === undefined ? (
-                <div className="text-center py-8 text-slate-500">
-                  読み込み中...
+                <div className="space-y-2">
+                  <Skeleton className="h-12" />
+                  <Skeleton className="h-12" />
+                  <Skeleton className="h-12" />
                 </div>
               ) : (
                 <ShoppingHistory items={purchased} />

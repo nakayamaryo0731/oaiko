@@ -1,6 +1,7 @@
 "use client";
 
 import { ConfirmationDialog } from "@/components/ui/ConfirmationDialog";
+import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { formatDateJapanese, formatAmount } from "@/lib/formatters";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 
@@ -15,6 +16,7 @@ type DeleteExpenseDialogProps = {
   };
   onConfirm: () => void;
   isDeleting: boolean;
+  error?: string | null;
 };
 
 export function DeleteExpenseDialog({
@@ -23,6 +25,7 @@ export function DeleteExpenseDialog({
   expense,
   onConfirm,
   isDeleting,
+  error,
 }: DeleteExpenseDialogProps) {
   return (
     <ConfirmationDialog
@@ -56,6 +59,7 @@ export function DeleteExpenseDialog({
           </div>
         </div>
       </div>
+      <ErrorAlert message={error ?? null} />
     </ConfirmationDialog>
   );
 }

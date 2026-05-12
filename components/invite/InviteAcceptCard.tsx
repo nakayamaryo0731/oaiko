@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Home, User, Users } from "lucide-react";
 import { ErrorAlert } from "@/components/ui/ErrorAlert";
+import { getErrorMessage } from "@/lib/errors";
 
 interface InvitationInfo {
   groupId: Id<"groups">;
@@ -43,9 +44,7 @@ export function InviteAcceptCard({ token, invitation }: InviteAcceptCardProps) {
         router.push(`/groups/${result.groupId}`);
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "グループへの参加に失敗しました",
-      );
+      setError(getErrorMessage(err, "グループへの参加に失敗しました"));
       setIsLoading(false);
     }
   };

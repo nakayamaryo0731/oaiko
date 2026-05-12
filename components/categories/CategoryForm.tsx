@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { IconPicker } from "./IconPicker";
 import { CategoryIcon } from "./CategoryIcon";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
+import { getErrorMessage } from "@/lib/errors";
 
 type CategoryFormProps = {
   mode: "create" | "edit";
@@ -37,7 +38,7 @@ export function CategoryForm({
     try {
       await onSubmit(name, icon);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
+      setError(getErrorMessage(err));
     }
   };
 
