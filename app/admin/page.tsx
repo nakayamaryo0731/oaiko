@@ -10,6 +10,7 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type SortingState,
+  type Table as TanstackTable,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -18,7 +19,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE_OPTIONS = [10, 30, 50] as const;
+const DEFAULT_PAGE_SIZE = 10;
 
 type PlanFilter = "all" | "free" | "premium";
 
@@ -200,7 +202,7 @@ function UserTable({ users }: { users: UserRow[] | undefined }) {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    initialState: { pagination: { pageSize: PAGE_SIZE } },
+    initialState: { pagination: { pageSize: DEFAULT_PAGE_SIZE } },
   });
 
   const planColumn = table.getColumn("plan");
@@ -227,100 +229,11 @@ function UserTable({ users }: { users: UserRow[] | undefined }) {
           }
         />
       </div>
-      <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            {table.getHeaderGroups().map((hg) => (
-              <tr key={hg.id} className="border-b border-slate-200 bg-slate-50">
-                {hg.headers.map((header) => {
-                  const align = header.column.columnDef.meta?.align ?? "left";
-                  const canSort = header.column.getCanSort();
-                  const sortDir = header.column.getIsSorted();
-                  const headerContent = flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  );
-                  return (
-                    <th
-                      key={header.id}
-                      className={`px-4 py-3 font-medium text-slate-600 ${align === "right" ? "text-right" : "text-left"}`}
-                    >
-                      {canSort ? (
-                        <button
-                          type="button"
-                          onClick={header.column.getToggleSortingHandler()}
-                          className={`inline-flex items-center gap-1 hover:text-slate-900 transition-colors ${align === "right" ? "ml-auto" : ""}`}
-                        >
-                          {headerContent}
-                          {sortDir === "asc" ? (
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          ) : sortDir === "desc" ? (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          ) : (
-                            <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
-                          )}
-                        </button>
-                      ) : (
-                        headerContent
-                      )}
-                    </th>
-                  );
-                })}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {users === undefined ? (
-              <tr>
-                <td
-                  colSpan={USER_COLUMNS.length}
-                  className="px-4 py-8 text-center"
-                >
-                  <Skeleton className="h-4 w-48 mx-auto" />
-                </td>
-              </tr>
-            ) : table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const align = cell.column.columnDef.meta?.align ?? "left";
-                    return (
-                      <td
-                        key={cell.id}
-                        className={`px-4 py-3 ${align === "right" ? "text-right" : ""}`}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={USER_COLUMNS.length}
-                  className="px-4 py-8 text-center text-slate-500"
-                >
-                  該当するユーザーがいません
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-        {table.getPageCount() > 1 && (
-          <Pagination
-            page={table.getState().pagination.pageIndex}
-            totalPages={table.getPageCount()}
-            onPageChange={(p) => table.setPageIndex(p)}
-          />
-        )}
-      </div>
+      <DataTable
+        table={table}
+        isLoading={users === undefined}
+        emptyMessage="該当するユーザーがいません"
+      />
     </section>
   );
 }
@@ -368,10 +281,64 @@ type GroupRow = {
   totalAmount: number;
 };
 
+const GROUP_COLUMNS: ColumnDef<GroupRow>[] = [
+  {
+    accessorKey: "name",
+    header: "グループ名",
+    cell: ({ getValue }) => (
+      <span className="text-slate-800">{String(getValue())}</span>
+    ),
+  },
+  {
+    accessorKey: "memberCount",
+    header: "メンバー",
+    meta: { align: "right" },
+    cell: ({ getValue }) => (
+      <span className="text-slate-600">{getValue<number>()}</span>
+    ),
+  },
+  {
+    accessorKey: "expenseCount",
+    header: "支出件数",
+    meta: { align: "right" },
+    cell: ({ getValue }) => (
+      <span className="text-slate-600">{getValue<number>()}</span>
+    ),
+  },
+  {
+    accessorKey: "totalAmount",
+    header: "総支出額",
+    meta: { align: "right" },
+    cell: ({ getValue }) => (
+      <span className="text-slate-600">
+        ¥{getValue<number>().toLocaleString()}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "createdAt",
+    header: "作成日",
+    cell: ({ getValue }) => (
+      <span className="text-slate-600">{formatDate(getValue<number>())}</span>
+    ),
+  },
+];
+
 function GroupTable({ groups }: { groups: GroupRow[] | undefined }) {
-  const [page, setPage] = useState(0);
-  const totalPages = groups ? Math.ceil(groups.length / PAGE_SIZE) : 0;
-  const pagedGroups = groups?.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const data = useMemo(() => groups ?? [], [groups]);
+
+  const table = useReactTable({
+    data,
+    columns: GROUP_COLUMNS,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: { pagination: { pageSize: DEFAULT_PAGE_SIZE } },
+  });
 
   return (
     <section>
@@ -383,102 +350,166 @@ function GroupTable({ groups }: { groups: GroupRow[] | undefined }) {
           </span>
         )}
       </h2>
-      <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50">
-              <th className="text-left px-4 py-3 font-medium text-slate-600">
-                グループ名
-              </th>
-              <th className="text-right px-4 py-3 font-medium text-slate-600">
-                メンバー
-              </th>
-              <th className="text-right px-4 py-3 font-medium text-slate-600">
-                支出件数
-              </th>
-              <th className="text-right px-4 py-3 font-medium text-slate-600">
-                総支出額
-              </th>
-              <th className="text-left px-4 py-3 font-medium text-slate-600">
-                作成日
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {pagedGroups ? (
-              pagedGroups.map((g) => (
-                <tr
-                  key={g._id}
-                  className="border-b border-slate-100 last:border-0"
-                >
-                  <td className="px-4 py-3 text-slate-800">{g.name}</td>
-                  <td className="px-4 py-3 text-right text-slate-600">
-                    {g.memberCount}
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-600">
-                    {g.expenseCount}
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-600">
-                    ¥{g.totalAmount.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    {formatDate(g.createdAt)}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center">
-                  <Skeleton className="h-4 w-48 mx-auto" />
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-        {totalPages > 1 && (
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
-        )}
-      </div>
+      <DataTable
+        table={table}
+        isLoading={groups === undefined}
+        emptyMessage="グループがありません"
+      />
     </section>
   );
 }
 
-/* ========== Pagination ========== */
+/* ========== DataTable (shared shell) ========== */
 
-function Pagination({
-  page,
-  totalPages,
-  onPageChange,
+function DataTable<T>({
+  table,
+  isLoading,
+  emptyMessage,
 }: {
-  page: number;
-  totalPages: number;
-  onPageChange: (page: number) => void;
+  table: TanstackTable<T>;
+  isLoading: boolean;
+  emptyMessage: string;
 }) {
+  const columnCount = table.getVisibleFlatColumns().length;
+
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200">
-      <p className="text-xs text-slate-500">
-        {page + 1} / {totalPages} ページ
-      </p>
-      <div className="flex gap-2">
-        <button
-          onClick={() => onPageChange(page - 1)}
-          disabled={page === 0}
-          className="px-3 py-1 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+    <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          {table.getHeaderGroups().map((hg) => (
+            <tr key={hg.id} className="border-b border-slate-200 bg-slate-50">
+              {hg.headers.map((header) => {
+                const align = header.column.columnDef.meta?.align ?? "left";
+                const canSort = header.column.getCanSort();
+                const sortDir = header.column.getIsSorted();
+                const headerContent = flexRender(
+                  header.column.columnDef.header,
+                  header.getContext(),
+                );
+                return (
+                  <th
+                    key={header.id}
+                    className={`px-4 py-3 font-medium text-slate-600 ${align === "right" ? "text-right" : "text-left"}`}
+                  >
+                    {canSort ? (
+                      <button
+                        type="button"
+                        onClick={header.column.getToggleSortingHandler()}
+                        className={`inline-flex items-center gap-1 hover:text-slate-900 transition-colors ${align === "right" ? "ml-auto" : ""}`}
+                      >
+                        {headerContent}
+                        {sortDir === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : sortDir === "desc" ? (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronsUpDown className="h-3.5 w-3.5 text-slate-300" />
+                        )}
+                      </button>
+                    ) : (
+                      headerContent
+                    )}
+                  </th>
+                );
+              })}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {isLoading ? (
+            <tr>
+              <td colSpan={columnCount} className="px-4 py-8 text-center">
+                <Skeleton className="h-4 w-48 mx-auto" />
+              </td>
+            </tr>
+          ) : table.getRowModel().rows.length > 0 ? (
+            table.getRowModel().rows.map((row) => (
+              <tr
+                key={row.id}
+                className="border-b border-slate-100 last:border-0"
+              >
+                {row.getVisibleCells().map((cell) => {
+                  const align = cell.column.columnDef.meta?.align ?? "left";
+                  return (
+                    <td
+                      key={cell.id}
+                      className={`px-4 py-3 ${align === "right" ? "text-right" : ""}`}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan={columnCount}
+                className="px-4 py-8 text-center text-slate-500"
+              >
+                {emptyMessage}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      {!isLoading && table.getFilteredRowModel().rows.length > 0 && (
+        <DataTablePagination table={table} />
+      )}
+    </div>
+  );
+}
+
+function DataTablePagination<T>({ table }: { table: TanstackTable<T> }) {
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageCount = table.getPageCount();
+  const pageSize = table.getState().pagination.pageSize;
+
+  return (
+    <div className="flex items-center justify-between gap-4 flex-wrap px-4 py-3 border-t border-slate-200">
+      <div className="flex items-center gap-2 text-xs text-slate-500">
+        <label htmlFor="page-size">表示件数:</label>
+        <select
+          id="page-size"
+          value={pageSize}
+          onChange={(e) => table.setPageSize(Number(e.target.value))}
+          className="px-2 py-1 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          前へ
-        </button>
-        <button
-          onClick={() => onPageChange(page + 1)}
-          disabled={page >= totalPages - 1}
-          className="px-3 py-1 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          次へ
-        </button>
+          {PAGE_SIZE_OPTIONS.map((size) => (
+            <option key={size} value={size}>
+              {size}
+            </option>
+          ))}
+        </select>
       </div>
+      {pageCount > 1 && (
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-slate-500">
+            {pageIndex + 1} / {pageCount} ページ
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="px-3 py-1 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              前へ
+            </button>
+            <button
+              type="button"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="px-3 py-1 text-sm border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            >
+              次へ
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
