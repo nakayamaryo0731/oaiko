@@ -162,18 +162,29 @@ export const getDetail = authQuery({
       .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
       .collect();
 
+    const invitations = await ctx.db
+      .query("groupInvitations")
+      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+      .collect();
+    const now = Date.now();
+    const hasActiveInvitation = invitations.some(
+      (inv) => inv.usedAt == null && inv.expiresAt > now,
+    );
+
     return {
       group: {
         _id: group._id,
         name: group.name,
         description: group.description,
         closingDay: group.closingDay,
+        inviteReminderDismissedAt: group.inviteReminderDismissedAt,
       },
       members: members
         .filter((m): m is NonNullable<typeof m> => m !== null)
         .sort((a, b) => a.joinedAt - b.joinedAt),
       categories: categories.sort((a, b) => a.sortOrder - b.sortOrder),
       myRole: myMembership.role,
+      hasActiveInvitation,
     };
   },
 });
@@ -295,6 +306,25 @@ export const updateClosingDay = authMutation({
       groupId: args.groupId,
       oldClosingDay: group.closingDay,
       newClosingDay: args.closingDay,
+    });
+  },
+});
+
+/**
+ * 招待リマインダーを「あとで」スキップ（永久 dismiss）
+ */
+export const dismissInviteReminder = authMutation({
+  args: { groupId: v.id("groups") },
+  handler: async (ctx, args) => {
+    await requireGroupMember(ctx, args.groupId);
+    const now = Date.now();
+    await ctx.db.patch(args.groupId, {
+      inviteReminderDismissedAt: now,
+      updatedAt: now,
+    });
+
+    ctx.logger.info("GROUP", "invite_reminder_dismissed", {
+      groupId: args.groupId,
     });
   },
 });

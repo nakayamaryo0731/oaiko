@@ -34,6 +34,7 @@ export default defineSchema({
     name: v.string(),
     description: v.optional(v.string()),
     closingDay: v.number(), // 1-28
+    inviteReminderDismissedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }),
