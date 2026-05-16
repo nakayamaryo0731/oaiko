@@ -251,7 +251,7 @@ export function GroupSettings({
           </button>
           {myRole === "owner" && (
             <div className="ml-2">
-              <InviteDialog groupId={group._id} groupName={group.name} />
+              <InviteDialog groupId={group._id} />
             </div>
           )}
         </div>

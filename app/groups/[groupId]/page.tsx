@@ -26,6 +26,7 @@ import { ClipboardList, BarChart3, Settings } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { NotificationBell } from "@/components/notifications";
 import { PwaOnboardingTour } from "@/components/pwa/PwaOnboardingTour";
+import { InviteReminderModal } from "@/components/groups/InviteReminderModal";
 import { buildMemberColorMap } from "@/lib/userColors";
 
 type PageProps = {
@@ -54,11 +55,21 @@ export default function GroupDetailPage({ params }: PageProps) {
   const detail = useQuery(api.groups.getDetail, {
     groupId: groupId as Id<"groups">,
   });
+  const me = useQuery(api.users.getMe);
 
   const memberColors = useMemo(
     () => (detail ? buildMemberColorMap(detail.members) : {}),
     [detail],
   );
+
+  const shouldShowInvitePrompts =
+    me !== undefined &&
+    me?.pwaOnboardingCompletedAt != null &&
+    detail !== undefined &&
+    detail.myRole === "owner" &&
+    detail.members.length === 1 &&
+    !detail.hasActiveInvitation &&
+    !detail.group.inviteReminderDismissedAt;
 
   useEffect(() => {
     const url = `/groups/${groupId}${TAB_URL_MAP[activeTab]}`;
@@ -118,6 +129,7 @@ export default function GroupDetailPage({ params }: PageProps) {
               group={detail.group}
               members={detail.members}
               categories={detail.categories}
+              shouldShowInviteBanner={shouldShowInvitePrompts}
             />
           )}
           {activeTab === "analytics" && (
@@ -144,6 +156,10 @@ export default function GroupDetailPage({ params }: PageProps) {
         onChange={(id) => setActiveTab(id as TabId)}
       />
       <PwaOnboardingTour />
+      <InviteReminderModal
+        groupId={detail.group._id}
+        shouldShow={shouldShowInvitePrompts}
+      />
     </div>
   );
 }

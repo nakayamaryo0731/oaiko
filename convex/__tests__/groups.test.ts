@@ -306,6 +306,141 @@ describe("groups", () => {
     });
   });
 
+  describe("getDetail (招待リマインダー関連)", () => {
+    test("有効な招待があれば hasActiveInvitation=true", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "招待ありグループ" });
+
+      await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.createInvitation, { groupId });
+
+      const detail = await t
+        .withIdentity(testIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      expect(detail.hasActiveInvitation).toBe(true);
+    });
+
+    test("招待がなければ hasActiveInvitation=false", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "招待なしグループ" });
+
+      const detail = await t
+        .withIdentity(testIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      expect(detail.hasActiveInvitation).toBe(false);
+    });
+
+    test("期限切れの招待は hasActiveInvitation=false", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "期限切れ" });
+
+      // 期限切れ招待を直接 insert
+      await t.run(async (ctx) => {
+        const user = await ctx.db
+          .query("users")
+          .withIndex("by_clerk_id", (q) =>
+            q.eq("clerkId", testIdentity.subject),
+          )
+          .unique();
+        await ctx.db.insert("groupInvitations", {
+          groupId,
+          token: "expired_token",
+          createdBy: user!._id,
+          expiresAt: Date.now() - 1000,
+          createdAt: Date.now() - 10000,
+        });
+      });
+
+      const detail = await t
+        .withIdentity(testIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      expect(detail.hasActiveInvitation).toBe(false);
+    });
+
+    test("作成直後は inviteReminderDismissedAt が undefined", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "未 dismiss" });
+
+      const detail = await t
+        .withIdentity(testIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      expect(detail.group.inviteReminderDismissedAt).toBeUndefined();
+    });
+  });
+
+  describe("dismissInviteReminder", () => {
+    test("オーナーが dismiss できる", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "dismiss テスト" });
+
+      const before = Date.now();
+      await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.dismissInviteReminder, { groupId });
+      const after = Date.now();
+
+      const detail = await t
+        .withIdentity(testIdentity)
+        .query(api.groups.getDetail, { groupId });
+
+      expect(detail.group.inviteReminderDismissedAt).toBeDefined();
+      expect(detail.group.inviteReminderDismissedAt!).toBeGreaterThanOrEqual(
+        before,
+      );
+      expect(detail.group.inviteReminderDismissedAt!).toBeLessThanOrEqual(
+        after,
+      );
+    });
+
+    test("非オーナー(非メンバー)は dismiss できない", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "他人のグループ" });
+
+      await t.withIdentity(testIdentity2).mutation(api.users.ensureUser, {});
+
+      await expect(
+        t
+          .withIdentity(testIdentity2)
+          .mutation(api.groups.dismissInviteReminder, { groupId }),
+      ).rejects.toThrow();
+    });
+
+    test("認証なしではエラーになる", async () => {
+      const t = convexTest(schema, modules);
+
+      const groupId = await t
+        .withIdentity(testIdentity)
+        .mutation(api.groups.create, { name: "認証テスト" });
+
+      await expect(
+        t.mutation(api.groups.dismissInviteReminder, { groupId }),
+      ).rejects.toThrow();
+    });
+  });
+
   describe("updateName", () => {
     test("メンバーがグループ名を更新できる", async () => {
       const t = convexTest(schema, modules);
