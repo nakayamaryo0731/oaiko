@@ -23,6 +23,7 @@ import { FAB } from "@/components/ui/FAB";
 import { Plus } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
 import { getErrorMessage } from "@/lib/errors";
+import { InviteCtaBanner } from "./InviteCtaBanner";
 
 type Member = {
   userId: Id<"users">;
@@ -47,6 +48,7 @@ type GroupDetailProps = {
   };
   members: Member[];
   categories: Category[];
+  shouldShowInviteBanner?: boolean;
 };
 
 type CreateState =
@@ -61,7 +63,12 @@ type ExpenseToDelete = {
   categoryName: string;
 };
 
-export function GroupDetail({ group, members, categories }: GroupDetailProps) {
+export function GroupDetail({
+  group,
+  members,
+  categories,
+  shouldShowInviteBanner = false,
+}: GroupDetailProps) {
   const removeExpense = useMutation(api.expenses.remove);
 
   // 期間ナビゲーション
@@ -130,6 +137,17 @@ export function GroupDetail({ group, members, categories }: GroupDetailProps) {
           onNext={goToNextMonth}
         />
       </div>
+
+      {/* 招待リマインダーバナー（1人グループのみ） */}
+      {shouldShowInviteBanner && (
+        <div className="px-4 pt-3">
+          <InviteCtaBanner
+            groupId={group._id}
+            groupName={group.name}
+            shouldShow={shouldShowInviteBanner}
+          />
+        </div>
+      )}
 
       {/* 支出一覧 */}
       <div className="px-4 pb-36 scrollbar-hide">
