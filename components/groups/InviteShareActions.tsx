@@ -7,13 +7,9 @@ import { buildInviteShareText } from "@/lib/inviteShareTemplate";
 
 type InviteShareActionsProps = {
   inviteUrl: string;
-  groupName: string;
 };
 
-export function InviteShareActions({
-  inviteUrl,
-  groupName,
-}: InviteShareActionsProps) {
+export function InviteShareActions({ inviteUrl }: InviteShareActionsProps) {
   const [copiedKind, setCopiedKind] = useState<"text" | "url" | null>(null);
 
   const copyToClipboard = async (value: string) => {
@@ -40,7 +36,7 @@ export function InviteShareActions({
   };
 
   const handleCopyText = async () => {
-    const text = buildInviteShareText(groupName, inviteUrl);
+    const text = buildInviteShareText(inviteUrl);
     if (await copyToClipboard(text)) {
       trackEvent("invite_share_with_template", { method: "copy" });
       flashCopied("text");
@@ -55,11 +51,11 @@ export function InviteShareActions({
   };
 
   const handleShare = async () => {
-    const text = buildInviteShareText(groupName, inviteUrl);
+    const text = buildInviteShareText(inviteUrl);
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${groupName}への招待`,
+          title: "Pairbo への招待",
           text,
         });
         trackEvent("invite_share_with_template", { method: "native_share" });

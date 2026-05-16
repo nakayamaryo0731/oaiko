@@ -141,7 +141,7 @@ export function GroupDetail({
       {/* 招待リマインダーバナー（1人グループのみ） */}
       {shouldShowInviteBanner && (
         <div className="px-4 pt-3">
-          <InviteCtaBanner groupId={group._id} groupName={group.name} />
+          <InviteCtaBanner groupId={group._id} />
         </div>
       )}
 

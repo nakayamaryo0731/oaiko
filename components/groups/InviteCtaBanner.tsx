@@ -18,10 +18,9 @@ import { InviteShareActions } from "./InviteShareActions";
 
 type Props = {
   groupId: Id<"groups">;
-  groupName: string;
 };
 
-export function InviteCtaBanner({ groupId, groupName }: Props) {
+export function InviteCtaBanner({ groupId }: Props) {
   const [open, setOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -64,7 +63,7 @@ export function InviteCtaBanner({ groupId, groupName }: Props) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-blue-900">
-              相棒を招待してアプリを完成させよう
+              メンバーを招待してアプリを活用しよう
             </p>
             <p className="text-[11px] text-blue-700">
               二人で使うと割り勘・精算が自動になります
@@ -77,7 +76,7 @@ export function InviteCtaBanner({ groupId, groupName }: Props) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>相棒を招待</DialogTitle>
+            <DialogTitle>メンバーを招待</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -86,7 +85,7 @@ export function InviteCtaBanner({ groupId, groupName }: Props) {
             {!inviteUrl ? (
               <div className="text-center py-4">
                 <p className="text-sm text-slate-600 mb-4">
-                  招待リンクを作成して、相棒に共有しましょう。
+                  招待リンクを作成して、メンバーに共有しましょう。
                   <br />
                   リンクの有効期限は7日間です。
                 </p>
@@ -95,7 +94,7 @@ export function InviteCtaBanner({ groupId, groupName }: Props) {
                 </Button>
               </div>
             ) : (
-              <InviteShareActions inviteUrl={inviteUrl} groupName={groupName} />
+              <InviteShareActions inviteUrl={inviteUrl} />
             )}
           </div>
         </DialogContent>

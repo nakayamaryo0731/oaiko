@@ -19,12 +19,11 @@ const OPEN_DELAY_MS = 700;
 
 type Props = {
   groupId: Id<"groups">;
-  groupName: string;
   /** 表示してよい状態か（オーナー + メンバー1 + 未dismiss + 有効招待なし + PWA完了 等） */
   shouldShow: boolean;
 };
 
-export function InviteReminderModal({ groupId, groupName, shouldShow }: Props) {
+export function InviteReminderModal({ groupId, shouldShow }: Props) {
   const [open, setOpen] = useState(false);
   const [hasShown, setHasShown] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -80,7 +79,7 @@ export function InviteReminderModal({ groupId, groupName, shouldShow }: Props) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>相棒を招待してみる？</DialogTitle>
+          <DialogTitle>メンバーを招待しましょう</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -90,8 +89,8 @@ export function InviteReminderModal({ groupId, groupName, shouldShow }: Props) {
             <>
               <p className="text-sm text-slate-600 leading-relaxed">
                 Pairbo
-                は二人で使うと記録が共有できて、月末の精算も自動でできるアプリ。
-                今のままだと一人用メモになってます。相棒に招待リンクを送ってみよう。
+                は二人で使うと記録が共有できて、月末の精算も自動でできます。
+                今のままだと一人用メモになっています。招待リンクを送ってみましょう。
               </p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button
@@ -112,7 +111,7 @@ export function InviteReminderModal({ groupId, groupName, shouldShow }: Props) {
               </div>
             </>
           ) : (
-            <InviteShareActions inviteUrl={inviteUrl} groupName={groupName} />
+            <InviteShareActions inviteUrl={inviteUrl} />
           )}
         </div>
       </DialogContent>

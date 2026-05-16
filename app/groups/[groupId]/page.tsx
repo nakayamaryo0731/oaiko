@@ -158,7 +158,6 @@ export default function GroupDetailPage({ params }: PageProps) {
       <PwaOnboardingTour />
       <InviteReminderModal
         groupId={detail.group._id}
-        groupName={detail.group.name}
         shouldShow={shouldShowInvitePrompts}
       />
     </div>

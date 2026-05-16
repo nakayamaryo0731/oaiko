@@ -20,10 +20,9 @@ import { InviteShareActions } from "./InviteShareActions";
 
 type InviteDialogProps = {
   groupId: Id<"groups">;
-  groupName: string;
 };
 
-export function InviteDialog({ groupId, groupName }: InviteDialogProps) {
+export function InviteDialog({ groupId }: InviteDialogProps) {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
 
   const { open, handleOpenChange, isLoading, error, execute } = useFormDialog({
@@ -78,7 +77,7 @@ export function InviteDialog({ groupId, groupName }: InviteDialogProps) {
               </Button>
             </div>
           ) : (
-            <InviteShareActions inviteUrl={inviteUrl} groupName={groupName} />
+            <InviteShareActions inviteUrl={inviteUrl} />
           )}
         </div>
       </DialogContent>
