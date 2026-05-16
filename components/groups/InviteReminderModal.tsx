@@ -71,10 +71,8 @@ export function InviteReminderModal({ groupId, groupName, shouldShow }: Props) {
   };
 
   const handleOpenChange = (next: boolean) => {
-    if (!next && !inviteUrl) {
-      handleDismiss();
-      return;
-    }
+    // ESC / backdrop で閉じたケースは「永久 dismiss」しない。
+    // 永久 dismiss は明示的に「あとで」ボタンを押したとき（handleDismiss）のみ。
     setOpen(next);
   };
 

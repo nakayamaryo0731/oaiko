@@ -386,7 +386,7 @@ describe("groups", () => {
   });
 
   describe("dismissInviteReminder", () => {
-    test("メンバーが dismiss できる", async () => {
+    test("オーナーが dismiss できる", async () => {
       const t = convexTest(schema, modules);
 
       const groupId = await t
@@ -412,7 +412,7 @@ describe("groups", () => {
       );
     });
 
-    test("非メンバーは dismiss できない", async () => {
+    test("非オーナー(非メンバー)は dismiss できない", async () => {
       const t = convexTest(schema, modules);
 
       const groupId = await t

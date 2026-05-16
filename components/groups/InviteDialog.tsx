@@ -46,7 +46,7 @@ export function InviteDialog({ groupId, groupName }: InviteDialogProps) {
 
     if (result.success && result.data) {
       setInviteUrl(result.data);
-      trackEvent("invite_sent");
+      trackEvent("invite_sent", { source: "dialog" });
     }
   };
 

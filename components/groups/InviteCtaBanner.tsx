@@ -19,19 +19,15 @@ import { InviteShareActions } from "./InviteShareActions";
 type Props = {
   groupId: Id<"groups">;
   groupName: string;
-  /** 表示してよい状態か（オーナー + メンバー1 + 未dismiss + 有効招待なし） */
-  shouldShow: boolean;
 };
 
-export function InviteCtaBanner({ groupId, groupName, shouldShow }: Props) {
+export function InviteCtaBanner({ groupId, groupName }: Props) {
   const [open, setOpen] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createInvitation = useMutation(api.groups.createInvitation);
-
-  if (!shouldShow) return null;
 
   const handleOpen = () => {
     setInviteUrl(null);

@@ -63,6 +63,7 @@ export default function GroupDetailPage({ params }: PageProps) {
   );
 
   const shouldShowInvitePrompts =
+    me !== undefined &&
     me?.pwaOnboardingCompletedAt != null &&
     detail !== undefined &&
     detail.myRole === "owner" &&

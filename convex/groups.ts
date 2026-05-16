@@ -312,11 +312,13 @@ export const updateClosingDay = authMutation({
 
 /**
  * 招待リマインダーを「あとで」スキップ（永久 dismiss）
+ *
+ * 表示対象はオーナーのみなので、dismiss もオーナー権限が必要。
  */
 export const dismissInviteReminder = authMutation({
   args: { groupId: v.id("groups") },
   handler: async (ctx, args) => {
-    await requireGroupMember(ctx, args.groupId);
+    await requireGroupOwner(ctx, args.groupId);
     const now = Date.now();
     await ctx.db.patch(args.groupId, {
       inviteReminderDismissedAt: now,
