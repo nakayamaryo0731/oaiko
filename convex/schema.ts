@@ -22,6 +22,7 @@ export default defineSchema({
     planOverride: v.optional(v.union(v.literal("free"), v.literal("premium"))),
     lastSeenReleaseAt: v.optional(v.number()),
     pwaOnboardingCompletedAt: v.optional(v.number()),
+    trialExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_clerk_id", ["clerkId"]),
@@ -184,6 +185,21 @@ export default defineSchema({
     .index("by_expense", ["expenseId"])
     .index("by_tag", ["tagId"]),
   // 用途: 支出のタグ取得、タグの使用状況確認
+
+  // ========================================
+  // 招待報酬（Premium trial 付与履歴）
+  // ========================================
+  inviteRewards: defineTable({
+    userId: v.id("users"),
+    invitationId: v.id("groupInvitations"),
+    reason: v.union(v.literal("inviter"), v.literal("invitee")),
+    grantedAt: v.number(),
+    expiresAt: v.number(),
+    durationMs: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_invitation_user", ["invitationId", "userId"]),
+  // 用途: ユーザーの trial 付与履歴、同一招待×同一ユーザーの重複防止
 
   // ========================================
   // サブスクリプション

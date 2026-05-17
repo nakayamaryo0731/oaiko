@@ -24,6 +24,7 @@ import { Plus } from "lucide-react";
 import { buildMemberColorMap } from "@/lib/userColors";
 import { getErrorMessage } from "@/lib/errors";
 import { InviteCtaBanner } from "./InviteCtaBanner";
+import { TrialRemainingBanner } from "@/components/ui/TrialRemainingBanner";
 
 type Member = {
   userId: Id<"users">;
@@ -137,6 +138,9 @@ export function GroupDetail({
           onNext={goToNextMonth}
         />
       </div>
+
+      {/* trial 残り3日以下のバナー（free に降格する前の課金導線） */}
+      <TrialRemainingBanner />
 
       {/* 招待リマインダーバナー（1人グループのみ） */}
       {shouldShowInviteBanner && (
