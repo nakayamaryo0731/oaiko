@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { Bell } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import {
-  getReleasesDesc,
+  getVisibleReleasesDesc,
   hasUnreadRelease,
   type Release,
 } from "@/lib/releases";
@@ -19,17 +19,27 @@ type View =
 
 export function NotificationBell() {
   const me = useQuery(api.users.getMe);
+  const subscription = useQuery(api.subscriptions.getMySubscription);
   const markRead = useMutation(api.users.markReleasesRead);
   const [view, setView] = useState<View>({ type: "closed" });
 
-  const all = getReleasesDesc();
+  // subscription も me と同じく取得完了するまで保留（プラン依存のフィルタが必要なため）
+  if (!me || subscription === undefined) {
+    return <div className="w-11 h-11" aria-hidden />;
+  }
 
-  if (!me || all.length === 0) {
+  const all = getVisibleReleasesDesc({
+    plan: subscription.plan,
+    status: subscription.status,
+    currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+  });
+
+  if (all.length === 0) {
     return <div className="w-11 h-11" aria-hidden />;
   }
 
   const latest = all[0];
-  const hasUnread = hasUnreadRelease(me.lastSeenReleaseAt);
+  const hasUnread = hasUnreadRelease(me.lastSeenReleaseAt, all);
 
   const handleOpen = () => {
     setView({ type: "detail", release: latest });
