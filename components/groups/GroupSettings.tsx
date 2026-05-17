@@ -35,6 +35,7 @@ import { UsageGuideDialog } from "@/components/pwa/UsageGuideDialog";
 import { useInlineEdit } from "@/hooks/useInlineEdit";
 import { InlineEditText, InlineEditDisplay } from "@/components/ui/InlineEdit";
 import { APP_VERSION } from "@/lib/version";
+import { readTrialState } from "@/lib/trial";
 
 type Category = {
   _id: Id<"categories">;
@@ -400,9 +401,24 @@ export function GroupSettings({
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-slate-800">プラン・お支払い</p>
-            <p className="text-[11px] text-slate-500">
-              Premiumプランの確認・変更
-            </p>
+            {(() => {
+              const trial = readTrialState(subscription?.trialExpiresAt);
+              const onStripePaid =
+                subscription?.status === "active" ||
+                subscription?.status === "trialing";
+              if (trial.kind === "active" && !onStripePaid) {
+                return (
+                  <p className="text-[11px] text-amber-600">
+                    Premium トライアル中（残り {trial.daysLeft}日）
+                  </p>
+                );
+              }
+              return (
+                <p className="text-[11px] text-slate-500">
+                  Premiumプランの確認・変更
+                </p>
+              );
+            })()}
           </div>
           <ChevronRight className="h-5 w-5 text-slate-400" />
         </Link>

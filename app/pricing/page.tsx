@@ -8,6 +8,7 @@ import { api } from "@/convex/_generated/api";
 import { AppHeader } from "@/components/ui/AppHeader";
 import { UserButton } from "@clerk/nextjs";
 import { trackEvent } from "@/lib/analytics";
+import { readTrialState } from "@/lib/trial";
 
 type PriceType = "monthly" | "yearly";
 
@@ -33,6 +34,12 @@ function PricingContent() {
   const [selectedPrice, setSelectedPrice] = useState<PriceType>("yearly");
 
   const isPremium = subscription?.plan === "premium";
+  const trial = readTrialState(subscription?.trialExpiresAt);
+  // Stripe active / Stripe Trial 中はそちらを優先表示。canceled-期間内 や subscription なしで
+  // trialExpiresAt があれば「Pairbo 内部 trial」表示。
+  const onStripePaid =
+    subscription?.status === "active" || subscription?.status === "trialing";
+  const isTrial = trial.kind === "active" && !onStripePaid;
 
   const handleCheckout = async (priceType: PriceType) => {
     if (!isAuthenticated) {
@@ -52,6 +59,16 @@ function PricingContent() {
         value: priceType === "monthly" ? 100 : 1000,
         currency: "JPY",
       });
+      if (isTrial && trial.kind === "active") {
+        // daysIntoTrial は近似値。複数招待で trial が30日超延長されたケースや、
+        // daysLeft の切り上げにより日単位の精度。詳細な計測が必要なら inviteRewards から算出する。
+        const grantedDurationDays = 30;
+        const elapsedDays = Math.max(0, grantedDurationDays - trial.daysLeft);
+        trackEvent("trial_to_paid", {
+          price_type: priceType,
+          daysIntoTrial: elapsedDays,
+        });
+      }
       window.location.href = url;
     } catch {
       alert("エラーが発生しました");
@@ -125,12 +142,26 @@ function PricingContent() {
                 <div>
                   <p className="text-sm text-slate-500">現在のプラン</p>
                   <p className="font-bold text-slate-800">
-                    {subscription.plan === "premium" ? "Premium" : "Free"}
+                    {isTrial
+                      ? "Premium（トライアル中）"
+                      : subscription.plan === "premium"
+                        ? "Premium"
+                        : "Free"}
                   </p>
                 </div>
-                {subscription.plan === "premium" && (
+                {isTrial && trial.kind === "active" ? (
                   <div className="text-right">
-                    {subscription.currentPeriodEnd && (
+                    <p className="text-xs text-slate-500">
+                      残り {trial.daysLeft}日
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      期限: {new Date(trial.expiresAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                ) : (
+                  subscription.plan === "premium" &&
+                  subscription.currentPeriodEnd && (
+                    <div className="text-right">
                       <p className="text-xs text-slate-500">
                         {subscription.cancelAtPeriodEnd
                           ? "終了予定"
@@ -140,10 +171,16 @@ function PricingContent() {
                           subscription.currentPeriodEnd,
                         ).toLocaleDateString()}
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )
                 )}
               </div>
+              {isTrial && (
+                <p className="mt-3 text-xs text-slate-600 leading-relaxed">
+                  期限終了後は自動的に Free プランに戻ります。Premium
+                  を続ける場合は下のプランからお選びください。
+                </p>
+              )}
             </div>
           )}
 
