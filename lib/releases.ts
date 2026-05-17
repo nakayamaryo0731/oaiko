@@ -52,21 +52,8 @@ export type ReleaseAudienceContext = {
   currentPeriodEnd: number | null;
 };
 
-/**
- * 「Pairbo の招待 trial 以外の理由で Premium になっているユーザー」かどうか。
- *
- * 該当する分類:
- * - Stripe active 課金中
- * - Stripe canceled だが currentPeriodEnd 内
- * - Stripe trialing（Stripe 側の試用期間。Pairbo は使っていないが将来のため）
- * - admin による planOverride = "premium"（status が null になる）
- *
- * 該当しない（= 表示する）分類:
- * - Pairbo 側の招待 trial（synthetic な status="trialing", currentPeriodEnd=null）
- * - past_due（決済失敗）
- * - free
- */
-function isEstablishedPremium(
+/** Stripe で課金中（active）または canceled だが期間内の Premium ユーザーかどうか */
+function isPayingStripePremium(
   ctx: ReleaseAudienceContext,
   now: number = Date.now(),
 ): boolean {
@@ -79,8 +66,6 @@ function isEstablishedPremium(
   ) {
     return true;
   }
-  if (ctx.status === "trialing" && ctx.currentPeriodEnd != null) return true;
-  if (ctx.status === null) return true; // admin planOverride
   return false;
 }
 
@@ -92,7 +77,7 @@ export function isReleaseVisibleTo(
 ): boolean {
   const audience = release.audience ?? "all";
   if (audience === "all") return true;
-  if (audience === "non-paying") return !isEstablishedPremium(ctx, now);
+  if (audience === "non-paying") return !isPayingStripePremium(ctx, now);
   return true;
 }
 
