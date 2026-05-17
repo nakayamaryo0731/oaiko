@@ -17,6 +17,7 @@ import { useFormDialog } from "@/hooks/useFormDialog";
 import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { trackEvent } from "@/lib/analytics";
 import { InviteShareActions } from "./InviteShareActions";
+import { InviteRewardBadge } from "./InviteRewardBadge";
 
 type InviteDialogProps = {
   groupId: Id<"groups">;
@@ -66,15 +67,18 @@ export function InviteDialog({ groupId }: InviteDialogProps) {
           <ErrorAlert message={error} className="rounded-md" />
 
           {!inviteUrl ? (
-            <div className="text-center py-4">
-              <p className="text-sm text-slate-600 mb-4">
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 text-center">
                 招待リンクを作成して、メンバーを招待できます。
                 <br />
                 リンクの有効期限は7日間です。
               </p>
-              <Button onClick={handleCreateInvite} disabled={isLoading}>
-                {isLoading ? "作成中..." : "招待リンクを作成"}
-              </Button>
+              <InviteRewardBadge />
+              <div className="text-center">
+                <Button onClick={handleCreateInvite} disabled={isLoading}>
+                  {isLoading ? "作成中..." : "招待リンクを作成"}
+                </Button>
+              </div>
             </div>
           ) : (
             <InviteShareActions inviteUrl={inviteUrl} />
