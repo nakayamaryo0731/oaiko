@@ -195,6 +195,70 @@ describe("subscription helpers", () => {
 
       expect(plan).toBe("premium");
     });
+
+    test("trialExpiresAt 有効期間中 → premium", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await t.run(async (ctx) => {
+        const now = Date.now();
+        return await ctx.db.insert("users", {
+          clerkId: "trial_user",
+          displayName: "トライアルユーザー",
+          avatarUrl: undefined,
+          trialExpiresAt: now + 7 * 24 * 60 * 60 * 1000,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+
+      const plan = await t.run(async (ctx) => {
+        return await getUserPlan(ctx, userId);
+      });
+
+      expect(plan).toBe("premium");
+    });
+
+    test("trialExpiresAt 期限切れ → free に自動降格", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await t.run(async (ctx) => {
+        const now = Date.now();
+        return await ctx.db.insert("users", {
+          clerkId: "expired_trial_user",
+          displayName: "期限切れトライアル",
+          avatarUrl: undefined,
+          trialExpiresAt: now - 1000,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+
+      const plan = await t.run(async (ctx) => {
+        return await getUserPlan(ctx, userId);
+      });
+
+      expect(plan).toBe("free");
+    });
+
+    test("planOverride は trial よりも優先される", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await t.run(async (ctx) => {
+        const now = Date.now();
+        return await ctx.db.insert("users", {
+          clerkId: "override_with_trial",
+          displayName: "オーバーライド+trial",
+          avatarUrl: undefined,
+          planOverride: "free",
+          trialExpiresAt: now + 7 * 24 * 60 * 60 * 1000,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+
+      const plan = await t.run(async (ctx) => {
+        return await getUserPlan(ctx, userId);
+      });
+
+      expect(plan).toBe("free");
+    });
   });
 
   describe("isPremium", () => {

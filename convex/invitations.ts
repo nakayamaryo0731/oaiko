@@ -3,6 +3,7 @@ import { query } from "./_generated/server";
 import { authMutation } from "./lib/auth";
 import { getGroupMemberIds } from "./lib/groupHelper";
 import { FALLBACK } from "./lib/enrichment";
+import { grantInviteReward } from "./lib/inviteReward";
 import {
   isInvitationExpired,
   isInvitationUsed,
@@ -119,6 +120,30 @@ export const accept = authMutation({
       invitationId: invitation._id,
     });
 
-    return { success: true, groupId: invitation.groupId };
+    const inviterReward = await grantInviteReward(ctx, {
+      userId: invitation.createdBy,
+      invitationId: invitation._id,
+      reason: "inviter",
+    });
+    const inviteeReward = await grantInviteReward(ctx, {
+      userId: ctx.user._id,
+      invitationId: invitation._id,
+      reason: "invitee",
+    });
+
+    ctx.logger.info("GROUP", "invite_reward_evaluated", {
+      invitationId: invitation._id,
+      inviterGranted: inviterReward.granted,
+      inviterReason: inviterReward.granted ? undefined : inviterReward.reason,
+      inviteeGranted: inviteeReward.granted,
+      inviteeReason: inviteeReward.granted ? undefined : inviteeReward.reason,
+    });
+
+    return {
+      success: true,
+      groupId: invitation.groupId,
+      inviterRewardGranted: inviterReward.granted,
+      inviteeRewardGranted: inviteeReward.granted,
+    };
   },
 });

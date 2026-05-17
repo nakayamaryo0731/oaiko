@@ -22,6 +22,10 @@ export async function getUserPlan(
     return user.planOverride;
   }
 
+  if (user?.trialExpiresAt && user.trialExpiresAt > Date.now()) {
+    return "premium";
+  }
+
   const subscription = await ctx.db
     .query("subscriptions")
     .withIndex("by_user", (q) => q.eq("userId", userId))

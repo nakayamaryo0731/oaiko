@@ -40,6 +40,7 @@ export const getMySubscription = query({
         status: null,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false,
+        trialExpiresAt: null,
       };
     }
 
@@ -54,6 +55,7 @@ export const getMySubscription = query({
         status: null,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false,
+        trialExpiresAt: null,
       };
     }
 
@@ -63,8 +65,13 @@ export const getMySubscription = query({
         status: null,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false,
+        trialExpiresAt: null,
       };
     }
+
+    const trialActive =
+      user.trialExpiresAt != null && user.trialExpiresAt > Date.now();
+    const trialExpiresAt = trialActive ? user.trialExpiresAt! : null;
 
     const subscription = await ctx.db
       .query("subscriptions")
@@ -73,10 +80,11 @@ export const getMySubscription = query({
 
     if (!subscription) {
       return {
-        plan: "free" as const,
-        status: null,
+        plan: trialActive ? ("premium" as const) : ("free" as const),
+        status: trialActive ? ("trialing" as const) : null,
         currentPeriodEnd: null,
         cancelAtPeriodEnd: false,
+        trialExpiresAt,
       };
     }
 
@@ -85,6 +93,7 @@ export const getMySubscription = query({
       status: subscription.status,
       currentPeriodEnd: subscription.currentPeriodEnd,
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+      trialExpiresAt,
     };
   },
 });
