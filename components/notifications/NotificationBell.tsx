@@ -7,7 +7,6 @@ import { api } from "@/convex/_generated/api";
 import {
   getVisibleReleasesDesc,
   hasUnreadRelease,
-  hasUnclaimedTrialCampaign,
   type Release,
 } from "@/lib/releases";
 import { ReleaseModal } from "./ReleaseModal";
@@ -40,9 +39,7 @@ export function NotificationBell() {
 
   const latest = all[0];
   const trialClaimed = subscription.trialExpiresAt != null;
-  const hasUnread =
-    hasUnreadRelease(me.lastSeenReleaseAt, all) ||
-    hasUnclaimedTrialCampaign(all, subscription.trialExpiresAt ?? undefined);
+  const hasUnread = hasUnreadRelease(me.lastSeenReleaseAt, all);
 
   const handleOpen = () => {
     setView({ type: "detail", release: latest });
