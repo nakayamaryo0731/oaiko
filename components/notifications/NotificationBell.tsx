@@ -23,7 +23,6 @@ export function NotificationBell() {
   const markRead = useMutation(api.users.markReleasesRead);
   const [view, setView] = useState<View>({ type: "closed" });
 
-  // subscription も me と同じく取得完了するまで保留（プラン依存のフィルタが必要なため）
   if (!me || subscription === undefined) {
     return <div className="w-11 h-11" aria-hidden />;
   }
@@ -39,6 +38,7 @@ export function NotificationBell() {
   }
 
   const latest = all[0];
+  const trialClaimed = subscription.trialExpiresAt != null;
   const hasUnread = hasUnreadRelease(me.lastSeenReleaseAt, all);
 
   const handleOpen = () => {
@@ -76,6 +76,7 @@ export function NotificationBell() {
       {view.type === "detail" && (
         <ReleaseModal
           release={view.release}
+          trialClaimed={trialClaimed}
           onClose={handleClose}
           onBack={handleShowList}
         />

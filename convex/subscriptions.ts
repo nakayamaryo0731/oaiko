@@ -436,6 +436,63 @@ export const listUsers = internalMutation({
 });
 
 /**
+ * Premium 30日トライアルを取得する（キャンペーン用）
+ *
+ * 冪等。以下のいずれかなら何もせず granted=false を返す:
+ * - 既に trial を取得済み（trialExpiresAt が set されている）
+ * - Stripe で active / canceled-期間内 / trialing の Premium 課金者
+ * - admin の planOverride premium
+ */
+export const claimTrial = authMutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = ctx.user;
+    const TRIAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
+
+    if (user.trialExpiresAt != null) {
+      return { granted: false, reason: "already_claimed" as const };
+    }
+
+    if (user.planOverride === "premium") {
+      return { granted: false, reason: "admin_override" as const };
+    }
+
+    const subscription = await ctx.db
+      .query("subscriptions")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+    const now = Date.now();
+    if (subscription?.plan === "premium") {
+      if (
+        subscription.status === "active" ||
+        subscription.status === "trialing"
+      ) {
+        return { granted: false, reason: "already_paying" as const };
+      }
+      if (
+        subscription.status === "canceled" &&
+        subscription.currentPeriodEnd != null &&
+        subscription.currentPeriodEnd > now
+      ) {
+        return { granted: false, reason: "already_paying" as const };
+      }
+    }
+
+    const expiresAt = now + TRIAL_DURATION_MS;
+    await ctx.db.patch(user._id, {
+      trialExpiresAt: expiresAt,
+      updatedAt: now,
+    });
+    ctx.logger.audit("SUBSCRIPTION", "trial_claimed", {
+      expiresAt,
+      durationDays: 30,
+    });
+
+    return { granted: true as const, expiresAt };
+  },
+});
+
+/**
  * 管理者プラン切替（フロントエンドから呼び出し）
  * isAdmin=true のユーザーのみ実行可能
  */

@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { trackEvent } from "@/lib/analytics";
 import { InviteShareActions } from "./InviteShareActions";
-import { InviteRewardBadge } from "./InviteRewardBadge";
 
 const OPEN_DELAY_MS = 700;
 
@@ -93,7 +92,6 @@ export function InviteReminderModal({ groupId, shouldShow }: Props) {
                 は二人で使うと記録が共有できて、月末の精算も自動でできます。
                 今のままだと一人用メモになっています。招待リンクを送ってみましょう。
               </p>
-              <InviteRewardBadge />
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <Button
                   type="button"

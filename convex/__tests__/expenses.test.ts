@@ -818,19 +818,6 @@ describe("expenses", () => {
         .withIdentity(userBIdentity)
         .mutation(api.invitations.accept, { token });
 
-      // 招待 accept で双方に Premium trial が付与されるため、free 前提のテストを成立させるためにクリア
-      await t.run(async (ctx) => {
-        for (const subject of [userAIdentity.subject, userBIdentity.subject]) {
-          const user = await ctx.db
-            .query("users")
-            .withIndex("by_clerk_id", (q) => q.eq("clerkId", subject))
-            .unique();
-          if (user) {
-            await ctx.db.patch(user._id, { trialExpiresAt: undefined });
-          }
-        }
-      });
-
       const detail = await t
         .withIdentity(userAIdentity)
         .query(api.groups.getDetail, { groupId });
