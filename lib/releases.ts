@@ -1,5 +1,13 @@
 export type ReleaseAudience = "all" | "non-paying";
 
+/** お知らせの CTA（取れるアクション）。今後増えたらここに追加する */
+export type ReleaseCta = {
+  /** ボタンに表示する文言 */
+  label: string;
+  /** クリック時の動作 */
+  action: "claim_trial";
+};
+
 export type Release = {
   /** 一意なID（YYYY-MM-DD-slug 形式推奨） */
   id: string;
@@ -14,6 +22,10 @@ export type Release = {
    * "non-paying" を指定すると、Stripe で active / 期間内 canceled の課金中ユーザーには表示しない。
    */
   audience?: ReleaseAudience;
+  /** お知らせ内の CTA（任意） */
+  cta?: ReleaseCta;
+  /** 表示の有効期限。これ以降は通知一覧から非表示にする（任意） */
+  expiresAt?: number;
 };
 
 /**
@@ -37,11 +49,13 @@ export const releases: Release[] = [
     body: "分析タブから、支出データをGoogleスプレッドシートに書き出せるようになりました。\n期間を選んでエクスポートすると、お使いのGoogleドライブに集計表が作成されます。",
   },
   {
-    id: "2026-05-17-invite-reward-trial",
+    id: "2026-05-17-trial-campaign",
     publishedAt: Date.UTC(2026, 4, 17),
-    title: "招待が成立すると2人とも Premium 1ヶ月無料に！",
-    body: "招待リンクから新しいメンバーが参加すると、招待した方も参加した方も Premium プランを30日間無料で体験できるようになりました。\n傾斜折半・タグ・年間分析などの機能をぜひ試してみてください。\n期間終了後は自動で無料プランに戻ります（自動課金は発生しません）。",
+    title: "Premium 1ヶ月無料体験キャンペーン！",
+    body: "下のボタンを押すと、Premium プランを30日間無料でご利用いただけます。\n\n• 傾斜折半（収入差に合わせた割り勘）\n• タグで支出を細かく整理\n• 年間の支出推移を分析\n• Google スプレッドシートへのエクスポート\n• 広告非表示\n\n期間終了後は自動で無料プランに戻ります（クレジットカード登録不要、自動課金は発生しません）。",
     audience: "non-paying",
+    cta: { label: "Premium機能を使ってみる", action: "claim_trial" },
+    expiresAt: Date.UTC(2026, 5, 1), // 2026-06-01 00:00 UTC = 5月末で表示終了
   },
 ];
 
@@ -69,12 +83,21 @@ function isPayingStripePremium(
   return false;
 }
 
+/** 表示期限切れか */
+export function isReleaseExpired(
+  release: Release,
+  now: number = Date.now(),
+): boolean {
+  return release.expiresAt != null && release.expiresAt <= now;
+}
+
 /** 個別リリースが特定ユーザーに見えるか判定する */
 export function isReleaseVisibleTo(
   release: Release,
   ctx: ReleaseAudienceContext,
   now: number = Date.now(),
 ): boolean {
+  if (isReleaseExpired(release, now)) return false;
   const audience = release.audience ?? "all";
   if (audience === "all") return true;
   if (audience === "non-paying") return !isPayingStripePremium(ctx, now);
@@ -101,4 +124,22 @@ export function hasUnreadRelease(
 ): boolean {
   const threshold = lastSeenAt ?? 0;
   return releasesList.some((r) => r.publishedAt > threshold);
+}
+
+/**
+ * 未取得の trial キャンペーンがあるか（lastSeenReleaseAt とは独立した bell バッジ条件）。
+ *
+ * 新規ユーザーは `lastSeenReleaseAt = now` で初期化されるため、過去公開のキャンペーンも
+ * 通常では未読扱いされない。trial 未取得かつ対象ユーザーには bell の赤ドットを出したい
+ * ため、この条件を別途付け加える。
+ */
+export function hasUnclaimedTrialCampaign(
+  releasesList: Release[],
+  trialExpiresAt: number | undefined,
+  now: number = Date.now(),
+): boolean {
+  if (trialExpiresAt != null) return false; // 既に trial 取得済み
+  return releasesList.some(
+    (r) => r.cta?.action === "claim_trial" && !isReleaseExpired(r, now),
+  );
 }
