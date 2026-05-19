@@ -27,7 +27,6 @@ import { UserButton } from "@clerk/nextjs";
 import { NotificationBell } from "@/components/notifications";
 import { PwaOnboardingTour } from "@/components/pwa/PwaOnboardingTour";
 import { InviteReminderModal } from "@/components/groups/InviteReminderModal";
-import { TrialWelcomeModal } from "@/components/onboarding/TrialWelcomeModal";
 import { buildMemberColorMap } from "@/lib/userColors";
 
 type PageProps = {
@@ -161,7 +160,6 @@ export default function GroupDetailPage({ params }: PageProps) {
         groupId={detail.group._id}
         shouldShow={shouldShowInvitePrompts}
       />
-      <TrialWelcomeModal />
     </div>
   );
 }
