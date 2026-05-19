@@ -125,21 +125,3 @@ export function hasUnreadRelease(
   const threshold = lastSeenAt ?? 0;
   return releasesList.some((r) => r.publishedAt > threshold);
 }
-
-/**
- * 未取得の trial キャンペーンがあるか（lastSeenReleaseAt とは独立した bell バッジ条件）。
- *
- * 新規ユーザーは `lastSeenReleaseAt = now` で初期化されるため、過去公開のキャンペーンも
- * 通常では未読扱いされない。trial 未取得かつ対象ユーザーには bell の赤ドットを出したい
- * ため、この条件を別途付け加える。
- */
-export function hasUnclaimedTrialCampaign(
-  releasesList: Release[],
-  trialExpiresAt: number | undefined,
-  now: number = Date.now(),
-): boolean {
-  if (trialExpiresAt != null) return false; // 既に trial 取得済み
-  return releasesList.some(
-    (r) => r.cta?.action === "claim_trial" && !isReleaseExpired(r, now),
-  );
-}

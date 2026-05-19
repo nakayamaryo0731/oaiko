@@ -30,26 +30,26 @@ export function ReleaseModal({
   onBack,
 }: ReleaseModalProps) {
   const claimTrial = useMutation(api.subscriptions.claimTrial);
-  const [claimState, setClaimState] = useState<
-    "idle" | "loading" | "success" | "error"
-  >(() => (trialClaimed ? "success" : "idle"));
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 直前に claim した直後はサーバ側 query 反映前なので、ローカルフラグも持っておく
+  const [justClaimed, setJustClaimed] = useState(false);
+
+  const showSuccess = trialClaimed || justClaimed;
 
   const handleClaim = async () => {
-    setClaimState("loading");
+    setIsLoading(true);
     setError(null);
     try {
       const result = await claimTrial();
       if (result.granted) {
         trackEvent("trial_claimed", { source: "release_modal" });
-        setClaimState("success");
-      } else {
-        // すでに付与済み・課金中など。UI 的には成功扱いでよい
-        setClaimState("success");
       }
+      setJustClaimed(true);
     } catch (err) {
       setError(getErrorMessage(err, "エラーが発生しました"));
-      setClaimState("error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,7 +87,7 @@ export function ReleaseModal({
         {hasClaimTrialCta && release.cta && (
           <div className="mt-5">
             <ErrorAlert message={error} className="rounded-md mb-3" />
-            {claimState === "success" ? (
+            {showSuccess ? (
               <div className="flex items-center gap-2 px-3 py-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900">
                 <Sparkles className="h-4 w-4 shrink-0" />
                 <p className="text-sm font-medium">
@@ -99,9 +99,9 @@ export function ReleaseModal({
                 type="button"
                 className="w-full"
                 onClick={handleClaim}
-                disabled={claimState === "loading"}
+                disabled={isLoading}
               >
-                {claimState === "loading" ? "処理中..." : release.cta.label}
+                {isLoading ? "処理中..." : release.cta.label}
               </Button>
             )}
           </div>
