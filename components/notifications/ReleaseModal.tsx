@@ -12,8 +12,11 @@ import { getErrorMessage } from "@/lib/errors";
 
 type ReleaseModalProps = {
   release: Release;
-  /** ユーザーが既に trial を取得済みか（claimTrial の事前判定に使用） */
-  trialClaimed: boolean;
+  /**
+   * ユーザーが既に Premium かどうか（Stripe / Pairbo trial / admin planOverride いずれの理由でも true）。
+   * true なら claim_trial CTA は「Premium ご利用中」表示になる。
+   */
+  isAlreadyPremium: boolean;
   onClose: () => void;
   onBack: () => void;
 };
@@ -25,7 +28,7 @@ function formatDate(ts: number): string {
 
 export function ReleaseModal({
   release,
-  trialClaimed,
+  isAlreadyPremium,
   onClose,
   onBack,
 }: ReleaseModalProps) {
@@ -35,7 +38,7 @@ export function ReleaseModal({
   // 直前に claim した直後はサーバ側 query 反映前なので、ローカルフラグも持っておく
   const [justClaimed, setJustClaimed] = useState(false);
 
-  const showSuccess = trialClaimed || justClaimed;
+  const showSuccess = isAlreadyPremium || justClaimed;
 
   const handleClaim = async () => {
     setIsLoading(true);

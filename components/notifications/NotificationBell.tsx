@@ -38,7 +38,10 @@ export function NotificationBell() {
   }
 
   const latest = all[0];
-  const trialClaimed = subscription.trialExpiresAt != null;
+  // 既に Premium（Stripe 課金 / Pairbo trial / admin planOverride いずれも含む）なら
+  // ReleaseModal の CTA は「体験中」表示にする。trialExpiresAt 単独では admin override の
+  // ケースを拾えないので plan ベースで判定する。
+  const isAlreadyPremium = subscription.plan === "premium";
   const hasUnread = hasUnreadRelease(me.lastSeenReleaseAt, all);
 
   const handleOpen = () => {
@@ -76,7 +79,7 @@ export function NotificationBell() {
       {view.type === "detail" && (
         <ReleaseModal
           release={view.release}
-          trialClaimed={trialClaimed}
+          isAlreadyPremium={isAlreadyPremium}
           onClose={handleClose}
           onBack={handleShowList}
         />
