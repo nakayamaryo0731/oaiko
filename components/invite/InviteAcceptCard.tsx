@@ -9,7 +9,6 @@ import type { Id } from "@/convex/_generated/dataModel";
 import { Home, User, Users } from "lucide-react";
 import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { getErrorMessage } from "@/lib/errors";
-import { trackEvent } from "@/lib/analytics";
 
 interface InvitationInfo {
   groupId: Id<"groups">;
@@ -41,17 +40,7 @@ export function InviteAcceptCard({ token, invitation }: InviteAcceptCardProps) {
       if (result.alreadyMember) {
         router.push(`/groups/${result.groupId}`);
       } else if (result.success) {
-        // 招待 accept 1件 = 1イベント。inviter/invitee いずれが付与されたかはプロパティで識別する。
-        // 端末は被招待者なので user_id は invitee。両者の付与履歴は inviteRewards テーブルが正。
-        trackEvent("invite_reward_granted", {
-          inviterGranted: result.inviterRewardGranted,
-          inviteeGranted: result.inviteeRewardGranted,
-          durationDays: 30,
-        });
-        const welcomeQuery = result.inviteeRewardGranted
-          ? "?welcome=trial"
-          : "";
-        router.push(`/groups/${result.groupId}${welcomeQuery}`);
+        router.push(`/groups/${result.groupId}`);
       }
     } catch (err) {
       setError(getErrorMessage(err, "グループへの参加に失敗しました"));

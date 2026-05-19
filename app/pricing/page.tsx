@@ -33,13 +33,14 @@ function PricingContent() {
   const [loading, setLoading] = useState(false);
   const [selectedPrice, setSelectedPrice] = useState<PriceType>("yearly");
 
-  const isPremium = subscription?.plan === "premium";
   const trial = readTrialState(subscription?.trialExpiresAt);
   // Stripe active / Stripe Trial 中はそちらを優先表示。canceled-期間内 や subscription なしで
   // trialExpiresAt があれば「Pairbo 内部 trial」表示。
   const onStripePaid =
     subscription?.status === "active" || subscription?.status === "trialing";
   const isTrial = trial.kind === "active" && !onStripePaid;
+  // 有料 Premium かどうか（trial 中は除外）。プランカードのスタイルや申込ボタンの活性判定に使う。
+  const isPaidPremium = subscription?.plan === "premium" && !isTrial;
 
   const handleCheckout = async (priceType: PriceType) => {
     if (!isAuthenticated) {
@@ -188,7 +189,7 @@ function PricingContent() {
           <div className="space-y-4">
             {/* Free プラン */}
             <div
-              className={`bg-white border rounded-xl p-6 ${!isPremium ? "border-slate-200" : "border-slate-100 opacity-60"}`}
+              className={`bg-white border rounded-xl p-6 ${!isPaidPremium ? "border-slate-200" : "border-slate-100 opacity-60"}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-slate-800">Free</h2>
@@ -216,7 +217,7 @@ function PricingContent() {
                   <span>月次分析グラフ</span>
                 </li>
               </ul>
-              {!isPremium && (
+              {!isPaidPremium && (
                 <div className="text-center text-sm text-slate-500">
                   現在ご利用中
                 </div>
@@ -225,9 +226,9 @@ function PricingContent() {
 
             {/* Premium プラン */}
             <div
-              className={`bg-white border-2 rounded-xl p-6 relative ${isPremium ? "border-emerald-500" : "border-slate-800"}`}
+              className={`bg-white border-2 rounded-xl p-6 relative ${isPaidPremium ? "border-emerald-500" : "border-slate-800"}`}
             >
-              {!isPremium && (
+              {!isPaidPremium && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <span className="bg-slate-800 text-white text-xs font-medium px-3 py-1 rounded-full">
                     おすすめ
@@ -255,7 +256,7 @@ function PricingContent() {
                   )}
                 </div>
               </div>
-              {!isPremium && (
+              {!isPaidPremium && (
                 <div className="flex mb-4 bg-slate-100 rounded-lg p-1">
                   <button
                     onClick={() => setSelectedPrice("monthly")}
@@ -300,7 +301,7 @@ function PricingContent() {
                   <span>広告非表示</span>
                 </li>
               </ul>
-              {isPremium ? (
+              {isPaidPremium ? (
                 <button
                   onClick={handleManageSubscription}
                   disabled={loading}

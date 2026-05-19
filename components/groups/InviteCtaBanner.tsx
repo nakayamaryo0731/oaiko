@@ -15,7 +15,6 @@ import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { UserPlus, ChevronRight } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 import { InviteShareActions } from "./InviteShareActions";
-import { InviteRewardBadge } from "./InviteRewardBadge";
 
 type Props = {
   groupId: Id<"groups">;
@@ -84,18 +83,15 @@ export function InviteCtaBanner({ groupId }: Props) {
             <ErrorAlert message={error} className="rounded-md" />
 
             {!inviteUrl ? (
-              <div className="space-y-4">
-                <p className="text-sm text-slate-600 text-center">
+              <div className="text-center py-4">
+                <p className="text-sm text-slate-600 mb-4">
                   招待リンクを作成して、メンバーに共有しましょう。
                   <br />
                   リンクの有効期限は7日間です。
                 </p>
-                <InviteRewardBadge />
-                <div className="text-center">
-                  <Button onClick={handleCreateInvite} disabled={isCreating}>
-                    {isCreating ? "作成中..." : "招待リンクを作る"}
-                  </Button>
-                </div>
+                <Button onClick={handleCreateInvite} disabled={isCreating}>
+                  {isCreating ? "作成中..." : "招待リンクを作る"}
+                </Button>
               </div>
             ) : (
               <InviteShareActions inviteUrl={inviteUrl} />

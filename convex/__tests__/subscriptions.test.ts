@@ -338,3 +338,135 @@ describe("subscriptions mutations", () => {
     });
   });
 });
+
+describe("claimTrial", () => {
+  const TRIAL_MS = 30 * 24 * 60 * 60 * 1000;
+  const claimIdentity = {
+    subject: "test_claim_user",
+    name: "クレームテスト",
+    email: "claim@example.com",
+  };
+
+  test("trial 未取得 / 非 Premium ユーザーは付与される", async () => {
+    const { api } = await import("../_generated/api");
+    const t = convexTest(schema, modules);
+    // 先に ensureUser でユーザーを作成
+    await t.withIdentity(claimIdentity).mutation(api.users.ensureUser, {});
+
+    const before = Date.now();
+    const result = await t
+      .withIdentity(claimIdentity)
+      .mutation(api.subscriptions.claimTrial, {});
+    const after = Date.now();
+
+    expect(result.granted).toBe(true);
+    if (result.granted) {
+      expect(result.expiresAt).toBeGreaterThanOrEqual(before + TRIAL_MS);
+      expect(result.expiresAt).toBeLessThanOrEqual(after + TRIAL_MS);
+    }
+
+    const user = await t.run(async (ctx) => {
+      return await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", claimIdentity.subject))
+        .unique();
+    });
+    expect(user?.trialExpiresAt).toBeDefined();
+  });
+
+  test("既に trial 取得済みなら no-op", async () => {
+    const { api } = await import("../_generated/api");
+    const t = convexTest(schema, modules);
+    await t.withIdentity(claimIdentity).mutation(api.users.ensureUser, {});
+
+    await t
+      .withIdentity(claimIdentity)
+      .mutation(api.subscriptions.claimTrial, {});
+    const second = await t
+      .withIdentity(claimIdentity)
+      .mutation(api.subscriptions.claimTrial, {});
+
+    expect(second.granted).toBe(false);
+    if (!second.granted) {
+      expect(second.reason).toBe("already_claimed");
+    }
+  });
+
+  test("active Stripe Premium 課金者は no-op", async () => {
+    const { api } = await import("../_generated/api");
+    const t = convexTest(schema, modules);
+    await t.withIdentity(claimIdentity).mutation(api.users.ensureUser, {});
+
+    await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", claimIdentity.subject))
+        .unique();
+      if (!user) throw new Error("user not found");
+      const nowTs = Date.now();
+      await ctx.db.insert("subscriptions", {
+        userId: user._id,
+        stripeCustomerId: "cus_paying",
+        stripeSubscriptionId: "sub_paying",
+        plan: "premium",
+        status: "active",
+        currentPeriodStart: nowTs,
+        currentPeriodEnd: nowTs + 30 * 24 * 60 * 60 * 1000,
+        cancelAtPeriodEnd: false,
+        createdAt: nowTs,
+        updatedAt: nowTs,
+      });
+    });
+
+    const result = await t
+      .withIdentity(claimIdentity)
+      .mutation(api.subscriptions.claimTrial, {});
+
+    expect(result.granted).toBe(false);
+    if (!result.granted) {
+      expect(result.reason).toBe("already_paying");
+    }
+  });
+
+  test("admin planOverride premium は no-op", async () => {
+    const { api } = await import("../_generated/api");
+    const t = convexTest(schema, modules);
+    await t.withIdentity(claimIdentity).mutation(api.users.ensureUser, {});
+    await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", claimIdentity.subject))
+        .unique();
+      if (!user) throw new Error("user not found");
+      await ctx.db.patch(user._id, { planOverride: "premium" });
+    });
+
+    const result = await t
+      .withIdentity(claimIdentity)
+      .mutation(api.subscriptions.claimTrial, {});
+
+    expect(result.granted).toBe(false);
+    if (!result.granted) {
+      expect(result.reason).toBe("admin_override");
+    }
+  });
+
+  test("getUserPlan が claim 後 premium を返す", async () => {
+    const { api } = await import("../_generated/api");
+    const t = convexTest(schema, modules);
+    await t.withIdentity(claimIdentity).mutation(api.users.ensureUser, {});
+    await t
+      .withIdentity(claimIdentity)
+      .mutation(api.subscriptions.claimTrial, {});
+
+    const plan = await t.run(async (ctx) => {
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkId", claimIdentity.subject))
+        .unique();
+      if (!user) throw new Error("user not found");
+      return await getUserPlan(ctx, user._id);
+    });
+    expect(plan).toBe("premium");
+  });
+});
