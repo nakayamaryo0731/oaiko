@@ -75,6 +75,7 @@ type Summary = {
   totalGroups: number;
   totalExpenses: number;
   premiumCount: number;
+  trialClaimedCount: number;
 };
 
 function SummaryCards({ summary }: { summary: Summary | undefined }) {
@@ -87,11 +88,12 @@ function SummaryCards({ summary }: { summary: Summary | undefined }) {
         { label: "グループ数", value: summary.totalGroups },
         { label: "支出件数", value: summary.totalExpenses.toLocaleString() },
         { label: "Premium", value: summary.premiumCount },
+        { label: "Trial claim", value: summary.trialClaimedCount },
       ]
     : null;
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8 gap-3">
       {cards
         ? cards.map((card) => (
             <div
@@ -102,7 +104,7 @@ function SummaryCards({ summary }: { summary: Summary | undefined }) {
               <p className="text-2xl font-bold text-slate-800">{card.value}</p>
             </div>
           ))
-        : Array.from({ length: 7 }).map((_, i) => (
+        : Array.from({ length: 8 }).map((_, i) => (
             <div
               key={i}
               className="bg-white rounded-lg border border-slate-200 p-4"
