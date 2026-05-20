@@ -53,6 +53,36 @@ describe("admin", () => {
       expect(summary.totalGroups).toBe(0);
       expect(summary.totalExpenses).toBe(0);
       expect(summary.premiumCount).toBe(0);
+      expect(summary.trialClaimedCount).toBe(0);
+    });
+
+    test("trial claim 数をカウントできる", async () => {
+      const t = convexTest(schema, modules);
+      await setupAdmin(t);
+
+      const now = Date.now();
+      const oneDay = 24 * 60 * 60 * 1000;
+
+      await t.withIdentity(userIdentity).mutation(api.users.ensureUser, {});
+      await t
+        .withIdentity({ subject: "expired_user", email: "e@example.com" })
+        .mutation(api.users.ensureUser, {});
+
+      await t.run(async (ctx) => {
+        const users = await ctx.db.query("users").collect();
+        const active = users.find((u) => u.clerkId === "user_clerk_id");
+        const expired = users.find((u) => u.clerkId === "expired_user");
+        if (active)
+          await ctx.db.patch(active._id, { trialExpiresAt: now + oneDay });
+        if (expired)
+          await ctx.db.patch(expired._id, { trialExpiresAt: now - oneDay });
+      });
+
+      const summary = await t
+        .withIdentity(adminIdentity)
+        .query(api.admin.getSummary, {});
+
+      expect(summary.trialClaimedCount).toBe(2);
     });
 
     test("非管理者はサマリーを取得できない", async () => {

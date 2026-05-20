@@ -73,6 +73,10 @@ export const getSummary = authQuery({
         premiumUserIds.add(s.userId);
     }
 
+    const trialClaimedCount = users.filter(
+      (u) => u.trialExpiresAt != null,
+    ).length;
+
     return {
       totalUsers: users.length,
       dau: getActiveUserIds(expenses, settlements, shoppingItems, oneDayAgo)
@@ -84,6 +88,7 @@ export const getSummary = authQuery({
       totalGroups: groups.length,
       totalExpenses: expenses.length,
       premiumCount: premiumUserIds.size,
+      trialClaimedCount,
     };
   },
 });
