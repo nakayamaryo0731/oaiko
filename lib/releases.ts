@@ -125,3 +125,20 @@ export function hasUnreadRelease(
   const threshold = lastSeenAt ?? 0;
   return releasesList.some((r) => r.publishedAt > threshold);
 }
+
+/**
+ * 現在実施中の trial 取得キャンペーンを返す。
+ * expiresAt が未来のもの（または未設定）のうち、claim_trial CTA を持つ最初の release。
+ * LP のキャンペーンバナー表示判定などに使用。
+ */
+export function getActiveTrialCampaign(
+  now: number = Date.now(),
+): Release | null {
+  return (
+    releases.find(
+      (r) =>
+        r.cta?.action === "claim_trial" &&
+        (r.expiresAt == null || r.expiresAt > now),
+    ) ?? null
+  );
+}
