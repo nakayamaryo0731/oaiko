@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { Bell } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import {
+  getAutoOpenRelease,
   getVisibleReleasesDesc,
   hasUnreadRelease,
   type Release,
+  type ReleaseAudienceContext,
 } from "@/lib/releases";
 import { ReleaseModal } from "./ReleaseModal";
 import { ReleaseListModal } from "./ReleaseListModal";
@@ -20,25 +22,61 @@ type View =
 export function NotificationBell() {
   const me = useQuery(api.users.getMe);
   const subscription = useQuery(api.subscriptions.getMySubscription);
-  const markRead = useMutation(api.users.markReleasesRead);
-  const [view, setView] = useState<View>({ type: "closed" });
 
-  if (!me || subscription === undefined) {
+  if (!me || !subscription) {
     return <div className="w-11 h-11" aria-hidden />;
   }
 
-  const all = getVisibleReleasesDesc({
+  return <NotificationBellReady me={me} subscription={subscription} />;
+}
+
+type MeData = NonNullable<ReturnType<typeof useQuery<typeof api.users.getMe>>>;
+type SubscriptionData = NonNullable<
+  ReturnType<typeof useQuery<typeof api.subscriptions.getMySubscription>>
+>;
+
+function NotificationBellReady({
+  me,
+  subscription,
+}: {
+  me: MeData;
+  subscription: SubscriptionData;
+}) {
+  const markRead = useMutation(api.users.markReleasesRead);
+
+  const audienceCtx: ReleaseAudienceContext = {
     plan: subscription.plan,
     status: subscription.status,
     currentPeriodEnd: subscription.currentPeriodEnd ?? null,
+  };
+  const trialClaimed = subscription.trialExpiresAt != null;
+
+  // 自動オープン判定は mount 直後に1回だけ。クエリ解決後にこのコンポーネントが
+  // マウントされるため、lazy initializer で安全に評価できる。
+  const [view, setView] = useState<View>(() => {
+    const auto = getAutoOpenRelease({
+      ctx: audienceCtx,
+      lastSeenReleaseAt: me.lastSeenReleaseAt,
+      trialClaimed,
+    });
+    return auto ? { type: "detail", release: auto } : { type: "closed" };
   });
+
+  // 自動オープンで起動したかを mount 時点でスナップショットする。
+  // 以降の view 変化で flag が動かないため、effect の依存に含めても再発火しない。
+  const wasAutoOpenedRef = useRef(view.type === "detail");
+  useEffect(() => {
+    if (!wasAutoOpenedRef.current) return;
+    markRead().catch(() => {});
+  }, [markRead]);
+
+  const all = getVisibleReleasesDesc(audienceCtx);
 
   if (all.length === 0) {
     return <div className="w-11 h-11" aria-hidden />;
   }
 
   const latest = all[0];
-  const trialClaimed = subscription.trialExpiresAt != null;
   const hasUnread = hasUnreadRelease(me.lastSeenReleaseAt, all);
 
   const handleOpen = () => {

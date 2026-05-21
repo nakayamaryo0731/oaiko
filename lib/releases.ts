@@ -26,6 +26,11 @@ export type Release = {
   cta?: ReleaseCta;
   /** 表示の有効期限。これ以降は通知一覧から非表示にする（任意） */
   expiresAt?: number;
+  /**
+   * true の場合、認証済みユーザーが画面にアクセスした際に自動でモーダルを開く。
+   * 既読（lastSeenReleaseAt が publishedAt 以上）になれば自動表示は止まる。
+   */
+  autoOpen?: boolean;
 };
 
 /**
@@ -56,6 +61,7 @@ export const releases: Release[] = [
     audience: "non-paying",
     cta: { label: "Premium機能を使ってみる", action: "claim_trial" },
     expiresAt: Date.UTC(2026, 5, 1), // 2026-06-01 00:00 UTC = 5月末で表示終了
+    autoOpen: true,
   },
 ];
 
@@ -140,5 +146,35 @@ export function getActiveTrialCampaign(
         r.cta?.action === "claim_trial" &&
         (r.expiresAt == null || r.expiresAt > now),
     ) ?? null
+  );
+}
+
+/**
+ * 自動でモーダルを開くべき release を返す（無ければ null）。
+ *
+ * 判定条件:
+ * - autoOpen が true
+ * - audience / 期限などの可視性を満たす（{@link isReleaseVisibleTo}）
+ * - lastSeenReleaseAt より新しい（既読でない）
+ * - claim_trial CTA の場合、trial を未 claim
+ *
+ * 条件を満たす中で最も新しい release を返す。
+ */
+export function getAutoOpenRelease(opts: {
+  ctx: ReleaseAudienceContext;
+  lastSeenReleaseAt: number | undefined;
+  trialClaimed: boolean;
+  now?: number;
+}): Release | null {
+  const now = opts.now ?? Date.now();
+  const threshold = opts.lastSeenReleaseAt ?? 0;
+  return (
+    getReleasesDesc().find((r) => {
+      if (r.autoOpen !== true) return false;
+      if (!isReleaseVisibleTo(r, opts.ctx, now)) return false;
+      if (r.publishedAt <= threshold) return false;
+      if (r.cta?.action === "claim_trial" && opts.trialClaimed) return false;
+      return true;
+    }) ?? null
   );
 }
