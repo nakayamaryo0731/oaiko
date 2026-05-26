@@ -290,13 +290,11 @@ function HeroSection() {
         {/* テキスト */}
         <div className="text-center md:text-left md:w-1/2">
           <p className="inline-block text-xs font-medium text-blue-600 bg-blue-50 rounded-full px-3 py-1 mb-6">
-            同棲・二人暮らしのための無料共有家計簿アプリ
+            二人暮らし・カップルのための無料共有家計簿アプリ
           </p>
 
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-4 leading-tight">
-            同棲の生活費分担を、
-            <br />
-            もっとフェアに。
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-800 mb-4 leading-tight text-balance">
+            パートナーとの生活費分担をもっといい感じに
           </h1>
 
           <p className="text-base text-slate-600 mb-1">
