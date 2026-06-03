@@ -7,6 +7,7 @@ import { formatDateShort, formatAmount } from "@/lib/formatters";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
 import { getTagColorClasses } from "@/lib/tagColors";
+import { getMemberTextColor } from "@/lib/userColors";
 
 type ExpenseCardProps = {
   expense: {
@@ -176,13 +177,14 @@ export const ExpenseCard = memo(function ExpenseCard({
               <span
                 style={
                   payer && memberColors?.[payer._id]
-                    ? {
-                        color: `color-mix(in srgb, ${memberColors[payer._id]}, black 45%)`,
-                      }
+                    ? { color: getMemberTextColor(memberColors[payer._id]) }
                     : undefined
                 }
               >
-                {payer?.displayName ?? "不明"}が支払い
+                <span className="font-semibold">
+                  {payer?.displayName ?? "不明"}
+                </span>
+                が支払い
               </span>
             </div>
             {tags && tags.length > 0 && (
