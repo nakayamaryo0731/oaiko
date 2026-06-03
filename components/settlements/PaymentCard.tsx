@@ -9,6 +9,7 @@ import { formatTimestamp, formatAmount } from "@/lib/formatters";
 import { trackEvent } from "@/lib/analytics";
 import { CircleCheck, Circle } from "lucide-react";
 import { MemberColorDot } from "@/components/ui/MemberColorDot";
+import { MemberNameLabel } from "@/components/ui/MemberNameLabel";
 
 type PaymentCardProps = {
   payment: {
@@ -44,9 +45,16 @@ export function PaymentCard({ payment, memberColors }: PaymentCardProps) {
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm text-slate-600 flex items-center gap-1">
           <MemberColorDot color={memberColors?.[payment.fromUserId]} />
-          {payment.fromUserName} →{" "}
+          <MemberNameLabel
+            name={payment.fromUserName}
+            color={memberColors?.[payment.fromUserId]}
+          />
+          {" → "}
           <MemberColorDot color={memberColors?.[payment.toUserId]} />
-          {payment.toUserName}
+          <MemberNameLabel
+            name={payment.toUserName}
+            color={memberColors?.[payment.toUserId]}
+          />
         </span>
         <span className="font-medium">¥{formatAmount(payment.amount)}</span>
       </div>

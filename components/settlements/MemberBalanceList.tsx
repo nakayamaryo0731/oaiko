@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { MemberExpenseDetail } from "./MemberExpenseDetail";
+import { MemberNameLabel } from "@/components/ui/MemberNameLabel";
 
 type Balance = {
   userId: Id<"users">;
@@ -88,7 +89,11 @@ export function MemberBalanceList({
                   style={{ backgroundColor: memberColors[balance.userId] }}
                 />
               )}
-              <span className="text-sm">{balance.displayName}</span>
+              <MemberNameLabel
+                name={balance.displayName}
+                color={memberColors?.[balance.userId]}
+                className="text-sm"
+              />
             </div>
             <div className="flex items-center gap-1.5">
               <span

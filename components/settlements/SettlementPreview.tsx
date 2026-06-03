@@ -11,6 +11,7 @@ import { buildMemberColorMap } from "@/lib/userColors";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { PayPayButton } from "./PayPayButton";
 import { trackEvent } from "@/lib/analytics";
+import { MemberNameLabel } from "@/components/ui/MemberNameLabel";
 
 type SettlementPreviewProps = {
   groupId: Id<"groups">;
@@ -110,7 +111,11 @@ export function SettlementPreview({
                       }}
                     />
                   )}
-                  {payment.fromUserName} →{" "}
+                  <MemberNameLabel
+                    name={payment.fromUserName}
+                    color={memberColors[payment.fromUserId]}
+                  />
+                  {" → "}
                   {memberColors[payment.toUserId] && (
                     <span
                       className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
@@ -119,7 +124,10 @@ export function SettlementPreview({
                       }}
                     />
                   )}
-                  {payment.toUserName}
+                  <MemberNameLabel
+                    name={payment.toUserName}
+                    color={memberColors[payment.toUserId]}
+                  />
                 </span>
                 <span className="font-medium">
                   ¥{payment.amount.toLocaleString()}
@@ -202,7 +210,15 @@ function CompactSettlement({
                       }}
                     />
                   )}
-                  {payment.fromUserName} → {payment.toUserName}
+                  <MemberNameLabel
+                    name={payment.fromUserName}
+                    color={memberColors[payment.fromUserId]}
+                  />
+                  {" → "}
+                  <MemberNameLabel
+                    name={payment.toUserName}
+                    color={memberColors[payment.toUserId]}
+                  />
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="font-medium text-slate-800">
@@ -309,7 +325,11 @@ function CompactSettlement({
                                 }}
                               />
                             )}
-                            {payment.fromUserName} →{" "}
+                            <MemberNameLabel
+                              name={payment.fromUserName}
+                              color={memberColors[payment.fromUserId]}
+                            />
+                            {" → "}
                             {memberColors[payment.toUserId] && (
                               <span
                                 className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
@@ -319,7 +339,10 @@ function CompactSettlement({
                                 }}
                               />
                             )}
-                            {payment.toUserName}
+                            <MemberNameLabel
+                              name={payment.toUserName}
+                              color={memberColors[payment.toUserId]}
+                            />
                           </span>
                           <span className="font-medium">
                             ¥{payment.amount.toLocaleString()}
