@@ -7,7 +7,7 @@ import { formatDateShort, formatAmount } from "@/lib/formatters";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
 import { getTagColorClasses } from "@/lib/tagColors";
-import { getMemberTextColor } from "@/lib/userColors";
+import { MemberNameLabel } from "@/components/ui/MemberNameLabel";
 
 type ExpenseCardProps = {
   expense: {
@@ -174,18 +174,11 @@ export const ExpenseCard = memo(function ExpenseCard({
             </div>
             <div className="text-xs text-slate-500">
               {formatDateShort(date)} ·{" "}
-              <span
-                style={
-                  payer && memberColors?.[payer._id]
-                    ? { color: getMemberTextColor(memberColors[payer._id]) }
-                    : undefined
-                }
-              >
-                <span className="font-semibold">
-                  {payer?.displayName ?? "不明"}
-                </span>
-                が支払い
-              </span>
+              <MemberNameLabel
+                name={payer?.displayName ?? "不明"}
+                color={payer ? memberColors?.[payer._id] : undefined}
+              />
+              が支払い
             </div>
             {tags && tags.length > 0 && (
               <div

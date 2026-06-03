@@ -13,6 +13,7 @@ import {
 import { ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
+import { MemberNameLabel } from "@/components/ui/MemberNameLabel";
 
 type ExpenseDetailProps = {
   expense: {
@@ -101,14 +102,19 @@ export function ExpenseDetail({
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">支払者</span>
-            <span className="text-slate-800 flex items-center gap-1.5">
+            <span className="flex items-center gap-1.5">
               {expense.payer && memberColors?.[expense.payer._id] && (
                 <span
                   className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
                   style={{ backgroundColor: memberColors[expense.payer._id] }}
                 />
               )}
-              {expense.payer?.displayName ?? "不明"}
+              <MemberNameLabel
+                name={expense.payer?.displayName ?? "不明"}
+                color={
+                  expense.payer ? memberColors?.[expense.payer._id] : undefined
+                }
+              />
             </span>
           </div>
           <div className="flex justify-between">
@@ -135,14 +141,17 @@ export function ExpenseDetail({
               key={split.userId}
               className="flex items-center justify-between py-2 border-b border-slate-100 last:border-b-0"
             >
-              <span className="text-slate-700 flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5">
                 {memberColors?.[split.userId] && (
                   <span
                     className="inline-block w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: memberColors[split.userId] }}
                   />
                 )}
-                {split.displayName}
+                <MemberNameLabel
+                  name={split.displayName}
+                  color={memberColors?.[split.userId]}
+                />
               </span>
               <span className="font-medium text-slate-800">
                 ¥{formatAmount(split.amount)}
