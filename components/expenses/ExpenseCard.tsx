@@ -172,7 +172,18 @@ export const ExpenseCard = memo(function ExpenseCard({
               {displayTitle}
             </div>
             <div className="text-xs text-slate-500">
-              {formatDateShort(date)} · {payer?.displayName ?? "不明"}が支払い
+              {formatDateShort(date)} ·{" "}
+              <span
+                style={
+                  payer && memberColors?.[payer._id]
+                    ? {
+                        color: `color-mix(in srgb, ${memberColors[payer._id]}, black 45%)`,
+                      }
+                    : undefined
+                }
+              >
+                {payer?.displayName ?? "不明"}が支払い
+              </span>
             </div>
             {tags && tags.length > 0 && (
               <div
