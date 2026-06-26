@@ -53,16 +53,6 @@ export const releases: Release[] = [
     title: "Googleスプレッドシートへのエクスポートに対応しました（Premium）",
     body: "分析タブから、支出データをGoogleスプレッドシートに書き出せるようになりました。\n期間を選んでエクスポートすると、お使いのGoogleドライブに集計表が作成されます。",
   },
-  {
-    id: "2026-05-17-trial-campaign",
-    publishedAt: Date.UTC(2026, 4, 17),
-    title: "Premium 1ヶ月無料体験キャンペーン！",
-    body: "下のボタンを押すと、Premium プランを30日間無料でご利用いただけます。\n\n• 傾斜折半（収入差に合わせた割り勘）\n• タグで支出を細かく整理\n• 年間の支出推移を分析\n• Google スプレッドシートへのエクスポート\n• 広告非表示\n\n期間終了後は自動で無料プランに戻ります（クレジットカード登録不要、自動課金は発生しません）。",
-    audience: "non-paying",
-    cta: { label: "Premium機能を使ってみる", action: "claim_trial" },
-    expiresAt: Date.UTC(2026, 5, 1), // 2026-06-01 00:00 UTC = 5月末で表示終了
-    autoOpen: true,
-  },
 ];
 
 /** リリース可視性判定で必要となる、ユーザーの支払い状況コンテキスト */
@@ -160,16 +150,22 @@ export function getActiveTrialCampaign(
  *
  * 条件を満たす中で最も新しい release を返す。
  */
-export function getAutoOpenRelease(opts: {
-  ctx: ReleaseAudienceContext;
-  lastSeenReleaseAt: number | undefined;
-  trialClaimed: boolean;
-  now?: number;
-}): Release | null {
+export function getAutoOpenRelease(
+  opts: {
+    ctx: ReleaseAudienceContext;
+    lastSeenReleaseAt: number | undefined;
+    trialClaimed: boolean;
+    now?: number;
+  },
+  releasesList: Release[] = releases,
+): Release | null {
   const now = opts.now ?? Date.now();
   const threshold = opts.lastSeenReleaseAt ?? 0;
+  const sorted = [...releasesList].sort(
+    (a, b) => b.publishedAt - a.publishedAt,
+  );
   return (
-    getReleasesDesc().find((r) => {
+    sorted.find((r) => {
       if (r.autoOpen !== true) return false;
       if (!isReleaseVisibleTo(r, opts.ctx, now)) return false;
       if (r.publishedAt <= threshold) return false;
