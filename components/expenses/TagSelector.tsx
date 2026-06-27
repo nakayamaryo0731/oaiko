@@ -9,6 +9,11 @@ import { trackEvent } from "@/lib/analytics";
 
 const MAX_TAGS_PER_EXPENSE = 10;
 
+const TAG_EXAMPLES: { name: string; color: string }[] = [
+  { name: "新婚旅行", color: "rose" },
+  { name: "引っ越し", color: "orange" },
+];
+
 type Tag = {
   _id: Id<"tags">;
   name: string;
@@ -132,15 +137,29 @@ export function TagSelector({
         <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">
           タグ
         </span>
-        <div
-          className="p-3 bg-slate-50 rounded-xl text-sm text-slate-500 cursor-pointer"
+        <a
+          href="/pricing"
           onClick={() => trackEvent("premium_gate_hit", { feature: "tags" })}
+          className="block p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
         >
-          <span className="inline-flex items-center gap-1">
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {TAG_EXAMPLES.map((t) => {
+              const colors = getTagColorClasses(t.color);
+              return (
+                <span
+                  key={t.name}
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs ${colors.bg} ${colors.text}`}
+                >
+                  #{t.name}
+                </span>
+              );
+            })}
+          </div>
+          <span className="inline-flex items-center gap-1 text-sm text-slate-600">
             <span className="text-yellow-500">★</span>
-            タグ機能はPremiumプランでご利用いただけます
+            Premiumプランで、イベントごとに支出をまとめられます
           </span>
-        </div>
+        </a>
       </div>
     );
   }
