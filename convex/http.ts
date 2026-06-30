@@ -6,7 +6,7 @@ import { Id } from "./_generated/dataModel";
 import { mapSubscriptionStatus } from "./lib/stripeHelpers";
 import { Logger } from "./lib/logger";
 
-const STRIPE_API_VERSION = "2026-05-27.dahlia" as const;
+const STRIPE_API_VERSION = "2026-06-24.dahlia" as const;
 
 // Stripe Invoice の拡張型
 type StripeInvoiceWithSubscription = Stripe.Invoice & {

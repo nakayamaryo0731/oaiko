@@ -70,10 +70,7 @@ export function ExpenseEditModal({
           title: expense.title,
           memo: expense.memo,
           splitMethod: expense.splitMethod as
-            | "equal"
-            | "ratio"
-            | "amount"
-            | "full",
+            "equal" | "ratio" | "amount" | "full",
           ratios:
             expense.splitMethod === "ratio"
               ? (() => {

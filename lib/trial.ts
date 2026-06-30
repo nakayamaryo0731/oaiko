@@ -2,8 +2,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const TRIAL_REMAINING_BANNER_THRESHOLD_DAYS = 3;
 
 export type TrialState =
-  | { kind: "none" }
-  | { kind: "active"; expiresAt: number; daysLeft: number };
+  { kind: "none" } | { kind: "active"; expiresAt: number; daysLeft: number };
 
 /**
  * `getMySubscription` レスポンスの `trialExpiresAt` を解釈し、
