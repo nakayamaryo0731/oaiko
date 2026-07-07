@@ -1,12 +1,7 @@
 export type OsType = "ios" | "android" | "desktop" | "other";
 
 export type BrowserType =
-  | "safari"
-  | "chrome"
-  | "edge"
-  | "firefox"
-  | "samsung"
-  | "other";
+  "safari" | "chrome" | "edge" | "firefox" | "samsung" | "other";
 
 export type DeviceType =
   | "iosSafari"

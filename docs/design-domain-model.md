@@ -334,15 +334,16 @@ erDiagram
 | createdAt  | number  | 作成日時                                         |
 
 **プリセットカテゴリ**:
-| name | icon | sortOrder |
-|------|------|-----------|
-| 食費 | 🍽️ | 1 |
-| 日用品 | 🧴 | 2 |
-| 光熱費 | 💡 | 3 |
-| 交通費 | 🚃 | 4 |
-| 娯楽 | 🎮 | 5 |
-| 医療費 | 💊 | 6 |
-| その他 | 📦 | 7 |
+
+| name   | icon | sortOrder |
+| ------ | ---- | --------- |
+| 食費   | 🍽️   | 1         |
+| 日用品 | 🧴   | 2         |
+| 光熱費 | 💡   | 3         |
+| 交通費 | 🚃   | 4         |
+| 娯楽   | 🎮   | 5         |
+| 医療費 | 💊   | 6         |
+| その他 | 📦   | 7         |
 
 **プリセットカテゴリの扱い**:
 
@@ -398,12 +399,13 @@ async function createGroupWithPresetCategories(ctx, groupData) {
 | updatedAt   | number  | 更新日時                 |
 
 **splitMethod の値**:
-| 値 | 説明 | splits の指定 |
-|----|------|--------------|
-| `"equal"` | 均等分割（人数で等分、端数は支払者負担） | 不要（自動計算） |
-| `"ratio"` | 傾斜分割（割合指定、合計100%） | 必須: 各メンバーの割合(%) |
-| `"amount"` | 傾斜分割（金額指定、合計=支出額） | 必須: 各メンバーの金額 |
-| `"full"` | 全額負担（指定した1人が全額負担、他は0円） | 必須: 負担者1人を指定 |
+
+| 値         | 説明                                       | splits の指定             |
+| ---------- | ------------------------------------------ | ------------------------- |
+| `"equal"`  | 均等分割（人数で等分、端数は支払者負担）   | 不要（自動計算）          |
+| `"ratio"`  | 傾斜分割（割合指定、合計100%）             | 必須: 各メンバーの割合(%) |
+| `"amount"` | 傾斜分割（金額指定、合計=支出額）          | 必須: 各メンバーの金額    |
+| `"full"`   | 全額負担（指定した1人が全額負担、他は0円） | 必須: 負担者1人を指定     |
 
 **"full" の例**:
 
@@ -847,11 +849,12 @@ export const create = authMutation({
 ```
 
 **関数の使い分け**:
-| 関数 | 用途 | 例 |
-|------|------|-----|
-| `query` / `mutation` | 認証不要 | 招待リンクの検証 |
-| `authQuery` / `authMutation` | 認証必須 | 支出登録、グループ操作 |
-| `internalQuery` / `internalMutation` | 内部専用 | スケジュール処理 |
+
+| 関数                                 | 用途     | 例                     |
+| ------------------------------------ | -------- | ---------------------- |
+| `query` / `mutation`                 | 認証不要 | 招待リンクの検証       |
+| `authQuery` / `authMutation`         | 認証必須 | 支出登録、グループ操作 |
+| `internalQuery` / `internalMutation` | 内部専用 | スケジュール処理       |
 
 ### Zod スキーマ定義（フロントエンド・複雑なバリデーション用）
 
@@ -1086,12 +1089,8 @@ import { mutation, query } from "./_generated/server";
 import { createExpenseInputSchema } from "./lib/schemas";
 
 // Zod対応のmutation/queryを作成
-const zMutation = zCustomMutation(mutation, {
-  /* middleware options */
-});
-const zQuery = zCustomQuery(query, {
-  /* middleware options */
-});
+const zMutation = zCustomMutation(mutation, {/* middleware options */});
+const zQuery = zCustomQuery(query, {/* middleware options */});
 
 export const create = zMutation({
   args: {
@@ -1332,18 +1331,19 @@ export default defineSchema({
 ```
 
 **インデックス設計の判断基準**:
-| テーブル | インデックス | 用途 | 備考 |
-|----------|--------------|------|------|
-| users | by_clerk_id | 認証後のユーザー取得 | 必須 |
-| groupMembers | by_user | ユーザーの所属グループ取得 | 必須 |
-| groupMembers | by_group_and_user | 権限チェック、メンバー一覧 | groupIdのみでも使用 |
-| groupInvitations | by_token | トークンから招待取得 | 必須 |
-| categories | by_group | グループのカテゴリ一覧 | 必須 |
-| expenses | by_group_and_date | 支出一覧、期間検索 | groupIdのみでも使用 |
-| expenseSplits | by_expense | 支出の負担配分取得 | 必須 |
-| settlements | by_group_and_period | 精算履歴、重複チェック | 必須 |
-| settlementPayments | by_settlement | 支払い詳細取得 | 必須 |
-| shoppingItems | by_group_and_purchased | 買い物リスト、履歴 | 必須 |
+
+| テーブル           | インデックス           | 用途                       | 備考                |
+| ------------------ | ---------------------- | -------------------------- | ------------------- |
+| users              | by_clerk_id            | 認証後のユーザー取得       | 必須                |
+| groupMembers       | by_user                | ユーザーの所属グループ取得 | 必須                |
+| groupMembers       | by_group_and_user      | 権限チェック、メンバー一覧 | groupIdのみでも使用 |
+| groupInvitations   | by_token               | トークンから招待取得       | 必須                |
+| categories         | by_group               | グループのカテゴリ一覧     | 必須                |
+| expenses           | by_group_and_date      | 支出一覧、期間検索         | groupIdのみでも使用 |
+| expenseSplits      | by_expense             | 支出の負担配分取得         | 必須                |
+| settlements        | by_group_and_period    | 精算履歴、重複チェック     | 必須                |
+| settlementPayments | by_settlement          | 支払い詳細取得             | 必須                |
+| shoppingItems      | by_group_and_purchased | 買い物リスト、履歴         | 必須                |
 
 ### フロントエンドでのZodバリデーション活用
 

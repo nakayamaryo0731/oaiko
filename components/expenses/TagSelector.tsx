@@ -43,8 +43,7 @@ export function TagSelector({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const tags = useQuery((api as any).tags.list, { groupId }) as
-    | Tag[]
-    | undefined;
+    Tag[] | undefined;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createTag = useMutation((api as any).tags.create);
 

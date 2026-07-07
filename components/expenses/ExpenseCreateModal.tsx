@@ -65,10 +65,7 @@ export function ExpenseCreateModal({
           title: sourceExpense.title,
           memo: sourceExpense.memo,
           splitMethod: sourceExpense.splitMethod as
-            | "equal"
-            | "ratio"
-            | "amount"
-            | "full",
+            "equal" | "ratio" | "amount" | "full",
           ratios:
             sourceExpense.splitMethod === "ratio"
               ? sourceExpense.splits.map((s) => ({
