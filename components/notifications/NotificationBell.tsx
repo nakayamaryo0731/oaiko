@@ -15,9 +15,7 @@ import { ReleaseModal } from "./ReleaseModal";
 import { ReleaseListModal } from "./ReleaseListModal";
 
 type View =
-  | { type: "closed" }
-  | { type: "list" }
-  | { type: "detail"; release: Release };
+  { type: "closed" } | { type: "list" } | { type: "detail"; release: Release };
 
 export function NotificationBell() {
   const me = useQuery(api.users.getMe);

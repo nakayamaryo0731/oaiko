@@ -10,7 +10,4 @@ export const INVITATION_RULES = {
  * 招待検証エラーの種類
  */
 export type InvitationErrorType =
-  | "invalid_token"
-  | "expired"
-  | "already_used"
-  | "group_not_found";
+  "invalid_token" | "expired" | "already_used" | "group_not_found";

@@ -53,8 +53,7 @@ type GroupDetailProps = {
 };
 
 type CreateState =
-  | { mode: "new" }
-  | { mode: "duplicate"; fromExpenseId: Id<"expenses"> };
+  { mode: "new" } | { mode: "duplicate"; fromExpenseId: Id<"expenses"> };
 
 type ExpenseToDelete = {
   _id: Id<"expenses">;
