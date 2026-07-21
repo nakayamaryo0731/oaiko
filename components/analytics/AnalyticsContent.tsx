@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useConvexAuth } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { usePeriodNavigation } from "@/hooks";
+import { usePeriodNavigation, useGroupPremium } from "@/hooks";
 import { ChevronLeft, ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,15 +47,10 @@ export function AnalyticsContent({
   groupId,
   closingDay,
 }: AnalyticsContentProps) {
-  const { isAuthenticated } = useConvexAuth();
   const [viewType, setViewType] = useState<ViewType>("month");
   const router = useRouter();
 
-  const subscription = useQuery(
-    api.subscriptions.getMySubscription,
-    isAuthenticated ? {} : "skip",
-  );
-  const isPremium = subscription?.plan === "premium";
+  const { isPremium } = useGroupPremium(groupId as Id<"groups">);
 
   useEffect(() => {
     trackEvent("view_analytics");

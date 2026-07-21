@@ -68,7 +68,7 @@ export const getYearlyCategoryBreakdown = authQuery({
     // 認可チェック
     await requireGroupMember(ctx, args.groupId);
 
-    const canUse = await canAccessYearlyAnalytics(ctx, ctx.user._id);
+    const canUse = await canAccessYearlyAnalytics(ctx, args.groupId);
     if (!canUse) {
       return {
         year: args.year,
@@ -197,7 +197,7 @@ export const getTagBreakdown = authQuery({
     await requireGroupMember(ctx, args.groupId);
 
     // Premium機能チェック
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, args.groupId);
     if (!canUse) {
       return {
         period: { startDate: "", endDate: "" },
@@ -250,7 +250,7 @@ export const getYearlyTagBreakdown = authQuery({
     await requireGroupMember(ctx, args.groupId);
 
     // Premium機能チェック
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, args.groupId);
     if (!canUse) {
       return {
         year: args.year,
@@ -304,7 +304,7 @@ export const getAllTimeCategoryBreakdown = authQuery({
     // 認可チェック
     await requireGroupMember(ctx, args.groupId);
 
-    const canUse = await canAccessYearlyAnalytics(ctx, ctx.user._id);
+    const canUse = await canAccessYearlyAnalytics(ctx, args.groupId);
     if (!canUse) {
       return {
         totalAmount: 0,
@@ -359,7 +359,7 @@ export const getAllTimeTagBreakdown = authQuery({
     await requireGroupMember(ctx, args.groupId);
 
     // Premium機能チェック
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, args.groupId);
     if (!canUse) {
       return {
         totalAmount: 0,

@@ -4,6 +4,8 @@ import { usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { useGroupPremium } from "@/hooks";
 import { ProPromoBanner } from "./ProPromoBanner";
 
 type AdBannerProps = {
@@ -15,7 +17,7 @@ type AdBannerProps = {
 
 /**
  * 広告バナーコンポーネント
- * - Premiumユーザー: 表示しない
+ * - Premium（グループ画面ではグループ内にPremiumメンバーがいる場合も含む）: 表示しない
  * - Freeユーザー/未ログイン: 広告を表示
  * - グループ詳細ページ: layout.tsxからは非表示（GroupDetailで個別に表示）
  */
@@ -25,6 +27,11 @@ export function AdBanner({
 }: AdBannerProps) {
   const pathname = usePathname();
   const { isAuthenticated, isLoading } = useConvexAuth();
+
+  // グループ画面ではグループ単位のPremium判定（ペアプラン）を使う
+  const groupId = pathname?.match(/^\/groups\/([^/]+)(\/|$)/)?.[1] as
+    Id<"groups"> | undefined;
+  const groupPremium = useGroupPremium(groupId);
 
   // 認証済みの場合のみサブスク状態を取得
   const subscription = useQuery(
@@ -49,12 +56,15 @@ export function AdBanner({
   }
 
   // サブスクリプション読み込み中は表示しない（ちらつき防止）
-  if (isAuthenticated && subscription === undefined) {
+  if (
+    isAuthenticated &&
+    (subscription === undefined || groupPremium.isLoading)
+  ) {
     return null;
   }
 
-  // Premiumユーザーは広告非表示
-  if (subscription?.plan === "premium") {
+  // Premiumユーザー、またはPremiumメンバーのいるグループの画面では広告非表示
+  if (subscription?.plan === "premium" || groupPremium.isPremium) {
     return null;
   }
 

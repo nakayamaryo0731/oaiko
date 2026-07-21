@@ -2,13 +2,13 @@
 
 import { use } from "react";
 import { useQuery } from "convex/react";
-import { useConvexAuth } from "convex/react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ExpenseForm } from "@/components/expenses";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { buildMemberColorMap } from "@/lib/userColors";
+import { useGroupPremium } from "@/hooks";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -108,7 +108,6 @@ export default function ExpenseNewPage({ params }: PageProps) {
   const searchParams = useSearchParams();
   const fromExpenseId = searchParams.get("from") as Id<"expenses"> | null;
 
-  const { isAuthenticated } = useConvexAuth();
   const detail = useQuery(api.groups.getDetail, {
     groupId: groupId as Id<"groups">,
   });
@@ -116,12 +115,8 @@ export default function ExpenseNewPage({ params }: PageProps) {
     api.expenses.getById,
     fromExpenseId ? { expenseId: fromExpenseId } : "skip",
   );
-  const subscription = useQuery(
-    api.subscriptions.getMySubscription,
-    isAuthenticated ? {} : "skip",
-  );
 
-  const isPremium = subscription?.plan === "premium";
+  const { isPremium } = useGroupPremium(groupId as Id<"groups">);
 
   const isLoading =
     detail === undefined || (fromExpenseId && sourceExpense === undefined);

@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery, useConvexAuth } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ExpenseForm } from "./ExpenseForm";
 import { X } from "lucide-react";
-import { useEscapeKey } from "@/hooks";
+import { useEscapeKey, useGroupPremium } from "@/hooks";
 
 type Category = {
   _id: Id<"categories">;
@@ -40,17 +40,12 @@ export function ExpenseCreateModal({
   memberColors,
   onClose,
 }: ExpenseCreateModalProps) {
-  const { isAuthenticated } = useConvexAuth();
-  const subscription = useQuery(
-    api.subscriptions.getMySubscription,
-    isAuthenticated ? {} : "skip",
-  );
   const sourceExpense = useQuery(
     api.expenses.getById,
     fromExpenseId ? { expenseId: fromExpenseId } : "skip",
   );
 
-  const isPremium = subscription?.plan === "premium";
+  const { isPremium } = useGroupPremium(groupId);
   const isWaitingForSource = !!fromExpenseId && sourceExpense === undefined;
 
   useEscapeKey(onClose);

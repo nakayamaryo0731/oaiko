@@ -5,3 +5,4 @@ export { usePeriodNavigation } from "./usePeriodNavigation";
 export { useDeviceType } from "./useDeviceType";
 export { useInstallPrompt } from "./useInstallPrompt";
 export { usePwaDisplayMode } from "./usePwaDisplayMode";
+export { useGroupPremium } from "./useGroupPremium";

@@ -50,7 +50,7 @@ export const create = authMutation({
     await requireGroupMember(ctx, args.groupId);
 
     // Premium機能チェック
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, args.groupId);
     if (!canUse) {
       throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
     }
@@ -131,7 +131,7 @@ export const update = authMutation({
     await requireGroupMember(ctx, tag.groupId);
 
     // Premium機能チェック
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, tag.groupId);
     if (!canUse) {
       throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
     }
@@ -200,7 +200,7 @@ export const remove = authMutation({
     await requireGroupMember(ctx, tag.groupId);
 
     // Premium機能チェック
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, tag.groupId);
     if (!canUse) {
       throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
     }
@@ -329,7 +329,7 @@ export const reorder = authMutation({
   handler: async (ctx, args) => {
     await requireGroupMember(ctx, args.groupId);
 
-    const canUse = await canUseTags(ctx, ctx.user._id);
+    const canUse = await canUseTags(ctx, args.groupId);
     if (!canUse) {
       throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
     }

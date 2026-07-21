@@ -5,7 +5,9 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
-import { authMutation } from "./lib/auth";
+import { authMutation, authQuery } from "./lib/auth";
+import { requireGroupMember } from "./lib/authorization";
+import { isGroupPremium } from "./lib/subscription";
 import { internal } from "./_generated/api";
 import Stripe from "stripe";
 
@@ -95,6 +97,20 @@ export const getMySubscription = query({
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       trialExpiresAt,
     };
+  },
+});
+
+/**
+ * グループのPremium状態を取得（ペアプラン）
+ * グループ内に1人でもPremiumメンバーがいればtrue
+ */
+export const getGroupPremium = authQuery({
+  args: {
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    await requireGroupMember(ctx, args.groupId);
+    return { isPremium: await isGroupPremium(ctx, args.groupId) };
   },
 });
 

@@ -300,6 +300,10 @@ function PricingContent() {
                   <CheckIcon className="text-emerald-500" />
                   <span>広告非表示</span>
                 </li>
+                <li className="flex items-center gap-2">
+                  <CheckIcon className="text-emerald-500" />
+                  <span>1人分の課金でグループ全員が使える</span>
+                </li>
               </ul>
               {isPaidPremium ? (
                 <button
@@ -329,6 +333,10 @@ function PricingContent() {
           <div className="mt-8 space-y-4">
             <h3 className="font-bold text-slate-800">よくある質問</h3>
             <div className="space-y-3">
+              <FaqItem
+                question="2人で使う場合、2人とも課金が必要ですか？"
+                answer="いいえ。グループ内のどちらか1人がPremiumなら、グループ全員がPremium機能を使えます。"
+              />
               <FaqItem
                 question="いつでも解約できますか？"
                 answer="はい、いつでも解約できます。解約後も期間終了まではPremiumプランをご利用いただけます。"

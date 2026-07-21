@@ -21,7 +21,9 @@ export function ProPromoBanner({ aboveTabNav = false }: ProPromoBannerProps) {
       <div className="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">✨</span>
-          <span className="text-sm text-slate-600">広告なしでもっと快適に</span>
+          <span className="text-sm text-slate-600">
+            1人分の課金で2人とも広告なし
+          </span>
         </div>
         <Link
           href="/pricing"
