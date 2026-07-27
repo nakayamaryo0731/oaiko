@@ -28,12 +28,17 @@ function PricingContent() {
     api.subscriptions.getMySubscription,
     isAuthenticated ? {} : "skip",
   );
+  const partnerStatus = useQuery(
+    api.subscriptions.hasPremiumPartner,
+    isAuthenticated ? {} : "skip",
+  );
   const createCheckout = useAction(api.subscriptions.createCheckoutSession);
   const createPortal = useAction(api.subscriptions.createPortalSession);
   const [loading, setLoading] = useState(false);
   const [selectedPrice, setSelectedPrice] = useState<PriceType>("yearly");
 
   const trial = readTrialState(subscription?.trialExpiresAt);
+  const hasPremiumPartner = partnerStatus?.hasPremiumPartner ?? false;
   // Stripe active / Stripe Trial 中はそちらを優先表示。canceled-期間内 や subscription なしで
   // trialExpiresAt があれば「Pairbo 内部 trial」表示。
   const onStripePaid =
@@ -133,6 +138,18 @@ function PricingContent() {
               >
                 {loading ? "処理中..." : "お支払い情報を更新"}
               </button>
+            </div>
+          )}
+
+          {/* グループ内に既にPremiumメンバーがいる場合の二重課金防止案内 */}
+          {isAuthenticated && hasPremiumPartner && !isPaidPremium && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 font-medium mb-1">
+                グループ内に既にPremiumメンバーがいます
+              </p>
+              <p className="text-blue-700 text-sm">
+                Premium機能はすでにグループ全員でご利用いただけます。追加のお支払いは不要です。
+              </p>
             </div>
           )}
 

@@ -530,6 +530,57 @@ describe("subscription helpers", () => {
     });
   });
 
+  describe("hasPremiumPartner クエリ", () => {
+    test("パートナーがpremium → true", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, partnerId);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(true);
+    });
+
+    test("自分だけがpremium → false（自分は除外）", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, userId);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(false);
+    });
+
+    test("全員free → false", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      await setupGroupWithMembers(t, [userId, partnerId]);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(false);
+    });
+
+    test("未認証 → false", async () => {
+      const t = convexTest(schema, modules);
+
+      const result = await t.query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(false);
+    });
+  });
+
   describe("getMySubscription エッジケース", () => {
     test("未認証ユーザー → { plan: 'free' }", async () => {
       const t = convexTest(schema, modules);
