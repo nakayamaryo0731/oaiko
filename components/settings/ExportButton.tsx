@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Download, Lock } from "lucide-react";
 import { ExportModal } from "./ExportModal";
+import { useGroupPremium } from "@/hooks";
 
 type Period =
   | { type: "all" }
@@ -20,10 +21,6 @@ type ExportButtonProps = {
 
 export function ExportButton({ groupId, initialPeriod }: ExportButtonProps) {
   const { isAuthenticated } = useConvexAuth();
-  const subscription = useQuery(
-    api.subscriptions.getMySubscription,
-    isAuthenticated ? {} : "skip",
-  );
   const connection = useQuery(
     api.google.getConnection,
     isAuthenticated ? {} : "skip",
@@ -31,7 +28,7 @@ export function ExportButton({ groupId, initialPeriod }: ExportButtonProps) {
 
   const [open, setOpen] = useState(false);
 
-  const isPremium = subscription?.plan === "premium";
+  const { isPremium } = useGroupPremium(groupId);
   const isConnected = connection?.connected ?? false;
 
   if (!isPremium) {

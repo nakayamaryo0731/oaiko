@@ -397,13 +397,6 @@ export const collectExportData = internalQuery({
       throw new ConvexError("ユーザーが見つかりません");
     }
 
-    const canExport = await canExportData(ctx, user._id);
-    if (!canExport) {
-      throw new ConvexError(
-        "エクスポート機能はPremiumプランでご利用いただけます",
-      );
-    }
-
     const membership = await ctx.db
       .query("groupMembers")
       .withIndex("by_group_and_user", (q) =>
@@ -412,6 +405,13 @@ export const collectExportData = internalQuery({
       .unique();
     if (!membership) {
       throw new ConvexError("このグループにアクセスする権限がありません");
+    }
+
+    const canExport = await canExportData(ctx, args.groupId);
+    if (!canExport) {
+      throw new ConvexError(
+        "エクスポート機能はPremiumプランでご利用いただけます",
+      );
     }
 
     const group = await getOrThrow(

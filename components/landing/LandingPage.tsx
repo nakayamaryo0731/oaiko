@@ -197,7 +197,7 @@ const testimonials = [
 const faqs = [
   {
     q: "本当に無料で使えますか？",
-    a: "基本機能はすべて無料です。傾斜折半や詳細分析が使えるPremiumプランもあります。",
+    a: "基本機能はすべて無料です。傾斜折半や詳細分析が使えるPremiumプランもあります。Premiumはどちらか1人の課金で2人とも使えます。",
   },
   {
     q: "アプリのインストールは必要ですか？",
@@ -628,7 +628,7 @@ function PricingCtaSection() {
       <div className="max-w-2xl mx-auto text-center">
         <h2 className="text-2xl font-bold mb-4">基本機能はすべて無料</h2>
         <p className="text-slate-300 mb-8">
-          広告非表示や詳細分析が使えるPremiumプランもあります
+          広告非表示や詳細分析が使えるPremiumプランもあります（1人分の課金で2人とも利用可能）
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link

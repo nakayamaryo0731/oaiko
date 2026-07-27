@@ -33,6 +33,7 @@ import {
 import { InquiryDialog } from "@/components/inquiries/InquiryDialog";
 import { UsageGuideDialog } from "@/components/pwa/UsageGuideDialog";
 import { useInlineEdit } from "@/hooks/useInlineEdit";
+import { useGroupPremium } from "@/hooks/useGroupPremium";
 import { InlineEditText, InlineEditDisplay } from "@/components/ui/InlineEdit";
 import { APP_VERSION } from "@/lib/version";
 import { readTrialState } from "@/lib/trial";
@@ -99,6 +100,7 @@ export function GroupSettings({
 }: GroupSettingsProps) {
   const me = useQuery(api.users.getMe);
   const subscription = useQuery(api.subscriptions.getMySubscription);
+  const { isPremium: isGroupPremiumActive } = useGroupPremium(group._id);
   const updateGroupName = useMutation(api.groups.updateName);
   const updateClosingDay = useMutation(api.groups.updateClosingDay);
   const updateDisplayName = useMutation(api.users.updateDisplayName);
@@ -374,7 +376,7 @@ export function GroupSettings({
             </div>
             <div className="min-w-0">
               <p className="text-xs text-slate-500">タグ</p>
-              {subscription?.plan === "premium" ? (
+              {isGroupPremiumActive ? (
                 <p className="font-medium text-slate-800">Premiumで利用可能</p>
               ) : (
                 <p className="text-sm text-slate-400 flex items-center gap-1">
@@ -384,9 +386,7 @@ export function GroupSettings({
               )}
             </div>
           </div>
-          {subscription?.plan === "premium" && (
-            <TagManager groupId={group._id} />
-          )}
+          {isGroupPremiumActive && <TagManager groupId={group._id} />}
         </div>
       </section>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useMemo } from "react";
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { ExpenseForm, DeleteExpenseDialog } from "@/components/expenses";
@@ -10,6 +10,7 @@ import { Trash2 } from "lucide-react";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
 import { useRouter } from "next/navigation";
 import { buildMemberColorMap } from "@/lib/userColors";
+import { useGroupPremium } from "@/hooks";
 
 type PageProps = {
   params: Promise<{
@@ -65,17 +66,12 @@ export default function ExpensePage({ params }: PageProps) {
   const resolvedParams = use(params);
   const groupId = resolvedParams.groupId as Id<"groups">;
   const expenseId = resolvedParams.expenseId as Id<"expenses">;
-  const { isAuthenticated } = useConvexAuth();
 
   const expense = useQuery(api.expenses.getById, { expenseId });
   const detail = useQuery(api.groups.getDetail, { groupId });
-  const subscription = useQuery(
-    api.subscriptions.getMySubscription,
-    isAuthenticated ? {} : "skip",
-  );
   const removeExpense = useMutation(api.expenses.remove);
 
-  const isPremium = subscription?.plan === "premium";
+  const { isPremium } = useGroupPremium(groupId);
 
   const memberColors = useMemo(
     () => (detail ? buildMemberColorMap(detail.members) : {}),

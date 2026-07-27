@@ -67,21 +67,37 @@ export async function isPremium(
   return plan === "premium";
 }
 
-/**
- * @deprecated isPremium を使用してください
- */
-export const isPro = isPremium;
-
 // グループ数・メンバー数の制限は廃止（同棲カップル向けアプリのため不要）
+
+/**
+ * グループ内に1人でもPremiumメンバーがいるかを確認（ペアプラン）
+ * 1人分の課金でグループ全員にPremium機能を解放する
+ */
+export async function isGroupPremium(
+  ctx: QueryCtx | MutationCtx,
+  groupId: Id<"groups">,
+): Promise<boolean> {
+  const members = await ctx.db
+    .query("groupMembers")
+    .withIndex("by_group_and_user", (q) => q.eq("groupId", groupId))
+    .collect();
+
+  for (const member of members) {
+    if (await isPremium(ctx, member.userId)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /**
  * 傾斜折半（割合・金額指定）にアクセスできるかどうかを確認
  */
 export async function canUseSlopedSplit(
   ctx: QueryCtx | MutationCtx,
-  userId: Id<"users">,
+  groupId: Id<"groups">,
 ): Promise<boolean> {
-  return isPremium(ctx, userId);
+  return isGroupPremium(ctx, groupId);
 }
 
 /**
@@ -89,30 +105,19 @@ export async function canUseSlopedSplit(
  */
 export async function canAccessYearlyAnalytics(
   ctx: QueryCtx | MutationCtx,
-  userId: Id<"users">,
+  groupId: Id<"groups">,
 ): Promise<boolean> {
-  return isPremium(ctx, userId);
-}
-
-/**
- * @deprecated canAccessYearlyAnalytics を使用してください
- */
-export async function canAccessDetailedAnalytics(
-  ctx: QueryCtx | MutationCtx,
-  userId: Id<"users">,
-): Promise<boolean> {
-  return isPremium(ctx, userId);
+  return isGroupPremium(ctx, groupId);
 }
 
 /**
  * データエクスポート機能にアクセスできるかどうかを確認
- * 注: 現在未実装。将来の実装用に残す
  */
 export async function canExportData(
   ctx: QueryCtx | MutationCtx,
-  userId: Id<"users">,
+  groupId: Id<"groups">,
 ): Promise<boolean> {
-  return isPremium(ctx, userId);
+  return isGroupPremium(ctx, groupId);
 }
 
 /**
@@ -120,7 +125,7 @@ export async function canExportData(
  */
 export async function canUseTags(
   ctx: QueryCtx | MutationCtx,
-  userId: Id<"users">,
+  groupId: Id<"groups">,
 ): Promise<boolean> {
-  return isPremium(ctx, userId);
+  return isGroupPremium(ctx, groupId);
 }

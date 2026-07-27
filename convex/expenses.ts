@@ -94,7 +94,7 @@ export const create = authMutation({
     validateSplitDetails(splitDetails, args.amount, targetMemberIds);
 
     if (splitDetails.method === "ratio" || splitDetails.method === "amount") {
-      const canUse = await canUseSlopedSplit(ctx, ctx.user._id);
+      const canUse = await canUseSlopedSplit(ctx, args.groupId);
       if (!canUse) {
         throw new ConvexError(
           "傾斜折半機能はPremiumプランでご利用いただけます",
@@ -181,7 +181,7 @@ export const create = authMutation({
     // タグの紐付け
     if (args.tagIds && args.tagIds.length > 0) {
       // Premium機能チェック
-      const canUse = await canUseTags(ctx, ctx.user._id);
+      const canUse = await canUseTags(ctx, args.groupId);
       if (!canUse) {
         throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
       }
@@ -731,7 +731,7 @@ export const update = authMutation({
     validateSplitDetails(splitDetails, args.amount, targetMemberIds);
 
     if (splitDetails.method === "ratio" || splitDetails.method === "amount") {
-      const canUse = await canUseSlopedSplit(ctx, ctx.user._id);
+      const canUse = await canUseSlopedSplit(ctx, expense.groupId);
       if (!canUse) {
         throw new ConvexError(
           "傾斜折半機能はPremiumプランでご利用いただけます",
@@ -790,7 +790,7 @@ export const update = authMutation({
       // 新しいタグを追加
       if (args.tagIds.length > 0) {
         // Premium機能チェック
-        const canUse = await canUseTags(ctx, ctx.user._id);
+        const canUse = await canUseTags(ctx, expense.groupId);
         if (!canUse) {
           throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
         }
@@ -947,7 +947,7 @@ export const updateTags = authMutation({
     await requireGroupMember(ctx, expense.groupId);
 
     if (args.tagIds.length > 0) {
-      const canUse = await canUseTags(ctx, ctx.user._id);
+      const canUse = await canUseTags(ctx, expense.groupId);
       if (!canUse) {
         throw new ConvexError("タグ機能はPremiumプランでご利用いただけます");
       }

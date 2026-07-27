@@ -5,10 +5,12 @@ import { api } from "../_generated/api";
 import {
   getUserPlan,
   isPremium,
+  isGroupPremium,
   canUseSlopedSplit,
   canAccessYearlyAnalytics,
   canUseTags,
 } from "../lib/subscription";
+import { Id } from "../_generated/dataModel";
 
 const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
 
@@ -49,6 +51,40 @@ async function setupSubscription(
       currentPeriodEnd:
         overrides.currentPeriodEnd ?? now + 30 * 24 * 60 * 60 * 1000,
       cancelAtPeriodEnd: overrides.cancelAtPeriodEnd ?? false,
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
+}
+
+async function setupGroupWithMembers(t: TestCtx, userIds: Id<"users">[]) {
+  const now = Date.now();
+  return await t.run(async (ctx) => {
+    const groupId = await ctx.db.insert("groups", {
+      name: "テストグループ",
+      closingDay: 25,
+      createdAt: now,
+      updatedAt: now,
+    });
+    for (const [i, userId] of userIds.entries()) {
+      await ctx.db.insert("groupMembers", {
+        groupId,
+        userId,
+        role: i === 0 ? "owner" : "member",
+        joinedAt: now,
+      });
+    }
+    return groupId;
+  });
+}
+
+async function setupSecondUser(t: TestCtx) {
+  const now = Date.now();
+  return await t.run(async (ctx) => {
+    return await ctx.db.insert("users", {
+      clerkId: "test_clerk_user_2",
+      displayName: "パートナー",
+      avatarUrl: undefined,
       createdAt: now,
       updatedAt: now,
     });
@@ -289,74 +325,259 @@ describe("subscription helpers", () => {
     });
   });
 
+  describe("isGroupPremium（ペアプラン）", () => {
+    test("メンバー全員free → false", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId, partnerId]);
+
+      const result = await t.run(async (ctx) => {
+        return await isGroupPremium(ctx, groupId);
+      });
+
+      expect(result).toBe(false);
+    });
+
+    test("1人がpremium → true（相手が課金していなくても）", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, partnerId);
+
+      const result = await t.run(async (ctx) => {
+        return await isGroupPremium(ctx, groupId);
+      });
+
+      expect(result).toBe(true);
+    });
+
+    test("trial中のメンバーがいる → true", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const trialUserId = await t.run(async (ctx) => {
+        const now = Date.now();
+        return await ctx.db.insert("users", {
+          clerkId: "group_trial_user",
+          displayName: "トライアル中パートナー",
+          avatarUrl: undefined,
+          trialExpiresAt: now + 7 * 24 * 60 * 60 * 1000,
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+      const groupId = await setupGroupWithMembers(t, [userId, trialUserId]);
+
+      const result = await t.run(async (ctx) => {
+        return await isGroupPremium(ctx, groupId);
+      });
+
+      expect(result).toBe(true);
+    });
+
+    test("planOverride: premium のメンバーがいる → true", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const overrideUserId = await t.run(async (ctx) => {
+        const now = Date.now();
+        return await ctx.db.insert("users", {
+          clerkId: "group_override_user",
+          displayName: "オーバーライドパートナー",
+          avatarUrl: undefined,
+          planOverride: "premium",
+          createdAt: now,
+          updatedAt: now,
+        });
+      });
+      const groupId = await setupGroupWithMembers(t, [userId, overrideUserId]);
+
+      const result = await t.run(async (ctx) => {
+        return await isGroupPremium(ctx, groupId);
+      });
+
+      expect(result).toBe(true);
+    });
+
+    test("premiumメンバーが脱退 → false", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, partnerId);
+
+      await t.run(async (ctx) => {
+        const membership = await ctx.db
+          .query("groupMembers")
+          .withIndex("by_group_and_user", (q) =>
+            q.eq("groupId", groupId).eq("userId", partnerId),
+          )
+          .unique();
+        await ctx.db.delete(membership!._id);
+      });
+
+      const result = await t.run(async (ctx) => {
+        return await isGroupPremium(ctx, groupId);
+      });
+
+      expect(result).toBe(false);
+    });
+  });
+
   describe("機能ゲート", () => {
-    test("canUseSlopedSplit: premium → true", async () => {
+    test("canUseSlopedSplit: グループ内にpremium → true", async () => {
       const t = convexTest(schema, modules);
       const userId = await setupUser(t);
       await setupSubscription(t, userId);
+      const groupId = await setupGroupWithMembers(t, [userId]);
 
       const result = await t.run(async (ctx) => {
-        return await canUseSlopedSplit(ctx, userId);
+        return await canUseSlopedSplit(ctx, groupId);
       });
 
       expect(result).toBe(true);
     });
 
-    test("canUseSlopedSplit: free → false", async () => {
+    test("canUseSlopedSplit: 全員free → false", async () => {
       const t = convexTest(schema, modules);
       const userId = await setupUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId]);
 
       const result = await t.run(async (ctx) => {
-        return await canUseSlopedSplit(ctx, userId);
+        return await canUseSlopedSplit(ctx, groupId);
       });
 
       expect(result).toBe(false);
     });
 
-    test("canAccessYearlyAnalytics: premium → true", async () => {
+    test("canAccessYearlyAnalytics: グループ内にpremium → true", async () => {
       const t = convexTest(schema, modules);
       const userId = await setupUser(t);
       await setupSubscription(t, userId);
+      const groupId = await setupGroupWithMembers(t, [userId]);
 
       const result = await t.run(async (ctx) => {
-        return await canAccessYearlyAnalytics(ctx, userId);
+        return await canAccessYearlyAnalytics(ctx, groupId);
       });
 
       expect(result).toBe(true);
     });
 
-    test("canAccessYearlyAnalytics: free → false", async () => {
+    test("canAccessYearlyAnalytics: 全員free → false", async () => {
       const t = convexTest(schema, modules);
       const userId = await setupUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId]);
 
       const result = await t.run(async (ctx) => {
-        return await canAccessYearlyAnalytics(ctx, userId);
+        return await canAccessYearlyAnalytics(ctx, groupId);
       });
 
       expect(result).toBe(false);
     });
 
-    test("canUseTags: premium → true", async () => {
+    test("canUseTags: グループ内にpremium → true", async () => {
       const t = convexTest(schema, modules);
       const userId = await setupUser(t);
       await setupSubscription(t, userId);
+      const groupId = await setupGroupWithMembers(t, [userId]);
 
       const result = await t.run(async (ctx) => {
-        return await canUseTags(ctx, userId);
+        return await canUseTags(ctx, groupId);
       });
 
       expect(result).toBe(true);
     });
 
-    test("canUseTags: free → false", async () => {
+    test("canUseTags: 全員free → false", async () => {
       const t = convexTest(schema, modules);
       const userId = await setupUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId]);
 
       const result = await t.run(async (ctx) => {
-        return await canUseTags(ctx, userId);
+        return await canUseTags(ctx, groupId);
       });
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe("getGroupPremium クエリ", () => {
+    test("メンバーとして取得できる（パートナーがpremium → isPremium: true）", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, partnerId);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.getGroupPremium, { groupId });
+
+      expect(result.isPremium).toBe(true);
+    });
+
+    test("グループ外のユーザー → エラー", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      await setupSecondUser(t);
+      const groupId = await setupGroupWithMembers(t, [userId]);
+
+      await expect(
+        t
+          .withIdentity({ subject: "test_clerk_user_2" })
+          .query(api.subscriptions.getGroupPremium, { groupId }),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("hasPremiumPartner クエリ", () => {
+    test("パートナーがpremium → true", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, partnerId);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(true);
+    });
+
+    test("自分だけがpremium → false（自分は除外）", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      await setupGroupWithMembers(t, [userId, partnerId]);
+      await setupSubscription(t, userId);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(false);
+    });
+
+    test("全員free → false", async () => {
+      const t = convexTest(schema, modules);
+      const userId = await setupUser(t);
+      const partnerId = await setupSecondUser(t);
+      await setupGroupWithMembers(t, [userId, partnerId]);
+
+      const result = await t
+        .withIdentity({ subject: "test_clerk_user_1" })
+        .query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(false);
+    });
+
+    test("未認証 → false", async () => {
+      const t = convexTest(schema, modules);
+
+      const result = await t.query(api.subscriptions.hasPremiumPartner, {});
+
+      expect(result.hasPremiumPartner).toBe(false);
     });
   });
 

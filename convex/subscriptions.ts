@@ -5,7 +5,9 @@ import {
   internalQuery,
   query,
 } from "./_generated/server";
-import { authMutation } from "./lib/auth";
+import { authMutation, authQuery } from "./lib/auth";
+import { requireGroupMember } from "./lib/authorization";
+import { isGroupPremium, isPremium } from "./lib/subscription";
 import { internal } from "./_generated/api";
 import Stripe from "stripe";
 
@@ -95,6 +97,66 @@ export const getMySubscription = query({
       cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
       trialExpiresAt,
     };
+  },
+});
+
+/**
+ * 自分以外のPremiumメンバーが所属グループにいるかを取得（ペアプラン）
+ * pricing頁で「既にグループ全員がPremiumを使える」ことを伝え、二重課金を防ぐ
+ * 未認証・ユーザー未作成でも安全に呼べるよう getMySubscription と同じ素のqueryにする
+ */
+export const hasPremiumPartner = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return { hasPremiumPartner: false };
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkId", identity.subject))
+      .unique();
+    if (!user) {
+      return { hasPremiumPartner: false };
+    }
+
+    const memberships = await ctx.db
+      .query("groupMembers")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    for (const membership of memberships) {
+      const members = await ctx.db
+        .query("groupMembers")
+        .withIndex("by_group_and_user", (q) =>
+          q.eq("groupId", membership.groupId),
+        )
+        .collect();
+
+      for (const member of members) {
+        if (member.userId === user._id) continue;
+        if (await isPremium(ctx, member.userId)) {
+          return { hasPremiumPartner: true };
+        }
+      }
+    }
+
+    return { hasPremiumPartner: false };
+  },
+});
+
+/**
+ * グループのPremium状態を取得（ペアプラン）
+ * グループ内に1人でもPremiumメンバーがいればtrue
+ */
+export const getGroupPremium = authQuery({
+  args: {
+    groupId: v.id("groups"),
+  },
+  handler: async (ctx, args) => {
+    await requireGroupMember(ctx, args.groupId);
+    return { isPremium: await isGroupPremium(ctx, args.groupId) };
   },
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
-import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useGroupPremium } from "@/hooks";
 
 type PageProps = {
   params: Promise<{ groupId: string }>;
@@ -25,7 +26,6 @@ type PageProps = {
 export default function ExpenseListPage({ params }: PageProps) {
   const { groupId } = use(params);
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useConvexAuth();
 
   const categoryId = searchParams.get("category") as Id<"categories"> | null;
   const tagId = searchParams.get("tag") as Id<"tags"> | "untagged" | null;
@@ -37,11 +37,7 @@ export default function ExpenseListPage({ params }: PageProps) {
     groupId: groupId as Id<"groups">,
   });
 
-  const subscription = useQuery(
-    api.subscriptions.getMySubscription,
-    isAuthenticated ? {} : "skip",
-  );
-  const isPremium = subscription?.plan === "premium";
+  const { isPremium } = useGroupPremium(groupId as Id<"groups">);
 
   const updateCategory = useMutation(api.expenses.updateCategory);
   const updateTags = useMutation(api.expenses.updateTags);

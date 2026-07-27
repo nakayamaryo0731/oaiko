@@ -28,12 +28,17 @@ function PricingContent() {
     api.subscriptions.getMySubscription,
     isAuthenticated ? {} : "skip",
   );
+  const partnerStatus = useQuery(
+    api.subscriptions.hasPremiumPartner,
+    isAuthenticated ? {} : "skip",
+  );
   const createCheckout = useAction(api.subscriptions.createCheckoutSession);
   const createPortal = useAction(api.subscriptions.createPortalSession);
   const [loading, setLoading] = useState(false);
   const [selectedPrice, setSelectedPrice] = useState<PriceType>("yearly");
 
   const trial = readTrialState(subscription?.trialExpiresAt);
+  const hasPremiumPartner = partnerStatus?.hasPremiumPartner ?? false;
   // Stripe active / Stripe Trial 中はそちらを優先表示。canceled-期間内 や subscription なしで
   // trialExpiresAt があれば「Pairbo 内部 trial」表示。
   const onStripePaid =
@@ -133,6 +138,18 @@ function PricingContent() {
               >
                 {loading ? "処理中..." : "お支払い情報を更新"}
               </button>
+            </div>
+          )}
+
+          {/* グループ内に既にPremiumメンバーがいる場合の二重課金防止案内 */}
+          {isAuthenticated && hasPremiumPartner && !isPaidPremium && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 font-medium mb-1">
+                グループ内に既にPremiumメンバーがいます
+              </p>
+              <p className="text-blue-700 text-sm">
+                Premium機能はすでにグループ全員でご利用いただけます。追加のお支払いは不要です。
+              </p>
             </div>
           )}
 
@@ -300,6 +317,10 @@ function PricingContent() {
                   <CheckIcon className="text-emerald-500" />
                   <span>広告非表示</span>
                 </li>
+                <li className="flex items-center gap-2">
+                  <CheckIcon className="text-emerald-500" />
+                  <span>1人分の課金でグループ全員が使える</span>
+                </li>
               </ul>
               {isPaidPremium ? (
                 <button
@@ -329,6 +350,10 @@ function PricingContent() {
           <div className="mt-8 space-y-4">
             <h3 className="font-bold text-slate-800">よくある質問</h3>
             <div className="space-y-3">
+              <FaqItem
+                question="2人で使う場合、2人とも課金が必要ですか？"
+                answer="いいえ。グループ内のどちらか1人がPremiumなら、グループ全員がPremium機能を使えます。"
+              />
               <FaqItem
                 question="いつでも解約できますか？"
                 answer="はい、いつでも解約できます。解約後も期間終了まではPremiumプランをご利用いただけます。"
