@@ -233,6 +233,7 @@ export async function enrichExpenseList(
       title: expense.title,
       memo: expense.memo,
       splitMethod: expense.splitMethod,
+      isRecurring: expense.recurringExpenseId !== undefined,
       category: category ?? null,
       payer: payer ?? null,
       splits: splits.map((split) => {

@@ -107,6 +107,28 @@ export const SAMPLE_EXPENSES = [
   },
 ] as const;
 
+/** サンプル定期支出テンプレート */
+export const SAMPLE_RECURRING_EXPENSES = [
+  {
+    categoryName: "住居費",
+    title: "家賃",
+    amountMode: "fixed" as const,
+    amount: 85000,
+    dayOfMonth: 25,
+    paidByIndex: 0,
+  },
+  {
+    categoryName: "光熱費",
+    title: "電気代",
+    amountMode: "variable" as const,
+    amount: 8000, // 前回値（確認カードの初期値）
+    dayOfMonth: 10,
+    paidByIndex: 1,
+    // シード投入時に当月のpendingMonthを設定し、確認カードを即表示できるようにする
+    pendingCurrentMonth: true,
+  },
+] as const;
+
 /** サンプル買い物リスト */
 export const SAMPLE_SHOPPING_ITEMS = [
   { name: "牛乳" },

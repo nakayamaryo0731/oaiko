@@ -6,6 +6,7 @@ import {
   SEED_USERS,
   TEST_GROUP,
   SAMPLE_EXPENSES,
+  SAMPLE_RECURRING_EXPENSES,
   SAMPLE_SHOPPING_ITEMS,
   SAMPLE_SETTLEMENTS,
   RATIO_SPLIT,
@@ -13,6 +14,7 @@ import {
   generateRandomDate,
   getSettlementPeriodForSeed,
 } from "./lib/seedData";
+import { getTodayJst } from "./recurringExpenses";
 
 /**
  * シードデータ投入
@@ -98,6 +100,29 @@ export const seedTestData = internalMutation({
       );
     }
 
+    for (const recurring of SAMPLE_RECURRING_EXPENSES) {
+      const categoryId = categoryMap.get(recurring.categoryName);
+      if (!categoryId) continue;
+
+      await ctx.db.insert("recurringExpenses", {
+        groupId,
+        amount: recurring.amount,
+        amountMode: recurring.amountMode,
+        categoryId,
+        paidBy: userIds[recurring.paidByIndex],
+        dayOfMonth: recurring.dayOfMonth,
+        title: recurring.title,
+        splitDetails: { method: "equal" },
+        pendingMonth:
+          "pendingCurrentMonth" in recurring && recurring.pendingCurrentMonth
+            ? getTodayJst().slice(0, 7)
+            : undefined,
+        createdBy: userIds[recurring.paidByIndex],
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
     for (const item of SAMPLE_SHOPPING_ITEMS) {
       await ctx.db.insert("shoppingItems", {
         groupId,
@@ -148,6 +173,7 @@ export const seedTestData = internalMutation({
       groupId,
       userCount: userIds.length,
       expenseCount: SAMPLE_EXPENSES.length,
+      recurringExpenseCount: SAMPLE_RECURRING_EXPENSES.length,
       shoppingItemCount: SAMPLE_SHOPPING_ITEMS.length,
       settlementCount,
     };
@@ -274,6 +300,7 @@ async function clearSeedDataInternal(ctx: MutationCtx) {
   let deletedCategories = 0;
   let deletedExpenses = 0;
   let deletedSplits = 0;
+  let deletedRecurringExpenses = 0;
   let deletedShoppingItems = 0;
   let deletedSettlements = 0;
   let deletedSettlementPayments = 0;
@@ -289,6 +316,7 @@ async function clearSeedDataInternal(ctx: MutationCtx) {
       deletedCategories,
       deletedExpenses,
       deletedSplits,
+      deletedRecurringExpenses,
       deletedShoppingItems,
       deletedSettlements,
       deletedSettlementPayments,
@@ -315,6 +343,15 @@ async function clearSeedDataInternal(ctx: MutationCtx) {
       }
       await ctx.db.delete(expense._id);
       deletedExpenses++;
+    }
+
+    const recurringExpenses = await ctx.db
+      .query("recurringExpenses")
+      .withIndex("by_group", (q) => q.eq("groupId", group._id))
+      .collect();
+    for (const recurring of recurringExpenses) {
+      await ctx.db.delete(recurring._id);
+      deletedRecurringExpenses++;
     }
 
     const categories = await ctx.db
@@ -377,6 +414,7 @@ async function clearSeedDataInternal(ctx: MutationCtx) {
     deletedCategories,
     deletedExpenses,
     deletedSplits,
+    deletedRecurringExpenses,
     deletedShoppingItems,
     deletedSettlements,
     deletedSettlementPayments,

@@ -15,6 +15,26 @@ export const splitMethodValidator = v.union(
 );
 
 /**
+ * 負担方法の詳細指定
+ * expenses.create の入力と recurringExpenses の保存で共用する
+ */
+export const splitDetailsValidator = v.union(
+  v.object({
+    method: v.literal("equal"),
+    memberIds: v.optional(v.array(v.id("users"))),
+  }),
+  v.object({
+    method: v.literal("ratio"),
+    ratios: v.array(v.object({ userId: v.id("users"), ratio: v.number() })),
+  }),
+  v.object({
+    method: v.literal("amount"),
+    amounts: v.array(v.object({ userId: v.id("users"), amount: v.number() })),
+  }),
+  v.object({ method: v.literal("full"), bearerId: v.id("users") }),
+);
+
+/**
  * グループメンバーの役割
  * - owner: オーナー（招待・削除権限あり）
  * - member: 一般メンバー
