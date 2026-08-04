@@ -15,7 +15,7 @@ import Stripe from "stripe";
 // Stripe初期化
 // ========================================
 
-const STRIPE_API_VERSION = "2026-06-24.dahlia" as const;
+const STRIPE_API_VERSION = "2026-07-29.dahlia" as const;
 
 function getStripe() {
   const apiKey = process.env.STRIPE_SECRET_KEY;
