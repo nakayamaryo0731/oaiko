@@ -4,7 +4,7 @@ import schema from "../schema";
 import { api } from "../_generated/api";
 import { PRESET_CATEGORIES } from "../lib/presetCategories";
 
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 // テスト用のユーザー認証情報
 const testIdentity = {

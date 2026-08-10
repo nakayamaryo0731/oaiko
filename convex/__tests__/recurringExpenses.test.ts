@@ -5,7 +5,7 @@ import { api, internal } from "../_generated/api";
 import { Id } from "../_generated/dataModel";
 import { getTodayJst } from "../recurringExpenses";
 
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 type TestCtx = TestConvex<typeof schema>;
 
