@@ -4,7 +4,7 @@ import schema from "../schema";
 
 // Convex関数モジュールを明示的にインポート
 // Note: convex-testの型定義がRecord<string, () => Promise<any>>を期待するため型アサーションが必要
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 describe("schema", () => {
   describe("users テーブル", () => {

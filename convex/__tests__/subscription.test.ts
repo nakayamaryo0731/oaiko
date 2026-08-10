@@ -12,7 +12,7 @@ import {
 } from "../lib/subscription";
 import { Id } from "../_generated/dataModel";
 
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 type TestCtx = TestConvex<typeof schema>;
 

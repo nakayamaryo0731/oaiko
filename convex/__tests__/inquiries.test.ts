@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import schema from "../schema";
 import { api } from "../_generated/api";
 
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 const testIdentity = {
   subject: "test_clerk_user_1",

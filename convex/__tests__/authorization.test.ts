@@ -9,7 +9,7 @@ import {
 } from "../lib/authorization";
 import type { AuthQueryCtx } from "../lib/auth";
 
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 describe("authorization ヘルパー関数", () => {
   describe("getGroupMembership", () => {

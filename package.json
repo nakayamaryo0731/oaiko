@@ -39,7 +39,7 @@
     "convex": "^1.42.3",
     "convex-helpers": "^0.1.120",
     "lucide-react": "^1.28.0",
-    "next": "16.2.12",
+    "next": "16.3.0",
     "qrcode.react": "^4.2.0",
     "radix-ui": "^1.6.7",
     "react": "^19.2.8",
@@ -61,7 +61,7 @@
     "@convex-dev/eslint-plugin": "^2.0.0",
     "@edge-runtime/vm": "^5.0.0",
     "@netlify/plugin-nextjs": "^5.15.13",
-    "@next/bundle-analyzer": "^16.2.12",
+    "@next/bundle-analyzer": "^16.3.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.1.2",
     "@types/react": "^19.2.18",
@@ -69,7 +69,7 @@
     "@vitest/coverage-v8": "^4.1.10",
     "convex-test": "^0.0.54",
     "eslint": "^9.39.1",
-    "eslint-config-next": "16.2.12",
+    "eslint-config-next": "16.3.0",
     "husky": "^9.1.7",
     "lint-staged": "^17.3.0",
     "npm-run-all2": "^9.0.3",
@@ -81,5 +81,12 @@
     "typescript": "^6.0.3",
     "vite": "^8.2.0",
     "vitest": "^4.1.10"
+  },
+  "pnpm": {
+    "overrides": {
+      "js-yaml@>=4.0.0 <4.3.0": "^4.3.0",
+      "brace-expansion@<1.1.16": "^1.1.16",
+      "brace-expansion@>=4.0.0 <5.0.9": "^5.0.9"
+    }
   }
 }

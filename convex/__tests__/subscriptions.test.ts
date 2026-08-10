@@ -4,7 +4,7 @@ import schema from "../schema";
 import { internal } from "../_generated/api";
 import { getUserPlan } from "../lib/subscription";
 
-const modules = import.meta.glob<Record<string, unknown>>("../**/*.ts");
+const modules = import.meta.glob("../**/*.ts");
 
 type TestCtx = TestConvex<typeof schema>;
 
