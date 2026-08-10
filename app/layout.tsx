@@ -4,6 +4,7 @@ import "./globals.css";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { PwaInstallPromptProvider } from "@/components/pwa/PwaInstallPromptProvider";
+import { IS_STAGING } from "@/lib/appEnv";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,15 +55,18 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Pairbo",
+    title: IS_STAGING ? "Pairbo STG" : "Pairbo",
   },
   formatDetection: {
     telephone: false,
   },
+  ...(IS_STAGING && {
+    icons: { icon: "/icons/staging/favicon-32x32.png" },
+  }),
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3b82f6",
+  themeColor: IS_STAGING ? "#b05026" : "#3b82f6",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -77,7 +81,14 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link
+          rel="apple-touch-icon"
+          href={
+            IS_STAGING
+              ? "/icons/staging/apple-touch-icon.png"
+              : "/icons/apple-touch-icon.png"
+          }
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
