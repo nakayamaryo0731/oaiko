@@ -29,8 +29,9 @@ export const create = authMutation({
     const since = Date.now() - RATE_LIMIT.windowMs;
     const recentInquiries = await ctx.db
       .query("inquiries")
-      .withIndex("by_user", (q) => q.eq("userId", ctx.user._id))
-      .filter((q) => q.gte(q.field("createdAt"), since))
+      .withIndex("by_user", (q) =>
+        q.eq("userId", ctx.user._id).gte("createdAt", since),
+      )
       .collect();
 
     if (recentInquiries.length >= RATE_LIMIT.maxPerHour) {

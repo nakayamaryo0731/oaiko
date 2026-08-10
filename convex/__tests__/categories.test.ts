@@ -202,11 +202,11 @@ describe("categories", () => {
 
       // プリセットカテゴリを取得
       const presetCategory = await t.run(async (ctx) => {
-        return await ctx.db
+        const categories = await ctx.db
           .query("categories")
           .withIndex("by_group", (q) => q.eq("groupId", groupId))
-          .filter((q) => q.eq(q.field("isPreset"), true))
-          .first();
+          .collect();
+        return categories.find((c) => c.isPreset) ?? null;
       });
 
       expect(presetCategory).not.toBeNull();
@@ -292,11 +292,11 @@ describe("categories", () => {
         });
 
       const presetCategory = await t.run(async (ctx) => {
-        return await ctx.db
+        const categories = await ctx.db
           .query("categories")
           .withIndex("by_group", (q) => q.eq("groupId", groupId))
-          .filter((q) => q.eq(q.field("isPreset"), true))
-          .first();
+          .collect();
+        return categories.find((c) => c.isPreset) ?? null;
       });
 
       expect(presetCategory).not.toBeNull();
@@ -417,11 +417,11 @@ describe("categories", () => {
         });
 
       const presetCategory = await t.run(async (ctx) => {
-        return await ctx.db
+        const categories = await ctx.db
           .query("categories")
           .withIndex("by_group", (q) => q.eq("groupId", groupId))
-          .filter((q) => q.eq(q.field("isPreset"), true))
-          .first();
+          .collect();
+        return categories.find((c) => c.isPreset) ?? null;
       });
 
       const result = await t

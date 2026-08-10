@@ -272,10 +272,9 @@ export const getById = authQuery({
         .collect(),
       ctx.db
         .query("shoppingItems")
-        .withIndex("by_group_and_purchased", (q) =>
-          q.eq("groupId", expense.groupId),
+        .withIndex("by_linked_expense", (q) =>
+          q.eq("linkedExpenseId", expense._id),
         )
-        .filter((q) => q.eq(q.field("linkedExpenseId"), expense._id))
         .collect(),
     ]);
 
@@ -831,10 +830,9 @@ export const remove = authMutation({
     // 買い物リストアイテムの連携解除（購入済み状態は維持）
     const linkedItems = await ctx.db
       .query("shoppingItems")
-      .withIndex("by_group_and_purchased", (q) =>
-        q.eq("groupId", expense.groupId),
+      .withIndex("by_linked_expense", (q) =>
+        q.eq("linkedExpenseId", args.expenseId),
       )
-      .filter((q) => q.eq(q.field("linkedExpenseId"), args.expenseId))
       .collect();
 
     if (linkedItems.length > 0) {
