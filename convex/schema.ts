@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
   splitMethodValidator,
+  splitDetailsValidator,
   memberRoleValidator,
   settlementStatusValidator,
   subscriptionPlanValidator,
@@ -97,11 +98,34 @@ export default defineSchema({
     title: v.optional(v.string()), // 支出のタイトル（任意）
     memo: v.optional(v.string()),
     splitMethod: splitMethodValidator,
+    recurringExpenseId: v.optional(v.id("recurringExpenses")),
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_group_and_date", ["groupId", "date"]),
   // 用途: グループの支出一覧（日付範囲検索、グループのみでも使用可）
+
+  // ========================================
+  // 定期支出テンプレート
+  // ========================================
+  recurringExpenses: defineTable({
+    groupId: v.id("groups"),
+    amount: v.optional(v.number()), // 変動モードでは省略可（前回値の初期表示用に保持）
+    amountMode: v.union(v.literal("fixed"), v.literal("variable")),
+    categoryId: v.id("categories"),
+    paidBy: v.id("users"),
+    dayOfMonth: v.number(), // 1-28
+    title: v.string(),
+    memo: v.optional(v.string()),
+    splitDetails: splitDetailsValidator,
+    pausedAt: v.optional(v.number()),
+    lastGeneratedMonth: v.optional(v.string()), // "YYYY-MM" 冪等性キー
+    pendingMonth: v.optional(v.string()), // 変動モード: 金額確認待ちの対象月
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_group", ["groupId"]),
+  // 用途: グループの定期支出一覧、日次cronでの全件走査
 
   // ========================================
   // 支出分割

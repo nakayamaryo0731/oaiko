@@ -11,6 +11,7 @@
 import type * as admin from "../admin.js";
 import type * as analytics from "../analytics.js";
 import type * as categories from "../categories.js";
+import type * as crons from "../crons.js";
 import type * as domain_category_index from "../domain/category/index.js";
 import type * as domain_category_rules from "../domain/category/rules.js";
 import type * as domain_category_types from "../domain/category/types.js";
@@ -60,6 +61,7 @@ import type * as lib_stripeHelpers from "../lib/stripeHelpers.js";
 import type * as lib_subscription from "../lib/subscription.js";
 import type * as lib_tagAnalyticsHelper from "../lib/tagAnalyticsHelper.js";
 import type * as lib_validators from "../lib/validators.js";
+import type * as recurringExpenses from "../recurringExpenses.js";
 import type * as seed from "../seed.js";
 import type * as settlements from "../settlements.js";
 import type * as shoppingList from "../shoppingList.js";
@@ -77,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   admin: typeof admin;
   analytics: typeof analytics;
   categories: typeof categories;
+  crons: typeof crons;
   "domain/category/index": typeof domain_category_index;
   "domain/category/rules": typeof domain_category_rules;
   "domain/category/types": typeof domain_category_types;
@@ -126,6 +129,7 @@ declare const fullApi: ApiFromModules<{
   "lib/subscription": typeof lib_subscription;
   "lib/tagAnalyticsHelper": typeof lib_tagAnalyticsHelper;
   "lib/validators": typeof lib_validators;
+  recurringExpenses: typeof recurringExpenses;
   seed: typeof seed;
   settlements: typeof settlements;
   shoppingList: typeof shoppingList;

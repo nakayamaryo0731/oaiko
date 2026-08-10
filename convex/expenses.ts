@@ -10,36 +10,17 @@ import { getOrThrow } from "./lib/dataHelpers";
 import { enrichExpenseList, FALLBACK } from "./lib/enrichment";
 import { canUseTags, canUseSlopedSplit } from "./lib/subscription";
 import {
-  calculateEqualSplit,
-  calculateRatioSplit,
-  calculateAmountSplit,
-  calculateFullSplit,
+  calculateSplits,
   validateExpenseInput,
   validateSplitDetails,
   validateTitle,
   resolveTargetMemberIds,
   type SplitDetails,
-  type SplitResult,
 } from "./domain/expense";
 import { getSettlementPeriod } from "./domain/settlement";
 import { TAG_LIMITS } from "./domain/tag";
 import type { Id } from "./_generated/dataModel";
-
-const splitDetailsValidator = v.union(
-  v.object({
-    method: v.literal("equal"),
-    memberIds: v.optional(v.array(v.id("users"))),
-  }),
-  v.object({
-    method: v.literal("ratio"),
-    ratios: v.array(v.object({ userId: v.id("users"), ratio: v.number() })),
-  }),
-  v.object({
-    method: v.literal("amount"),
-    amounts: v.array(v.object({ userId: v.id("users"), amount: v.number() })),
-  }),
-  v.object({ method: v.literal("full"), bearerId: v.id("users") }),
-);
+import { splitDetailsValidator } from "./lib/validators";
 
 export const create = authMutation({
   args: {
@@ -229,24 +210,6 @@ export const create = authMutation({
     return expenseId;
   },
 });
-
-function calculateSplits(
-  details: SplitDetails,
-  amount: number,
-  memberIds: import("./_generated/dataModel").Id<"users">[],
-  payerId: import("./_generated/dataModel").Id<"users">,
-): SplitResult[] {
-  switch (details.method) {
-    case "equal":
-      return calculateEqualSplit(amount, memberIds, payerId);
-    case "ratio":
-      return calculateRatioSplit(amount, details.ratios, payerId);
-    case "amount":
-      return calculateAmountSplit(details.amounts);
-    case "full":
-      return calculateFullSplit(amount, memberIds, details.bearerId);
-  }
-}
 
 /**
  * グループの支出一覧取得

@@ -25,11 +25,13 @@ import {
   ChevronDown,
   CreditCard,
   MessageCircle,
+  RefreshCw,
   Star,
   Shield,
   Check,
   HelpCircle,
 } from "lucide-react";
+import { RecurringExpenseManager } from "@/components/settings/RecurringExpenseManager";
 import { InquiryDialog } from "@/components/inquiries/InquiryDialog";
 import { UsageGuideDialog } from "@/components/pwa/UsageGuideDialog";
 import { useInlineEdit } from "@/hooks/useInlineEdit";
@@ -387,6 +389,38 @@ export function GroupSettings({
             </div>
           </div>
           {isGroupPremiumActive && <TagManager groupId={group._id} />}
+        </div>
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+              <RefreshCw className="h-4 w-4 text-slate-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-slate-500">定期支出</p>
+              {isGroupPremiumActive ? (
+                <p className="font-medium text-slate-800">
+                  家賃・サブスクを自動記録
+                </p>
+              ) : (
+                <p className="text-sm text-slate-400 flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 text-yellow-500" />
+                  Premiumプラン限定
+                </p>
+              )}
+            </div>
+          </div>
+          {isGroupPremiumActive && (
+            <RecurringExpenseManager
+              groupId={group._id}
+              categories={categories}
+              members={members.map((m) => ({
+                userId: m.userId,
+                displayName: m.displayName,
+                isMe: m.isMe,
+              }))}
+              memberColors={memberColors}
+            />
+          )}
         </div>
       </section>
 

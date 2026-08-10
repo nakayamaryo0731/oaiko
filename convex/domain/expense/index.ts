@@ -29,6 +29,7 @@ export {
   calculateRatioSplit,
   calculateAmountSplit,
   calculateFullSplit,
+  calculateSplits,
 } from "./splitCalculator";
 
 // Member resolution

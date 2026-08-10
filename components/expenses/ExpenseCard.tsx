@@ -2,7 +2,7 @@
 
 import { memo, useMemo } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
-import { Copy, Trash2, ChevronDown } from "lucide-react";
+import { Copy, Trash2, ChevronDown, RefreshCw } from "lucide-react";
 import { formatDateShort, formatAmount } from "@/lib/formatters";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { DEFAULT_ICON } from "@/lib/categoryIcons";
@@ -17,6 +17,7 @@ type ExpenseCardProps = {
     title?: string;
     memo?: string;
     splitMethod: string;
+    isRecurring?: boolean;
     category: {
       _id: Id<"categories">;
       name: string;
@@ -169,8 +170,16 @@ export const ExpenseCard = memo(function ExpenseCard({
 
           {/* 中央: タイトル + 詳細 + タグ */}
           <div className="flex-1 min-w-0">
-            <div className="font-medium text-slate-800 truncate">
-              {displayTitle}
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="font-medium text-slate-800 truncate">
+                {displayTitle}
+              </span>
+              {expense.isRecurring && (
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-[10px] text-slate-500 shrink-0">
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  自動
+                </span>
+              )}
             </div>
             <div className="text-xs text-slate-500">
               {formatDateShort(date)} ·{" "}

@@ -1,6 +1,11 @@
 import { ConvexError } from "convex/values";
 import type { Id } from "../../_generated/dataModel";
-import type { SplitResult, RatioSplitInput, AmountSplitInput } from "./types";
+import type {
+  SplitResult,
+  RatioSplitInput,
+  AmountSplitInput,
+  SplitDetails,
+} from "./types";
 
 /**
  * 均等分割（端数は支払者が負担）
@@ -119,4 +124,25 @@ export function calculateFullSplit(
     userId,
     amount: userId === bearerId ? amount : 0,
   }));
+}
+
+/**
+ * splitDetailsに応じた分割計算のディスパッチ
+ */
+export function calculateSplits(
+  details: SplitDetails,
+  amount: number,
+  memberIds: Id<"users">[],
+  payerId: Id<"users">,
+): SplitResult[] {
+  switch (details.method) {
+    case "equal":
+      return calculateEqualSplit(amount, memberIds, payerId);
+    case "ratio":
+      return calculateRatioSplit(amount, details.ratios, payerId);
+    case "amount":
+      return calculateAmountSplit(details.amounts);
+    case "full":
+      return calculateFullSplit(amount, memberIds, details.bearerId);
+  }
 }
