@@ -156,8 +156,7 @@ export const remove = authMutation({
 
     const usedExpense = await ctx.db
       .query("expenses")
-      .withIndex("by_group_and_date", (q) => q.eq("groupId", category.groupId))
-      .filter((q) => q.eq(q.field("categoryId"), args.categoryId))
+      .withIndex("by_category", (q) => q.eq("categoryId", args.categoryId))
       .first();
 
     if (usedExpense) {
@@ -199,8 +198,7 @@ export const canDelete = authQuery({
 
     const usedExpenses = await ctx.db
       .query("expenses")
-      .withIndex("by_group_and_date", (q) => q.eq("groupId", category.groupId))
-      .filter((q) => q.eq(q.field("categoryId"), args.categoryId))
+      .withIndex("by_category", (q) => q.eq("categoryId", args.categoryId))
       .collect();
 
     if (usedExpenses.length > 0) {

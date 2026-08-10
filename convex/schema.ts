@@ -102,8 +102,10 @@ export default defineSchema({
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_group_and_date", ["groupId", "date"]),
-  // 用途: グループの支出一覧（日付範囲検索、グループのみでも使用可）
+  })
+    .index("by_group_and_date", ["groupId", "date"])
+    .index("by_category", ["categoryId"]),
+  // 用途: グループの支出一覧（日付範囲検索、グループのみでも使用可）、カテゴリ使用チェック
 
   // ========================================
   // 定期支出テンプレート
@@ -180,8 +182,10 @@ export default defineSchema({
     purchasedBy: v.optional(v.id("users")),
     linkedExpenseId: v.optional(v.id("expenses")),
     createdAt: v.number(),
-  }).index("by_group_and_purchased", ["groupId", "purchasedAt"]),
-  // 用途: グループの買い物リスト（未購入: purchasedAt=null、履歴: purchasedAt!=null）
+  })
+    .index("by_group_and_purchased", ["groupId", "purchasedAt"])
+    .index("by_linked_expense", ["linkedExpenseId"]),
+  // 用途: グループの買い物リスト（未購入: purchasedAt=null、履歴: purchasedAt!=null）、支出連携の逆引き
 
   // ========================================
   // タグ
@@ -238,8 +242,8 @@ export default defineSchema({
     category: inquiryCategoryValidator,
     body: v.string(),
     createdAt: v.number(),
-  }).index("by_user", ["userId"]),
-  // 用途: ユーザーからの問い合わせ管理
+  }).index("by_user", ["userId", "createdAt"]),
+  // 用途: ユーザーからの問い合わせ管理、レート制限の期間絞り込み
 
   // ========================================
   // Stripe Webhook 冪等性
