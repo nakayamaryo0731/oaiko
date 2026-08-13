@@ -11,9 +11,10 @@ import {
   type SplitDetails,
 } from "./SplitMethodSelector";
 import { TagSelector } from "./TagSelector";
-import { ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { MemberColorDot } from "@/components/ui/MemberColorDot";
+import { Switch } from "@/components/ui/switch";
 import { ErrorAlert } from "@/components/ui/ErrorAlert";
 import { trackEvent } from "@/lib/analytics";
 
@@ -31,10 +32,12 @@ type Member = {
 
 type InitialData = {
   expenseId?: Id<"expenses">;
+  recurringExpenseId?: Id<"recurringExpenses">;
   amount: number;
   categoryId: Id<"categories">;
   paidBy: Id<"users">;
-  date: string;
+  date?: string;
+  dayOfMonth?: number;
   title?: string;
   memo?: string;
   splitMethod: "equal" | "ratio" | "amount" | "full";
@@ -42,6 +45,7 @@ type InitialData = {
   amounts?: { userId: Id<"users">; amount: number }[];
   bearerId?: Id<"users">;
   splits?: { userId: Id<"users">; amount: number }[];
+  selectedMemberIds?: Id<"users">[];
   tagIds?: Id<"tags">[];
 };
 
@@ -50,6 +54,8 @@ type ExpenseFormProps = {
   categories: Category[];
   members: Member[];
   mode?: "create" | "edit";
+  /** "recurring" は定期支出テンプレートの作成・編集（日付の代わりに実行日を選択） */
+  variant?: "expense" | "recurring";
   initialData?: InitialData;
   isPremium?: boolean;
   linkedShoppingItems?: { _id: Id<"shoppingItems">; name: string }[];
@@ -65,11 +71,18 @@ function getTodayString(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+/** 日付文字列から定期支出の実行日を導出（29〜31日は28日に丸める） */
+function toDayOfMonth(date: string): number {
+  const day = Number(date.slice(8, 10));
+  return Math.min(day || 1, 28);
+}
+
 export function ExpenseForm({
   groupId,
   categories,
   members,
   mode = "create",
+  variant = "expense",
   initialData,
   isPremium = false,
   linkedShoppingItems,
@@ -80,7 +93,10 @@ export function ExpenseForm({
   const router = useRouter();
   const createExpense = useMutation(api.expenses.create);
   const updateExpense = useMutation(api.expenses.update);
+  const createTemplate = useMutation(api.recurringExpenses.create);
+  const updateTemplate = useMutation(api.recurringExpenses.update);
 
+  const isRecurring = variant === "recurring";
   const isEditMode = mode === "edit" && initialData;
   const hasInitialData = !!initialData;
 
@@ -107,11 +123,16 @@ export function ExpenseForm({
       : (members.find((m) => m.isMe)?.userId ?? members[0]?.userId),
   );
   const [date, setDate] = useState(
-    hasInitialData ? initialData.date : getTodayString(),
+    hasInitialData ? (initialData.date ?? getTodayString()) : getTodayString(),
+  );
+  const [dayOfMonth, setDayOfMonth] = useState(
+    hasInitialData ? (initialData.dayOfMonth ?? 25) : 25,
   );
   const [title, setTitle] = useState(
     hasInitialData ? (initialData.title ?? "") : "",
   );
+  // 通常の支出登録時に定期支出テンプレートも作成するか
+  const [registerRecurring, setRegisterRecurring] = useState(false);
 
   const [splitMethod, setSplitMethod] = useState<SplitMethod>(
     hasInitialData ? initialData.splitMethod : "equal",
@@ -147,6 +168,9 @@ export function ExpenseForm({
   );
   const [selectedMemberIds, setSelectedMemberIds] = useState<Set<Id<"users">>>(
     () => {
+      if (hasInitialData && initialData.selectedMemberIds) {
+        return new Set(initialData.selectedMemberIds);
+      }
       if (hasInitialData && initialData.splits) {
         const splitUserIds = initialData.splits
           .filter((s) => s.amount > 0)
@@ -216,6 +240,50 @@ export function ExpenseForm({
     }
   };
 
+  const buildSplitDetails = (amountNum: number): SplitDetails | null => {
+    const selectedMemberIdArray = Array.from(selectedMemberIds);
+
+    if (splitMethod === "equal") {
+      return { method: "equal", memberIds: selectedMemberIdArray };
+    }
+    if (splitMethod === "ratio") {
+      // 選択メンバーのみの割合をフィルタ
+      const selectedRatios = Array.from(ratios.entries())
+        .filter(([userId]) => selectedMemberIds.has(userId))
+        .map(([userId, ratio]) => ({ userId, ratio }));
+      const totalRatio = selectedRatios.reduce((sum, r) => sum + r.ratio, 0);
+      if (totalRatio !== 100) {
+        setError("割合の合計を100%にしてください");
+        return null;
+      }
+      return { method: "ratio", ratios: selectedRatios };
+    }
+    if (splitMethod === "amount") {
+      // 選択メンバーのみの金額をフィルタ
+      const selectedAmounts = Array.from(amounts.entries())
+        .filter(([userId]) => selectedMemberIds.has(userId))
+        .map(([userId, amt]) => ({ userId, amount: amt }));
+      const totalAmounts = selectedAmounts.reduce(
+        (sum, a) => sum + a.amount,
+        0,
+      );
+      if (totalAmounts !== amountNum) {
+        setError("金額の合計を支出金額と一致させてください");
+        return null;
+      }
+      return { method: "amount", amounts: selectedAmounts };
+    }
+    if (!bearerId) {
+      setError("全額負担者を選択してください");
+      return null;
+    }
+    if (!selectedMemberIds.has(bearerId)) {
+      setError("全額負担者は選択メンバーから選んでください");
+      return null;
+    }
+    return { method: "full", bearerId };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -237,8 +305,12 @@ export function ExpenseForm({
       setError("支払者を選択してください");
       return;
     }
-    if (!date) {
+    if (!isRecurring && !date) {
       setError("日付を選択してください");
+      return;
+    }
+    if ((isRecurring || registerRecurring) && !title.trim()) {
+      setError("定期支出にはタイトルが必要です");
       return;
     }
 
@@ -248,58 +320,36 @@ export function ExpenseForm({
       return;
     }
 
-    const selectedMemberIdArray = Array.from(selectedMemberIds);
-
-    let splitDetails: SplitDetails;
-    if (splitMethod === "equal") {
-      splitDetails = { method: "equal", memberIds: selectedMemberIdArray };
-    } else if (splitMethod === "ratio") {
-      // 選択メンバーのみの割合をフィルタ
-      const selectedRatios = Array.from(ratios.entries())
-        .filter(([userId]) => selectedMemberIds.has(userId))
-        .map(([userId, ratio]) => ({ userId, ratio }));
-      const totalRatio = selectedRatios.reduce((sum, r) => sum + r.ratio, 0);
-      if (totalRatio !== 100) {
-        setError("割合の合計を100%にしてください");
-        return;
-      }
-      splitDetails = {
-        method: "ratio",
-        ratios: selectedRatios,
-      };
-    } else if (splitMethod === "amount") {
-      // 選択メンバーのみの金額をフィルタ
-      const selectedAmounts = Array.from(amounts.entries())
-        .filter(([userId]) => selectedMemberIds.has(userId))
-        .map(([userId, amt]) => ({ userId, amount: amt }));
-      const totalAmounts = selectedAmounts.reduce(
-        (sum, a) => sum + a.amount,
-        0,
-      );
-      if (totalAmounts !== amountNum) {
-        setError("金額の合計を支出金額と一致させてください");
-        return;
-      }
-      splitDetails = {
-        method: "amount",
-        amounts: selectedAmounts,
-      };
-    } else {
-      if (!bearerId) {
-        setError("全額負担者を選択してください");
-        return;
-      }
-      if (!selectedMemberIds.has(bearerId)) {
-        setError("全額負担者は選択メンバーから選んでください");
-        return;
-      }
-      splitDetails = { method: "full", bearerId };
-    }
+    const splitDetails = buildSplitDetails(amountNum);
+    if (!splitDetails) return;
 
     setIsLoading(true);
 
     try {
-      if (isEditMode && initialData.expenseId) {
+      if (isRecurring) {
+        if (isEditMode && initialData.recurringExpenseId) {
+          await updateTemplate({
+            recurringExpenseId: initialData.recurringExpenseId,
+            amount: amountNum,
+            categoryId,
+            paidBy,
+            dayOfMonth,
+            title: title.trim(),
+            splitDetails,
+          });
+        } else {
+          await createTemplate({
+            groupId,
+            amount: amountNum,
+            categoryId,
+            paidBy,
+            dayOfMonth,
+            title: title.trim(),
+            splitDetails,
+          });
+          trackEvent("create_recurring_expense", { source: "settings" });
+        }
+      } else if (isEditMode && initialData.expenseId) {
         await updateExpense({
           expenseId: initialData.expenseId,
           amount: amountNum,
@@ -322,12 +372,18 @@ export function ExpenseForm({
           shoppingItemIds:
             shoppingItemIds.length > 0 ? shoppingItemIds : undefined,
           tagIds: tagIds.length > 0 ? tagIds : undefined,
+          recurring: registerRecurring
+            ? { dayOfMonth: toDayOfMonth(date) }
+            : undefined,
         });
         trackEvent("create_expense", {
           value: amountNum,
           currency: "JPY",
           split_method: splitMethod,
         });
+        if (registerRecurring) {
+          trackEvent("create_recurring_expense", { source: "expense_form" });
+        }
       }
 
       if (onClose) {
@@ -382,8 +438,22 @@ export function ExpenseForm({
     parseInt(amount, 10) >= 1 &&
     categoryId !== "" &&
     paidBy &&
-    date !== "" &&
+    (isRecurring ? title.trim() !== "" : date !== "") &&
     isSplitValid();
+
+  const submitLabel = isLoading
+    ? isEditMode
+      ? "更新中..."
+      : isRecurring
+        ? "保存中..."
+        : "登録中..."
+    : isEditMode
+      ? isRecurring
+        ? "更新"
+        : "更新する"
+      : isRecurring
+        ? "追加"
+        : "記録する";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-2">
@@ -407,23 +477,37 @@ export function ExpenseForm({
         </div>
       </div>
 
-      {/* タイトル + 日付 - 横並び */}
+      {/* タイトル + 日付（定期支出では実行日） - 横並び */}
       <div className="flex gap-2 items-center">
         <input
           type="text"
-          placeholder="タイトル"
+          placeholder={isRecurring ? "家賃、Netflix など" : "タイトル"}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           maxLength={100}
           className="flex-1 min-w-0 py-3 px-4 bg-slate-50 rounded-xl border-none text-slate-800 outline-none focus:ring-2 focus:ring-blue-200 placeholder:text-slate-400"
         />
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          className="shrink-0 py-3 px-3 bg-slate-50 rounded-xl border-none text-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-200 w-32"
-        />
+        {isRecurring ? (
+          <select
+            value={dayOfMonth}
+            onChange={(e) => setDayOfMonth(Number(e.target.value))}
+            className="shrink-0 py-3 px-3 bg-slate-50 rounded-xl border-none text-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-200 w-32"
+          >
+            {Array.from({ length: 28 }, (_, i) => i + 1).map((d) => (
+              <option key={d} value={d}>
+                毎月{d}日
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            required
+            className="shrink-0 py-3 px-3 bg-slate-50 rounded-xl border-none text-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-200 w-32"
+          />
+        )}
       </div>
 
       {/* カテゴリ - 横スクロールチップ */}
@@ -502,13 +586,58 @@ export function ExpenseForm({
       </div>
 
       {/* タグ選択 */}
-      <TagSelector
-        groupId={groupId}
-        selectedTagIds={tagIds}
-        onSelectionChange={setTagIds}
-        isPremium={isPremium}
-        disabled={isLoading}
-      />
+      {!isRecurring && (
+        <TagSelector
+          groupId={groupId}
+          selectedTagIds={tagIds}
+          onSelectionChange={setTagIds}
+          isPremium={isPremium}
+          disabled={isLoading}
+        />
+      )}
+
+      {/* 定期支出として登録 */}
+      {!isRecurring && !isEditMode && (
+        <div className="rounded-xl border border-slate-200 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <RefreshCw className="h-4 w-4 text-slate-400 shrink-0" />
+              <span className="text-sm font-medium text-slate-700">
+                毎月自動で記録
+              </span>
+              {!isPremium && <span className="text-xs">🔒</span>}
+            </div>
+            <Switch
+              checked={registerRecurring}
+              disabled={!isPremium}
+              onCheckedChange={(checked) => {
+                if (!isPremium) {
+                  trackEvent("premium_gate_hit", {
+                    feature: "recurring_expense",
+                  });
+                  return;
+                }
+                setRegisterRecurring(checked);
+              }}
+            />
+          </div>
+          {isPremium ? (
+            registerRecurring && (
+              <p className="mt-1.5 text-xs text-slate-500">
+                来月から毎月{toDayOfMonth(date)}
+                日に同じ内容で自動記録します（タイトル必須）
+              </p>
+            )
+          ) : (
+            <p className="mt-1.5 text-xs text-slate-500">
+              <a href="/pricing" className="text-blue-600 hover:underline">
+                Premiumプラン
+              </a>
+              で定期支出の自動記録が利用可能
+            </p>
+          )}
+        </div>
+      )}
 
       {/* 買い物リスト連携（現在非表示）
       {!isEditMode && (
@@ -571,13 +700,7 @@ export function ExpenseForm({
             disabled={isLoading || !isFormValid}
             className="flex-1 py-4 bg-blue-500 text-white font-medium rounded-2xl hover:bg-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading
-              ? isEditMode
-                ? "更新中..."
-                : "登録中..."
-              : isEditMode
-                ? "更新する"
-                : "記録する"}
+            {submitLabel}
           </button>
           <button
             type="button"

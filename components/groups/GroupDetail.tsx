@@ -7,7 +7,6 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { usePeriodNavigation } from "@/hooks";
 import { PeriodExpenseList, DeleteExpenseDialog } from "@/components/expenses";
-import { PendingRecurringCard } from "@/components/expenses/PendingRecurringCard";
 
 const ExpenseEditModal = dynamic(() =>
   import("@/components/expenses/ExpenseEditModal").then(
@@ -151,7 +150,6 @@ export function GroupDetail({
 
       {/* 支出一覧 */}
       <div className="px-4 pb-36 scrollbar-hide">
-        <PendingRecurringCard groupId={group._id} />
         <PeriodExpenseList
           groupId={group._id}
           year={displayYear}

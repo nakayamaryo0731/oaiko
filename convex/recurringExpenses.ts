@@ -14,7 +14,6 @@ import {
   calculateSplits,
   validateSplitDetails,
   validateAmount,
-  validateMemo,
   resolveTargetMemberIds,
   type SplitDetails,
 } from "./domain/expense";
@@ -32,15 +31,21 @@ export function getTodayJst(now = Date.now()): string {
   return new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }
 
-function validateTemplateInput(args: {
-  amountMode: "fixed" | "variable";
-  amount?: number;
+export type RecurringTemplateInput = {
+  groupId: Id<"groups">;
+  amount: number;
+  categoryId: Id<"categories">;
+  paidBy: Id<"users">;
   dayOfMonth: number;
   title: string;
-  memo?: string;
   splitDetails: SplitDetails;
+};
+
+function validateTemplateInput(args: {
+  amount: number;
+  dayOfMonth: number;
+  title: string;
 }) {
-  validateMemo(args.memo);
   if (
     !Number.isInteger(args.dayOfMonth) ||
     args.dayOfMonth < RECURRING_EXPENSE_LIMITS.MIN_DAY ||
@@ -54,34 +59,14 @@ function validateTemplateInput(args: {
     throw new ConvexError("タイトルを入力してください");
   }
 
-  if (args.amountMode === "fixed") {
-    if (args.amount === undefined) {
-      throw new ConvexError("固定モードでは金額の指定が必要です");
-    }
-    validateAmount(args.amount);
-  } else {
-    if (args.amount !== undefined) {
-      validateAmount(args.amount);
-    }
-    // 金額指定分割は合計額が固定額と一致する必要があるため、変動モードでは使えない
-    if (args.splitDetails.method === "amount") {
-      throw new ConvexError("変動モードでは金額指定の分割は使用できません");
-    }
-  }
+  validateAmount(args.amount);
 
   return title;
 }
 
 async function validateTemplateRelations(
   ctx: AuthMutationCtx,
-  args: {
-    groupId: Id<"groups">;
-    categoryId: Id<"categories">;
-    paidBy: Id<"users">;
-    amountMode: "fixed" | "variable";
-    amount?: number;
-    splitDetails: SplitDetails;
-  },
+  args: RecurringTemplateInput,
 ) {
   const category = await ctx.db.get(args.categoryId);
   if (!category || category.groupId !== args.groupId) {
@@ -100,14 +85,61 @@ async function validateTemplateRelations(
     args.splitDetails,
     allMemberIds,
   );
-  // resolveTargetMemberIds はratio/fullのメンバー所属を検証しないため、ここで検証する
+  // resolveTargetMemberIds はratio/amount/fullのメンバー所属を検証しないため、ここで検証する
   if (targetMemberIds.some((id) => !allMemberIds.includes(id))) {
     throw new ConvexError("分割対象メンバーがグループに所属していません");
   }
-  // 変動モードでは金額未確定のため、金額に依存する検証は生成・確定時に行う
-  if (args.amountMode === "fixed") {
-    validateSplitDetails(args.splitDetails, args.amount!, targetMemberIds);
+  validateSplitDetails(args.splitDetails, args.amount, targetMemberIds);
+}
+
+/**
+ * テンプレート作成の共通処理（設定画面・支出フォームの両方から使う）
+ * lastGeneratedMonth を指定すると、その月の自動生成をスキップする
+ */
+export async function insertRecurringTemplate(
+  ctx: AuthMutationCtx,
+  args: RecurringTemplateInput & { lastGeneratedMonth?: string },
+): Promise<Id<"recurringExpenses">> {
+  const canUse = await isGroupPremium(ctx, args.groupId);
+  if (!canUse) {
+    throw new ConvexError("定期支出はPremiumプランでご利用いただけます");
   }
+
+  const title = validateTemplateInput(args);
+  await validateTemplateRelations(ctx, args);
+
+  const existing = await ctx.db
+    .query("recurringExpenses")
+    .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
+    .collect();
+  if (existing.length >= RECURRING_EXPENSE_LIMITS.MAX_PER_GROUP) {
+    throw new ConvexError(
+      `定期支出は${RECURRING_EXPENSE_LIMITS.MAX_PER_GROUP}件まで登録できます`,
+    );
+  }
+
+  const now = Date.now();
+  const id = await ctx.db.insert("recurringExpenses", {
+    groupId: args.groupId,
+    amount: args.amount,
+    categoryId: args.categoryId,
+    paidBy: args.paidBy,
+    dayOfMonth: args.dayOfMonth,
+    title,
+    splitDetails: args.splitDetails,
+    lastGeneratedMonth: args.lastGeneratedMonth,
+    createdBy: ctx.user._id,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  ctx.logger.audit("EXPENSE", "recurring_created", {
+    recurringExpenseId: id,
+    groupId: args.groupId,
+    dayOfMonth: args.dayOfMonth,
+  });
+
+  return id;
 }
 
 /**
@@ -148,104 +180,21 @@ export const list = authQuery({
 });
 
 /**
- * 金額確認待ちの定期支出一覧（支出一覧の確認カード用）
- */
-export const listPending = authQuery({
-  args: {
-    groupId: v.id("groups"),
-  },
-  handler: async (ctx, args) => {
-    await requireGroupMember(ctx, args.groupId);
-
-    // Premium失効中は確認カードを出さない（確定もPremiumゲートで弾かれるため）
-    if (!(await isGroupPremium(ctx, args.groupId))) {
-      return [];
-    }
-
-    const templates = await ctx.db
-      .query("recurringExpenses")
-      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
-      .collect();
-
-    const pending = templates.filter((t) => t.pendingMonth !== undefined);
-
-    return Promise.all(
-      pending.map(async (t) => {
-        const category = await ctx.db.get(t.categoryId);
-        return {
-          _id: t._id,
-          title: t.title,
-          pendingMonth: t.pendingMonth!,
-          previousAmount: t.amount,
-          category: category
-            ? { name: category.name, icon: category.icon }
-            : null,
-        };
-      }),
-    );
-  },
-});
-
-/**
  * 定期支出テンプレート作成（Premium・グループ単位）
  */
 export const create = authMutation({
   args: {
     groupId: v.id("groups"),
-    amount: v.optional(v.number()),
-    amountMode: v.union(v.literal("fixed"), v.literal("variable")),
+    amount: v.number(),
     categoryId: v.id("categories"),
     paidBy: v.id("users"),
     dayOfMonth: v.number(),
     title: v.string(),
-    memo: v.optional(v.string()),
     splitDetails: splitDetailsValidator,
   },
   handler: async (ctx, args) => {
     await requireGroupMember(ctx, args.groupId);
-
-    const canUse = await isGroupPremium(ctx, args.groupId);
-    if (!canUse) {
-      throw new ConvexError("定期支出はPremiumプランでご利用いただけます");
-    }
-
-    const title = validateTemplateInput(args);
-    await validateTemplateRelations(ctx, args);
-
-    const existing = await ctx.db
-      .query("recurringExpenses")
-      .withIndex("by_group", (q) => q.eq("groupId", args.groupId))
-      .collect();
-    if (existing.length >= RECURRING_EXPENSE_LIMITS.MAX_PER_GROUP) {
-      throw new ConvexError(
-        `定期支出は${RECURRING_EXPENSE_LIMITS.MAX_PER_GROUP}件まで登録できます`,
-      );
-    }
-
-    const now = Date.now();
-    const id = await ctx.db.insert("recurringExpenses", {
-      groupId: args.groupId,
-      amount: args.amount,
-      amountMode: args.amountMode,
-      categoryId: args.categoryId,
-      paidBy: args.paidBy,
-      dayOfMonth: args.dayOfMonth,
-      title,
-      memo: args.memo?.trim() || undefined,
-      splitDetails: args.splitDetails,
-      createdBy: ctx.user._id,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    ctx.logger.audit("EXPENSE", "recurring_created", {
-      recurringExpenseId: id,
-      groupId: args.groupId,
-      amountMode: args.amountMode,
-      dayOfMonth: args.dayOfMonth,
-    });
-
-    return id;
+    return insertRecurringTemplate(ctx, args);
   },
 });
 
@@ -255,13 +204,11 @@ export const create = authMutation({
 export const update = authMutation({
   args: {
     recurringExpenseId: v.id("recurringExpenses"),
-    amount: v.optional(v.number()),
-    amountMode: v.union(v.literal("fixed"), v.literal("variable")),
+    amount: v.number(),
     categoryId: v.id("categories"),
     paidBy: v.id("users"),
     dayOfMonth: v.number(),
     title: v.string(),
-    memo: v.optional(v.string()),
     splitDetails: splitDetailsValidator,
   },
   handler: async (ctx, args) => {
@@ -285,15 +232,11 @@ export const update = authMutation({
 
     await ctx.db.patch(args.recurringExpenseId, {
       amount: args.amount,
-      amountMode: args.amountMode,
       categoryId: args.categoryId,
       paidBy: args.paidBy,
       dayOfMonth: args.dayOfMonth,
       title,
-      memo: args.memo?.trim() || undefined,
       splitDetails: args.splitDetails,
-      // 固定モードに切り替えたら確認待ちは無効化する
-      ...(args.amountMode === "fixed" ? { pendingMonth: undefined } : {}),
       updatedAt: Date.now(),
     });
 
@@ -352,100 +295,16 @@ export const setPaused = authMutation({
 });
 
 /**
- * 変動モードの金額確定（確認カードから支出を作成）
- */
-export const confirmPending = authMutation({
-  args: {
-    recurringExpenseId: v.id("recurringExpenses"),
-    amount: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const template = await getOrThrow(
-      ctx,
-      args.recurringExpenseId,
-      "定期支出が見つかりません",
-    );
-    await requireGroupMember(ctx, template.groupId);
-
-    const canUse = await isGroupPremium(ctx, template.groupId);
-    if (!canUse) {
-      throw new ConvexError("定期支出はPremiumプランでご利用いただけます");
-    }
-
-    if (
-      template.amountMode !== "variable" ||
-      template.pendingMonth === undefined
-    ) {
-      throw new ConvexError("金額確認待ちの定期支出ではありません");
-    }
-
-    const memberIds = await getGroupMemberIds(ctx, template.groupId);
-    if (!memberIds.includes(template.paidBy)) {
-      throw new ConvexError(
-        "支払者がグループにいません。定期支出の設定を編集してください",
-      );
-    }
-
-    validateAmount(args.amount);
-
-    const date = `${template.pendingMonth}-${String(template.dayOfMonth).padStart(2, "0")}`;
-    const expenseId = await createExpenseFromTemplate(
-      ctx,
-      template,
-      args.amount,
-      date,
-    );
-
-    await ctx.db.patch(args.recurringExpenseId, {
-      // 次回の初期値として今回の金額を保持
-      amount: args.amount,
-      pendingMonth: undefined,
-      updatedAt: Date.now(),
-    });
-
-    ctx.logger.audit("EXPENSE", "recurring_confirmed", {
-      recurringExpenseId: args.recurringExpenseId,
-      expenseId,
-      amount: args.amount,
-    });
-
-    return expenseId;
-  },
-});
-
-/**
- * 変動モードの確認待ちを今月分スキップ
- */
-export const skipPending = authMutation({
-  args: {
-    recurringExpenseId: v.id("recurringExpenses"),
-  },
-  handler: async (ctx, args) => {
-    const template = await getOrThrow(
-      ctx,
-      args.recurringExpenseId,
-      "定期支出が見つかりません",
-    );
-    await requireGroupMember(ctx, template.groupId);
-
-    await ctx.db.patch(args.recurringExpenseId, {
-      pendingMonth: undefined,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-/**
  * テンプレートから支出 + 分割を作成する共通処理
  * splitDetailsが現在のメンバー構成で無効な場合は均等割にフォールバックする
  */
 async function createExpenseFromTemplate(
   ctx: MutationCtx,
   template: Doc<"recurringExpenses">,
-  amount: number,
   date: string,
 ): Promise<Id<"expenses">> {
   const allMemberIds = await getGroupMemberIds(ctx, template.groupId);
+  const amount = template.amount;
 
   let splitDetails: SplitDetails = template.splitDetails;
   let splits;
@@ -486,7 +345,6 @@ async function createExpenseFromTemplate(
     paidBy: template.paidBy,
     date,
     title: template.title,
-    memo: template.memo,
     splitMethod: splitDetails.method,
     recurringExpenseId: template._id,
     createdBy: template.createdBy,
@@ -553,20 +411,11 @@ export const generateDue = internalMutation({
           continue;
         }
 
-        if (template.amountMode === "fixed") {
-          const expenseId = await createExpenseFromTemplate(
-            ctx,
-            template,
-            template.amount!,
-            today,
-          );
-          logger.info("EXPENSE", "recurring_generated", {
-            recurringExpenseId: template._id,
-            expenseId,
-          });
-        } else {
-          await ctx.db.patch(template._id, { pendingMonth: month });
-        }
+        const expenseId = await createExpenseFromTemplate(ctx, template, today);
+        logger.info("EXPENSE", "recurring_generated", {
+          recurringExpenseId: template._id,
+          expenseId,
+        });
 
         await ctx.db.patch(template._id, {
           lastGeneratedMonth: month,

@@ -85,8 +85,7 @@ async function insertTemplate(
     groupId: Id<"groups">;
     categoryId: Id<"categories">;
     paidBy: Id<"users">;
-    amountMode: "fixed" | "variable";
-    amount?: number;
+    amount: number;
     dayOfMonth: number;
     splitDetails?:
       | { method: "equal"; memberIds?: Id<"users">[] }
@@ -94,7 +93,6 @@ async function insertTemplate(
       | { method: "full"; bearerId: Id<"users"> };
     pausedAt?: number;
     lastGeneratedMonth?: string;
-    pendingMonth?: string;
   },
 ) {
   const now = Date.now();
@@ -102,7 +100,6 @@ async function insertTemplate(
     return await ctx.db.insert("recurringExpenses", {
       groupId: data.groupId,
       amount: data.amount,
-      amountMode: data.amountMode,
       categoryId: data.categoryId,
       paidBy: data.paidBy,
       dayOfMonth: data.dayOfMonth,
@@ -110,7 +107,6 @@ async function insertTemplate(
       splitDetails: data.splitDetails ?? { method: "equal" },
       pausedAt: data.pausedAt,
       lastGeneratedMonth: data.lastGeneratedMonth,
-      pendingMonth: data.pendingMonth,
       createdBy: data.paidBy,
       createdAt: now,
       updatedAt: now,
@@ -121,6 +117,10 @@ async function insertTemplate(
 // テスト用の実行日: 15日固定（YYYY-MM-15）
 const TODAY = `${getTodayJst().slice(0, 7)}-15`;
 const MONTH = TODAY.slice(0, 7);
+const NEXT_MONTH = (() => {
+  const [y, m] = MONTH.split("-").map(Number);
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+})();
 
 describe("recurringExpenses", () => {
   describe("create", () => {
@@ -131,7 +131,6 @@ describe("recurringExpenses", () => {
       const id = await asUser(t).mutation(api.recurringExpenses.create, {
         groupId,
         amount: 85000,
-        amountMode: "fixed",
         categoryId,
         paidBy: userId,
         dayOfMonth: 25,
@@ -152,7 +151,6 @@ describe("recurringExpenses", () => {
         asUser(t).mutation(api.recurringExpenses.create, {
           groupId,
           amount: 85000,
-          amountMode: "fixed",
           categoryId,
           paidBy: userId,
           dayOfMonth: 25,
@@ -170,7 +168,6 @@ describe("recurringExpenses", () => {
         asUser(t).mutation(api.recurringExpenses.create, {
           groupId,
           amount: 85000,
-          amountMode: "fixed",
           categoryId,
           paidBy: userId,
           dayOfMonth: 29,
@@ -180,56 +177,32 @@ describe("recurringExpenses", () => {
       ).rejects.toThrow(/1〜28/);
     });
 
-    test("固定モードで金額なし → エラー", async () => {
+    test("タイトルが空 → エラー", async () => {
       const t = convexTest(schema, modules);
       const { groupId, categoryId, userId } = await setup(t);
 
       await expect(
         asUser(t).mutation(api.recurringExpenses.create, {
           groupId,
-          amountMode: "fixed",
+          amount: 85000,
           categoryId,
           paidBy: userId,
           dayOfMonth: 25,
-          title: "家賃",
+          title: "  ",
           splitDetails: { method: "equal" },
         }),
-      ).rejects.toThrow(/金額/);
-    });
-
-    test("変動モードで金額指定分割 → エラー", async () => {
-      const t = convexTest(schema, modules);
-      const { groupId, categoryId, userId, partnerId } = await setup(t);
-
-      await expect(
-        asUser(t).mutation(api.recurringExpenses.create, {
-          groupId,
-          amountMode: "variable",
-          categoryId,
-          paidBy: userId,
-          dayOfMonth: 25,
-          title: "電気代",
-          splitDetails: {
-            method: "amount",
-            amounts: [
-              { userId, amount: 500 },
-              { userId: partnerId, amount: 500 },
-            ],
-          },
-        }),
-      ).rejects.toThrow(/変動モード/);
+      ).rejects.toThrow(/タイトル/);
     });
   });
 
   describe("generateDue", () => {
-    test("固定モード: 当日分の支出とsplitsを作成し、lastGeneratedMonthを更新", async () => {
+    test("当日分の支出とsplitsを作成し、lastGeneratedMonthを更新", async () => {
       const t = convexTest(schema, modules);
       const { groupId, categoryId, userId, partnerId } = await setup(t);
       const templateId = await insertTemplate(t, {
         groupId,
         categoryId,
         paidBy: userId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 15,
       });
@@ -263,7 +236,6 @@ describe("recurringExpenses", () => {
         groupId,
         categoryId,
         paidBy: userId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 15,
       });
@@ -288,7 +260,6 @@ describe("recurringExpenses", () => {
         groupId,
         categoryId,
         paidBy: userId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 16,
       });
@@ -310,7 +281,6 @@ describe("recurringExpenses", () => {
         groupId,
         categoryId,
         paidBy: userId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 15,
         pausedAt: Date.now(),
@@ -335,7 +305,6 @@ describe("recurringExpenses", () => {
         groupId,
         categoryId,
         paidBy: userId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 15,
       });
@@ -352,52 +321,6 @@ describe("recurringExpenses", () => {
       expect(template?.lastGeneratedMonth).toBeUndefined();
     });
 
-    test("変動モード: 支出は作らずpendingMonthを設定", async () => {
-      const t = convexTest(schema, modules);
-      const { groupId, categoryId, userId } = await setup(t);
-      const templateId = await insertTemplate(t, {
-        groupId,
-        categoryId,
-        paidBy: userId,
-        amountMode: "variable",
-        amount: 8000,
-        dayOfMonth: 15,
-      });
-
-      await t.mutation(internal.recurringExpenses.generateDue, {
-        todayOverride: TODAY,
-      });
-
-      const { expenses, template } = await t.run(async (ctx) => ({
-        expenses: await ctx.db.query("expenses").collect(),
-        template: await ctx.db.get(templateId),
-      }));
-      expect(expenses).toHaveLength(0);
-      expect(template?.pendingMonth).toBe(MONTH);
-      expect(template?.lastGeneratedMonth).toBe(MONTH);
-    });
-
-    test("未確定の前月分pendingMonthは当月で上書きされる", async () => {
-      const t = convexTest(schema, modules);
-      const { groupId, categoryId, userId } = await setup(t);
-      const templateId = await insertTemplate(t, {
-        groupId,
-        categoryId,
-        paidBy: userId,
-        amountMode: "variable",
-        dayOfMonth: 15,
-        pendingMonth: "2020-01",
-        lastGeneratedMonth: "2020-01",
-      });
-
-      await t.mutation(internal.recurringExpenses.generateDue, {
-        todayOverride: TODAY,
-      });
-
-      const template = await t.run(async (ctx) => ctx.db.get(templateId));
-      expect(template?.pendingMonth).toBe(MONTH);
-    });
-
     test("splitDetailsが無効（脱退メンバー参照）→ 均等割にフォールバック", async () => {
       const t = convexTest(schema, modules);
       const { groupId, categoryId, userId, partnerId } = await setup(t);
@@ -405,7 +328,6 @@ describe("recurringExpenses", () => {
         groupId,
         categoryId,
         paidBy: userId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 15,
         splitDetails: {
@@ -449,7 +371,6 @@ describe("recurringExpenses", () => {
         groupId,
         categoryId,
         paidBy: partnerId,
-        amountMode: "fixed",
         amount: 10000,
         dayOfMonth: 15,
       });
@@ -477,130 +398,97 @@ describe("recurringExpenses", () => {
     });
   });
 
-  describe("confirmPending", () => {
-    test("金額を入力して確定 → 支出作成・pendingMonthクリア・金額を保持", async () => {
+  describe("支出登録と同時のテンプレート作成（expenses.create recurring）", () => {
+    test("支出とテンプレートを作成し、当月は自動生成をスキップ・翌月から生成", async () => {
       const t = convexTest(schema, modules);
       const { groupId, categoryId, userId } = await setup(t);
-      const templateId = await insertTemplate(t, {
+
+      const expenseId = await asUser(t).mutation(api.expenses.create, {
         groupId,
+        amount: 85000,
         categoryId,
         paidBy: userId,
-        amountMode: "variable",
-        dayOfMonth: 15,
-        pendingMonth: MONTH,
+        date: TODAY,
+        title: "家賃",
+        splitDetails: { method: "equal" },
+        recurring: { dayOfMonth: 15 },
       });
 
-      const expenseId = await asUser(t).mutation(
-        api.recurringExpenses.confirmPending,
-        { recurringExpenseId: templateId, amount: 12345 },
-      );
-
-      const { expense, template } = await t.run(async (ctx) => ({
+      const { expense, templates } = await t.run(async (ctx) => ({
         expense: await ctx.db.get(expenseId),
-        template: await ctx.db.get(templateId),
+        templates: await ctx.db.query("recurringExpenses").collect(),
       }));
-      expect(expense?.amount).toBe(12345);
-      expect(expense?.date).toBe(`${MONTH}-15`);
-      expect(expense?.recurringExpenseId).toBe(templateId);
-      expect(template?.pendingMonth).toBeUndefined();
-      expect(template?.amount).toBe(12345);
+
+      // 手動記録した支出はテンプレート由来ではない
+      expect(expense?.recurringExpenseId).toBeUndefined();
+      expect(templates).toHaveLength(1);
+      expect(templates[0].amount).toBe(85000);
+      expect(templates[0].title).toBe("家賃");
+      expect(templates[0].dayOfMonth).toBe(15);
+      expect(templates[0].lastGeneratedMonth).toBe(MONTH);
+
+      // 当月のcronでは二重生成されない
+      await t.mutation(internal.recurringExpenses.generateDue, {
+        todayOverride: TODAY,
+      });
+      let expenses = await t.run(async (ctx) =>
+        ctx.db.query("expenses").collect(),
+      );
+      expect(expenses).toHaveLength(1);
+
+      // 翌月の実行日に生成される
+      await t.mutation(internal.recurringExpenses.generateDue, {
+        todayOverride: `${NEXT_MONTH}-15`,
+      });
+      expenses = await t.run(async (ctx) => ctx.db.query("expenses").collect());
+      expect(expenses).toHaveLength(2);
+      const generated = expenses.find((e) => e.recurringExpenseId);
+      expect(generated?.date).toBe(`${NEXT_MONTH}-15`);
+      expect(generated?.amount).toBe(85000);
     });
 
-    test("Freeグループ → エラー", async () => {
+    test("タイトルなし → エラー", async () => {
+      const t = convexTest(schema, modules);
+      const { groupId, categoryId, userId } = await setup(t);
+
+      await expect(
+        asUser(t).mutation(api.expenses.create, {
+          groupId,
+          amount: 85000,
+          categoryId,
+          paidBy: userId,
+          date: TODAY,
+          splitDetails: { method: "equal" },
+          recurring: { dayOfMonth: 15 },
+        }),
+      ).rejects.toThrow(/タイトル/);
+    });
+
+    test("Freeグループ → エラー（支出も作成されない）", async () => {
       const t = convexTest(schema, modules);
       const { groupId, categoryId, userId } = await setup(t, {
         premium: false,
       });
-      const templateId = await insertTemplate(t, {
-        groupId,
-        categoryId,
-        paidBy: userId,
-        amountMode: "variable",
-        dayOfMonth: 15,
-        pendingMonth: MONTH,
-      });
 
       await expect(
-        asUser(t).mutation(api.recurringExpenses.confirmPending, {
-          recurringExpenseId: templateId,
-          amount: 12345,
+        asUser(t).mutation(api.expenses.create, {
+          groupId,
+          amount: 85000,
+          categoryId,
+          paidBy: userId,
+          date: TODAY,
+          title: "家賃",
+          splitDetails: { method: "equal" },
+          recurring: { dayOfMonth: 15 },
         }),
       ).rejects.toThrow(/Premium/);
-    });
 
-    test("支払者が脱退済み → エラー", async () => {
-      const t = convexTest(schema, modules);
-      const { groupId, categoryId, partnerId } = await setup(t);
-      const templateId = await insertTemplate(t, {
-        groupId,
-        categoryId,
-        paidBy: partnerId,
-        amountMode: "variable",
-        dayOfMonth: 15,
-        pendingMonth: MONTH,
-      });
-
-      await t.run(async (ctx) => {
-        const membership = await ctx.db
-          .query("groupMembers")
-          .withIndex("by_group_and_user", (q) =>
-            q.eq("groupId", groupId).eq("userId", partnerId),
-          )
-          .unique();
-        await ctx.db.delete(membership!._id);
-      });
-
-      await expect(
-        asUser(t).mutation(api.recurringExpenses.confirmPending, {
-          recurringExpenseId: templateId,
-          amount: 12345,
-        }),
-      ).rejects.toThrow(/支払者/);
-    });
-
-    test("確認待ちでないテンプレート → エラー", async () => {
-      const t = convexTest(schema, modules);
-      const { groupId, categoryId, userId } = await setup(t);
-      const templateId = await insertTemplate(t, {
-        groupId,
-        categoryId,
-        paidBy: userId,
-        amountMode: "variable",
-        dayOfMonth: 15,
-      });
-
-      await expect(
-        asUser(t).mutation(api.recurringExpenses.confirmPending, {
-          recurringExpenseId: templateId,
-          amount: 12345,
-        }),
-      ).rejects.toThrow(/確認待ち/);
-    });
-  });
-
-  describe("skipPending", () => {
-    test("pendingMonthをクリアし支出は作らない", async () => {
-      const t = convexTest(schema, modules);
-      const { groupId, categoryId, userId } = await setup(t);
-      const templateId = await insertTemplate(t, {
-        groupId,
-        categoryId,
-        paidBy: userId,
-        amountMode: "variable",
-        dayOfMonth: 15,
-        pendingMonth: MONTH,
-      });
-
-      await asUser(t).mutation(api.recurringExpenses.skipPending, {
-        recurringExpenseId: templateId,
-      });
-
-      const { expenses, template } = await t.run(async (ctx) => ({
+      const { expenses, templates } = await t.run(async (ctx) => ({
         expenses: await ctx.db.query("expenses").collect(),
-        template: await ctx.db.get(templateId),
+        templates: await ctx.db.query("recurringExpenses").collect(),
       }));
       expect(expenses).toHaveLength(0);
-      expect(template?.pendingMonth).toBeUndefined();
+      expect(templates).toHaveLength(0);
     });
   });
 });
