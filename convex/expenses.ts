@@ -21,6 +21,7 @@ import { getSettlementPeriod } from "./domain/settlement";
 import { TAG_LIMITS } from "./domain/tag";
 import type { Id } from "./_generated/dataModel";
 import { splitDetailsValidator } from "./lib/validators";
+import { insertRecurringTemplate } from "./recurringExpenses";
 
 export const create = authMutation({
   args: {
@@ -34,6 +35,8 @@ export const create = authMutation({
     splitDetails: v.optional(splitDetailsValidator),
     shoppingItemIds: v.optional(v.array(v.id("shoppingItems"))),
     tagIds: v.optional(v.array(v.id("tags"))),
+    // 指定すると同じ内容の定期支出テンプレートも作成する（翌月分から自動生成）
+    recurring: v.optional(v.object({ dayOfMonth: v.number() })),
   },
   handler: async (ctx, args) => {
     validateExpenseInput({
@@ -195,6 +198,24 @@ export const create = authMutation({
       ctx.logger.info("TAG", "tags_linked_to_expense", {
         expenseId,
         tagIds: args.tagIds,
+      });
+    }
+
+    // 定期支出テンプレートの同時作成
+    if (args.recurring) {
+      if (!title) {
+        throw new ConvexError("定期支出として登録するにはタイトルが必要です");
+      }
+      await insertRecurringTemplate(ctx, {
+        groupId: args.groupId,
+        amount: args.amount,
+        categoryId: args.categoryId,
+        paidBy: args.paidBy,
+        dayOfMonth: args.recurring.dayOfMonth,
+        title,
+        splitDetails,
+        // 今回の支出が記録済みの月は自動生成をスキップする
+        lastGeneratedMonth: args.date.slice(0, 7),
       });
     }
 

@@ -14,7 +14,6 @@ import {
   generateRandomDate,
   getSettlementPeriodForSeed,
 } from "./lib/seedData";
-import { getTodayJst } from "./recurringExpenses";
 
 /**
  * シードデータ投入
@@ -107,16 +106,11 @@ export const seedTestData = internalMutation({
       await ctx.db.insert("recurringExpenses", {
         groupId,
         amount: recurring.amount,
-        amountMode: recurring.amountMode,
         categoryId,
         paidBy: userIds[recurring.paidByIndex],
         dayOfMonth: recurring.dayOfMonth,
         title: recurring.title,
         splitDetails: { method: "equal" },
-        pendingMonth:
-          "pendingCurrentMonth" in recurring && recurring.pendingCurrentMonth
-            ? getTodayJst().slice(0, 7)
-            : undefined,
         createdBy: userIds[recurring.paidByIndex],
         createdAt: now,
         updatedAt: now,

@@ -112,17 +112,14 @@ export default defineSchema({
   // ========================================
   recurringExpenses: defineTable({
     groupId: v.id("groups"),
-    amount: v.optional(v.number()), // 変動モードでは省略可（前回値の初期表示用に保持）
-    amountMode: v.union(v.literal("fixed"), v.literal("variable")),
+    amount: v.number(),
     categoryId: v.id("categories"),
     paidBy: v.id("users"),
     dayOfMonth: v.number(), // 1-28
     title: v.string(),
-    memo: v.optional(v.string()),
     splitDetails: splitDetailsValidator,
     pausedAt: v.optional(v.number()),
     lastGeneratedMonth: v.optional(v.string()), // "YYYY-MM" 冪等性キー
-    pendingMonth: v.optional(v.string()), // 変動モード: 金額確認待ちの対象月
     createdBy: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.number(),
