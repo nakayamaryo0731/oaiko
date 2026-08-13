@@ -14,6 +14,8 @@ const withBundleAnalyzer = bundleAnalyzer({
 });
 
 const nextConfig: NextConfig = {
+  // next devによるCLAUDE.mdへの自動追記を無効化
+  agentRules: false,
   images: {
     remotePatterns: [
       {
